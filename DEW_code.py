@@ -37,9 +37,13 @@ def F(msq, Q_renormSq):
 #########################
 
 def sigmauu_stop(vHiggs, tanb, y_t, g, g_prime, theta_W, m_sqrd_stopGauge, m_stop_sq, a_t, Q_renormSq):
-    Sigmauu_stop  = (1/(16 * (np.pi)**2))*F(m_stop_sq, Q_renormSq)
+    Sigmauu_stop  = (1/(64 * (np.pi)**2))*F(m_stop_sq, Q_renormSq)
     return Sigmauu_stop
     
+def sigmadd_stop():
+    Sigmadd_stop = 
+    return Sigmadd_stop
+
 #########################
 # Sbottom squarks:
 #########################
