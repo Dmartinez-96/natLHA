@@ -61,28 +61,144 @@ def sigmadd_stau():
     
 
 #########################
-# Sfermions:
+# Sfermions, 1st gen:
 #########################
 
+def sigmauu_sup_L():
+    
 
+def sigmauu_sup_R():
+    
+    
+def sigmauu_sdown_L():
+    
+    
+def sigmauu_sdown_R():
+    
+    
+def sigmauu_selec_L():
+    
+    
+def sigmauu_selec_R():
+    
+    
+def sigmauu_selecSneut():
+    
+    
+def sigmadd_sup_L():
+    
 
+def sigmadd_sup_R():
+    
+    
+def sigmadd_sdown_L():
+    
+    
+def sigmadd_sdown_R():
+    
+    
+def sigmadd_selec_L():
+    
+    
+def sigmadd_selec_R():
+    
+    
+def sigmadd_selecSneut():
+    
+    
+#########################
+# Sfermions, 2nd gen:
+#########################
+
+def sigmauu_sstrange_L():
+    
+
+def sigmauu_sstrange_R():
+    
+    
+def sigmauu_scharm_L():
+    
+    
+def sigmauu_scharm_R():
+    
+    
+def sigmauu_smu_L():
+    
+    
+def sigmauu_smu_R():
+    
+    
+def sigmauu_smuSneut():
+    
+    
+def sigmadd_sstrange_L():
+    
+
+def sigmadd_sstrange_R():
+    
+    
+def sigmadd_scharm_L():
+    
+    
+def sigmadd_scharm_R():
+    
+    
+def sigmadd_smu_L():
+    
+    
+def sigmadd_smu_R():
+    
+    
+def sigmadd_smuSneut():
+    
+    
 #########################
 # Neutralinos:
 #########################
 
+def sigmauu_neutralino():
+    
 
+def sigmadd_neutralino():
+    
 
 #########################
 # Charginos:
 #########################
 
+def sigmauu_chargino():
+    
 
+def sigmadd_chargino():
+    
 
 #########################
 # Higgs bosons:
 #########################
 
+def sigmauu_h0():
+    
+    
+def sigmauu_H0():
+    
+    
+def sigmauu_Hplus():
+    
+    
+def sigmauu_Hminus():
+    
 
+def sigmadd_h0():
+    
+    
+def sigmadd_H0():
+    
+    
+def sigmadd_Hplus():
+    
+    
+def sigmadd_Hminus():
+    
 
 #########################
 # Weak bosons (sigmauu = sigmadd for both below):
@@ -121,15 +237,19 @@ def sigmadd_tau(ytau, vHiggs, tanb, Q_renormSq):
 # Sigmauu computation
 #########################
 
-
+def sigmauu_net():
+    
 
 #########################
 # Sigmadd computation
 #########################
 
-
+def sigmadd_net():
+    
 
 #########################
 # DEW computation
 #########################
 
+def DEW():
+    
