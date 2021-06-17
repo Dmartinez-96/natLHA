@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pyslha
 
-filename = input("Enter name of input file: ")
-inputFile = open(filename)
-
 #########################
 # Mass relations:
 #########################
@@ -18,13 +15,13 @@ def mZsq(g, g_prime, vHiggs):
     mymZsq = ((np.power(g, 2) + np.power(g_prime, 2)) / 2) * np.power(vHiggs, 2)
     return mymZsq
 
-def mA0sq(mu, mHu, mHd):
-    mymA0sq = 2 * np.power(np.abs(mu), 2) + np.power(mHu, 2) + np.power(mHd, 2)
+def mA0sq(mu, mHusq, mHdsq):
+    mymA0sq = 2 * np.power(np.abs(mu), 2) + mHusq + mHdsq
     return mymA0sq
 
-def mHpmsq(mu, mHu, mHd, g, vHiggs):
+def mHpmsq(mu, mHusq, mHdsq, g, vHiggs):
     mymWsq = mWsq(g, vHiggs)
-    mymHpmsq = mA0sq(mu, mHu, mHd) + mymWsq
+    mymHpmsq = mA0sq(mu, mHusq, mHdsq) + mymWsq
     return mymHpmsq
     
 #########################
@@ -449,15 +446,15 @@ def sigmadd_chargino2(g, M2, vHiggs, tanb, mu, msC, Q_renorm):
 # Higgs bosons (sigmauu = sigmadd here):
 #########################
 
-def sigmauu_h0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mh0, Q_renorm):
-    mynum = ((np.power(g, 2) + np.power(g_prime, 2)) * np.power(vHiggs, 2)) - (2 * mA0sq(mu, mHu, mHd) * (np.power(cossqb(tanb), 2) - 6 * cossqb(tanb) * sinsqb(tanb) + np.power(sinsqb(tanb), 2))) 
-    myden = np.sqrt(np.power((mA0sq(mu, mHu, mHd) - np.power(mZ, 2)), 2) + 4 * np.power(mZ, 2) * mA0sq(mu, mHu, mHd)* 4 * cossqb(tanb) * sinsqb(tanb))
+def sigmauu_h0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mh0, Q_renorm):
+    mynum = ((np.power(g, 2) + np.power(g_prime, 2)) * np.power(vHiggs, 2)) - (2 * mA0sq(mu, mHusq, mHdsq) * (np.power(cossqb(tanb), 2) - 6 * cossqb(tanb) * sinsqb(tanb) + np.power(sinsqb(tanb), 2))) 
+    myden = np.sqrt(np.power((mA0sq(mu, mHusq, mHdsq) - np.power(mZ, 2)), 2) + 4 * np.power(mZ, 2) * mA0sq(mu, mHusq, mHdsq)* 4 * cossqb(tanb) * sinsqb(tanb))
     Sigmauu_h0 = (1/(32 * np.power(np.pi, 2))) * ((np.power(g, 2) + np.power(g_prime, 2)) / 4) * (1 - (mynum / myden)) * F(mh0, Q_renorm)
     return Sigmauu_h0
     
-def sigmauu_H0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mH0, Q_renorm):
-    mynum = ((np.power(g, 2) + np.power(g_prime, 2)) * np.power(vHiggs, 2)) - (2 * mA0sq(mu, mHu, mHd) * (np.power(cossqb(tanb), 2) - 6 * cossqb(tanb) * sinsqb(tanb) + np.power(sinsqb(tanb), 2))) 
-    myden = np.sqrt(np.power((mA0sq(mu, mHu, mHd) - np.power(mZ, 2)), 2) + 4 * np.power(mZ, 2) * mA0sq(mu, mHu, mHd)* 4 * cossqb(tanb) * sinsqb(tanb))
+def sigmauu_H0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mH0, Q_renorm):
+    mynum = ((np.power(g, 2) + np.power(g_prime, 2)) * np.power(vHiggs, 2)) - (2 * mA0sq(mu, mHusq, mHdsq) * (np.power(cossqb(tanb), 2) - 6 * cossqb(tanb) * sinsqb(tanb) + np.power(sinsqb(tanb), 2))) 
+    myden = np.sqrt(np.power((mA0sq(mu, mHusq, mHdsq) - np.power(mZ, 2)), 2) + 4 * np.power(mZ, 2) * mA0sq(mu, mHusq, mHdsq)* 4 * cossqb(tanb) * sinsqb(tanb))
     Sigmauu_H0 = (1/(32 * np.power(np.pi, 2))) * ((np.power(g, 2) + np.power(g_prime, 2)) / 4) * (1 + (mynum / myden)) * F(mH0, Q_renorm)
     return Sigmauu_H0
     
@@ -515,7 +512,7 @@ def sigmauu_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm):
     Sigmauunet = sigmauu_stop1(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm)\
             + sigmauu_stop2(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm)\
@@ -543,8 +540,8 @@ def sigmauu_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_
             + sigmauu_neutralino(M1, M2, mu, g, g_prime, vHiggs, tanb, msN4, Q_renorm)\
             + sigmauu_chargino1(g, M2, vHiggs, tanb, mu, msC1, Q_renorm)\
             + sigmauu_chargino2(g, M2, vHiggs, tanb, mu, msC2, Q_renorm)\
-            + sigmauu_h0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mh0, Q_renorm)\
-            + sigmauu_H0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mH0, Q_renorm)\
+            + sigmauu_h0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mh0, Q_renorm)\
+            + sigmauu_H0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mH0, Q_renorm)\
             + sigmauu_H_pm(g, mH_pm, Q_renorm) + sigmauu_W_pm(g, vHiggs, Q_renorm)\
             + sigmauu_Z0(g, g_prime, vHiggs, Q_renorm) + sigmauu_top(y_t, vHiggs, tanb, Q_renorm)
     return Sigmauunet
@@ -557,7 +554,7 @@ def sigmadd_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm):
     Sigmaddnet = sigmadd_stop1(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm)\
             + sigmadd_stop2(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm)\
@@ -585,8 +582,8 @@ def sigmadd_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_
             + sigmadd_neutralino(M1, M2, mu, g, g_prime, vHiggs, tanb, msN4, Q_renorm)\
             + sigmadd_chargino1(g, M2, vHiggs, tanb, mu, msC1, Q_renorm)\
             + sigmadd_chargino2(g, M2, vHiggs, tanb, mu, msC2, Q_renorm)\
-            + sigmauu_h0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mh0, Q_renorm)\
-            + sigmauu_H0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mH0, Q_renorm)\
+            + sigmauu_h0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mh0, Q_renorm)\
+            + sigmauu_H0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mH0, Q_renorm)\
             + sigmauu_H_pm(g, mH_pm, Q_renorm) + sigmauu_W_pm(g, vHiggs, Q_renorm)\
             + sigmauu_Z0(g, g_prime, vHiggs, Q_renorm)\
             + sigmadd_bottom(y_b, vHiggs, tanb, Q_renorm)\
@@ -601,7 +598,7 @@ def Max_Sigmauu_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1,
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm):
     Sigmauuarray = np.array([sigmauu_stop1(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm),\
             sigmauu_stop2(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm),\
@@ -629,8 +626,8 @@ def Max_Sigmauu_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1,
             sigmauu_neutralino(M1, M2, mu, g, g_prime, vHiggs, tanb, msN4, Q_renorm),\
             sigmauu_chargino1(g, M2, vHiggs, tanb, mu, msC1, Q_renorm),\
             sigmauu_chargino2(g, M2, vHiggs, tanb, mu, msC2, Q_renorm),\
-            sigmauu_h0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mh0, Q_renorm),\
-            sigmauu_H0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mH0, Q_renorm),\
+            sigmauu_h0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mh0, Q_renorm),\
+            sigmauu_H0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mH0, Q_renorm),\
             sigmauu_H_pm(g, mH_pm, Q_renorm), sigmauu_W_pm(g, vHiggs, Q_renorm),\
             sigmauu_Z0(g, g_prime, vHiggs, Q_renorm), sigmauu_top(y_t, vHiggs, tanb, Q_renorm)])
     myuucontribarray = np.absolute((np.absolute((-1) * Sigmauuarray) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))) - Sigmauuarray) / 2
@@ -641,7 +638,7 @@ def Max_Sigmadd_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1,
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm):
     Sigmaddarray = np.array([sigmadd_stop1(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm),\
             sigmadd_stop2(vHiggs, mu, tanb, y_t, g, g_prime, m_stop_1, m_stop_2, mtL, mtR, a_t, Q_renorm),\
@@ -669,8 +666,8 @@ def Max_Sigmadd_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1,
             sigmadd_neutralino(M1, M2, mu, g, g_prime, vHiggs, tanb, msN4, Q_renorm),\
             sigmadd_chargino1(g, M2, vHiggs, tanb, mu, msC1, Q_renorm),\
             sigmadd_chargino2(g, M2, vHiggs, tanb, mu, msC2, Q_renorm),\
-            sigmauu_h0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mh0, Q_renorm),\
-            sigmauu_H0(g, g_prime, vHiggs, tanb, mHu, mHd, mu, mZ, mH0, Q_renorm),\
+            sigmauu_h0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mh0, Q_renorm),\
+            sigmauu_H0(g, g_prime, vHiggs, tanb, mHusq, mHdsq, mu, mZ, mH0, Q_renorm),\
             sigmauu_H_pm(g, mH_pm, Q_renorm), sigmauu_W_pm(g, vHiggs, Q_renorm),\
             sigmauu_Z0(g, g_prime, vHiggs, Q_renorm),\
             sigmadd_bottom(y_b, vHiggs, tanb, Q_renorm),\
@@ -683,48 +680,47 @@ def DEW(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm):
-    mzsq_min_cond = (np.absolute(np.power(mHd, 2) + sigmadd_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
-                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
-                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
-                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
-                M1, M2, a_t, a_b, a_tau, Q_renorm) - np.power(mHu, 2) - sigmauu_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
-                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
-                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
-                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
-                M1, M2, a_t, a_b, a_tau, Q_renorm)) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb))))\
-                - np.power(mHu, 2) - sigmauu_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
-                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
-                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
-                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
-                M1, M2, a_t, a_b, a_tau, Q_renorm) - np.power(mHd, 2) \
-                - sigmadd_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
-                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
-                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
-                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
-                M1, M2, a_t, a_b, a_tau, Q_renorm) - (2 * np.power(mu, 2))
+#    mzsq_min_cond = (np.absolute(mHdsq + sigmadd_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
+#                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
+#                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
+#                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
+#                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
+#                M1, M2, a_t, a_b, a_tau, Q_renorm) - mHusq - sigmauu_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
+#                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
+#                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
+#                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
+#                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
+#                M1, M2, a_t, a_b, a_tau, Q_renorm)) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb))))\
+#                - mHusq - sigmauu_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
+#                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
+#                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
+#                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
+#                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
+#                M1, M2, a_t, a_b, a_tau, Q_renorm) - mHdsq \
+#                - sigmadd_net(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
+#                m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
+#                mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
+#                msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
+#                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
+#                M1, M2, a_t, a_b, a_tau, Q_renorm) - (2 * np.power(mu, 2))
     cmu = np.absolute((-1) * np.power(mu, 2))
-    cHu = np.absolute((np.absolute((-1) * np.power(mHu, 2) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))))\
-              - np.power(mHu, 2)) / 2
-    cHd = np.absolute((np.absolute((np.power(mHd, 2)) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))))\
-              - np.power(mHd, 2)) / 2
+    cHu = np.absolute((np.absolute((-1) * mHusq / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))))\
+              - mHusq) / 2
+    cHd = np.absolute((np.absolute(mHdsq / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))))\
+              - mHdsq) / 2
     contribution_array = np.array([cmu, cHu, cHd, Max_Sigmadd_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm),\
                 Max_Sigmauu_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
                 mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecSneut,\
                 msstrangeL, msstrangeR, mscharmL, mscharmR, msmuL, msmuR, msmuSneut,\
-                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHu, mHd, mH_pm,\
+                msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm)])
-    mydew = (np.amax(contribution_array)) / (mzsq_min_cond / 2)
+    mydew = (np.amax(contribution_array)) / (np.power(mZ, 2) / 2)
     return mydew
-                                                                                
