@@ -182,7 +182,7 @@ def sigmadd_stau2(vHiggs, mu, tanb, y_tau, g, g_prime, sinsq_theta_W, m_stau_1, 
 # Sfermions, 1st gen:
 #########################
 
-def sigmauu_sup_L():
+def sigmauu_sup_L(g, g_prime, sinsq_theta_W, msupL, Q_renorm):
     
 
 def sigmauu_sup_R():
