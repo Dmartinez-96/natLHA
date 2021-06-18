@@ -724,3 +724,64 @@ def DEW(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
                 M1, M2, a_t, a_b, a_tau, Q_renorm)])
     mydew = (np.amax(contribution_array)) / (np.power(mZ, 2) / 2)
     return mydew
+                                                                            
+#########################
+# SLHA input
+#########################
+
+direc = input('Enter the full directory for your SLHA file: ')
+d = pyslha.read(direc)
+mz = np.sqrt(((np.power(d.blocks['GAUGE'][1], 2) + np.power(d.blocks['GAUGE'][2], 2)) / 2) * np.power(d.blocks['HMIX'][3], 2))
+resultant_dew = DEW(d.blocks['HMIX'][3], # Higgs VEV(Q) MSSM DRbar
+    d.blocks['HMIX'][1], # mu(Q) MSSM DRbar
+    d.blocks['HMIX'][2], # tanb(Q) MSSSM DRbar
+    d.blocks['YU'][3, 3], # y_t(Q) MSSM DRbar
+    d.blocks['YD'][3, 3], # y_b(Q) MSSM DRbar
+    d.blocks['YE'][3, 3], # y_tau(Q) MSSM DRbar
+    d.blocks['GAUGE'][2], # g'(Q) MSSM DRbar
+    d.blocks['GAUGE'][1], # g(Q) MSSM DRbar
+    d.blocks['MASS'][1000006], # m_stop_1
+    d.blocks['MASS'][2000006], # m_stop_2
+    d.blocks['MASS'][1000005], # m_sbot_1
+    d.blocks['MASS'][2000005], # m_sbot_2
+    d.blocks['MASS'][1000015], # m_stau_1
+    d.blocks['MASS'][2000015], # m_stau_2
+    d.blocks['MSOFT'][43], # m_~Q3_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][46], # m_stop_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][43], # m_~Q3_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][49], # m_sbot_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][33], # m_stau_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][36], # m_stau_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][41], # m_~Q1_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][44], # m_sup_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][41], # m_~Q1_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][47], # m_sdown_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][31], # m_selec_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][34], # m_selec_R(Q) MSSM DRbar
+    d.blocks['MASS'][1000012], # m_selecSneutrino_L
+    d.blocks['MSOFT'][42], # m_~Q2_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][48], # m_sstrange_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][42], # m_~Q2_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][45], # m_scharm_R(Q) MSSM DRbar
+    d.blocks['MSOFT'][32], # m_smu_L(Q) MSSM DRbar
+    d.blocks['MSOFT'][35], # m_smu_R(Q) MSSM DRbar
+    d.blocks['MASS'][1000014], # m_smuSneutrino_L
+    d.blocks['MASS'][1000022], # m_Neutralino_1
+    d.blocks['MASS'][1000023], # m_Neutralino_2
+    d.blocks['MASS'][1000025], # m_Neutralino_3
+    d.blocks['MASS'][1000035], # m_Neutralino_4
+    d.blocks['MASS'][1000024], # m_Chargino_1
+    d.blocks['MASS'][1000037], # m_Chargino_2
+    mz, # m_Z from previous command before this one
+    d.blocks['MASS'][25], # m_h0 
+    d.blocks['MASS'][35], # m_H0
+    d.blocks['MSOFT'][22], # m_Hu^2(Q) MSSM DRbar
+    d.blocks['MSOFT'][21], # m_Hd^2(Q) MSSM DRbar
+    d.blocks['MASS'][37], # m_H_+-
+    d.blocks['MSOFT'][1], # M_1
+    d.blocks['MSOFT'][2], # M_2
+    d.blocks['AU'][3, 3] * d.blocks['YU'][3, 3], # a_t 
+    d.blocks['AD'][3, 3] * d.blocks['YD'][3, 3], # a_b
+    d.blocks['AE'][3, 3] * d.blocks['YE'][3, 3], # a_tau
+    np.sqrt(d.blocks['MASS'][1000006] * d.blocks['MASS'][2000006])) # Q_renorm = sqrt(m_stop_1 * m_stop_2)
+print('\nGiven the submitted SLHA file, your value for the electroweak naturalness measure, Delta_EW, is: ' + str(resultant_dew))
