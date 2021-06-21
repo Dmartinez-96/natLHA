@@ -631,7 +631,7 @@ def Max_Sigmauu_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1,
             sigmauu_Z0(g, g_prime, vHiggs, Q_renorm), sigmauu_top(y_t, vHiggs, tanb, Q_renorm)])
     myuucontribarray = np.absolute((np.absolute((-1) * Sigmauuarray) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))) - Sigmauuarray) / 2
     maxuucontrib = np.amax(myuucontribarray)
-    return maxuucontrib
+    return maxuucontrib / 2
 
 def Max_Sigmadd_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
@@ -673,7 +673,7 @@ def Max_Sigmadd_contrib(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1,
             sigmadd_tau(y_tau, vHiggs, tanb, Q_renorm)])
     myddcontribarray = np.absolute((np.absolute(Sigmaddarray) / np.sqrt(1 - (4 * sinsqb(tanb) * cossqb(tanb)))) - Sigmaddarray) / 2
     maxddcontrib = np.amax(myddcontribarray)
-    return maxddcontrib
+    return maxddcontrib / 2
 
 def DEW(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
                 m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR, mbL, mbR, mtauL,\
@@ -730,7 +730,8 @@ def DEW(vHiggs, mu, tanb, y_t, y_b, y_tau, g, g_prime, m_stop_1, m_stop_2,\
 
 direc = input('Enter the full directory for your SLHA file: ')
 d = pyslha.read(direc)
-mz = np.sqrt(((np.power(d.blocks['GAUGE'][1], 2) + np.power(d.blocks['GAUGE'][2], 2)) / 2) * np.power(d.blocks['HMIX'][3], 2))
+mz = d.blocks['SMINPUTS'][4]
+#mz = np.sqrt(((np.power(d.blocks['GAUGE'][1], 2) + np.power(d.blocks['GAUGE'][2], 2)) / 2) * np.power(d.blocks['HMIX'][3], 2))
 resultant_dew = DEW(d.blocks['HMIX'][3], # Higgs VEV(Q) MSSM DRbar
     d.blocks['HMIX'][1], # mu(Q) MSSM DRbar
     d.blocks['HMIX'][2], # tanb(Q) MSSSM DRbar
