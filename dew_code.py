@@ -27,7 +27,7 @@ def m_w_sq(g_coupling, v_higgs):
     return my_mw_sq
 
 
-def mZsq(g_coupling, g_prime, v_higgs):
+def mzsq(g_coupling, g_prime, v_higgs):
     """
     Return Z boson squared mass.
 
@@ -47,7 +47,7 @@ def mZsq(g_coupling, g_prime, v_higgs):
     return my_mz_sq
 
 
-def mA0sq(mu, mHusq, mHdsq):
+def ma_0sq(mu_soft, mh_usq, mh_dsq):
     """
     Return A_0 squared mass.
 
@@ -62,30 +62,8 @@ def mA0sq(mu, mHusq, mHdsq):
     mymA0sq : A_0 squared mass.
 
     """
-    my_ma0_sq = 2 * np.power(np.abs(mu), 2) + mHusq + mHdsq
+    my_ma0_sq = 2 * np.power(np.abs(mu_soft), 2) + mh_usq + mh_dsq
     return my_ma0_sq
-
-
-def mHpmsq(mu, mHusq, mHdsq, g_coupling, v_higgs):
-    """
-    Return Higgs_{+-} squared mass.
-
-    Parameters
-    ----------
-    mu : SUSY Higgs mass parameter, mu.
-    mHusq : Squared up-type Higgs mass.
-    mHdsq : Squared down-type Higgs mass.
-    g_coupling : Electroweak coupling constant g.
-    v_higgs : Higgs VEV.
-
-    Returns
-    -------
-    mymHpmsq : Higgs_{+-} squared mass.
-
-    """
-    mymWsq = m_w_sq(g_coupling, v_higgs)
-    mymHpmsq = mA0sq(mu, mHusq, mHdsq) + mymWsq
-    return mymHpmsq
 
 
 #########################
@@ -93,23 +71,23 @@ def mHpmsq(mu, mHusq, mHdsq, g_coupling, v_higgs):
 #########################
 
 
-def F(m, Q_renorm):
+def logfunc(mass, q_renorm):
     """
     Return F = m^2 * (ln(m^2 / Q^2) - 1).
 
     Parameters
     ----------
-    m : Input mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    mass : Input mass.
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
-    myF : F = m^2 * (ln(m^2 / Q^2) - 1).
+    myf : F = m^2 * (ln(m^2 / Q^2) - 1).
 
     """
-    myF = np.power(m, 2) * (np.log((np.power(m, 2))
-                                   / (np.power(Q_renorm, 2))) - 1)
-    return myF
+    myf = np.power(mass, 2) * (np.log((np.power(mass, 2))
+                                      / (np.power(q_renorm, 2))) - 1)
+    return myf
 
 
 def sinsqb(tanb):
@@ -244,7 +222,7 @@ def cos_squared_theta_W(g_coupling, g_prime):
 
 
 def sigmauu_stop1(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
-                  m_stop_2, mtL, mtR, a_t, Q_renorm):
+                  m_stop_2, mtL, mtR, a_t, q_renorm):
     """
     Return one-loop correction Sigma_u^u(stop_1).
 
@@ -261,7 +239,7 @@ def sigmauu_stop1(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
     mtL : Left gauge eigenstate stop mass.
     mtR : Right gauge eigenstate stop mass.
     a_t : Soft trilinear scalar top coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -288,12 +266,12 @@ def sigmauu_stop1(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
                                                 - 3) / 12)
                      - (stop_num / (np.power(m_stop_2, 2)
                                     - np.power(m_stop_1, 2))))\
-        * F(m_stop_1, Q_renorm)
+        * logfunc(m_stop_1, q_renorm)
     return Sigmauu_stop1
 
 
 def sigmadd_stop1(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
-                  m_stop_2, mtL, mtR, a_t, Q_renorm):
+                  m_stop_2, mtL, mtR, a_t, q_renorm):
     """
     Return one-loop correction Sigma_d^d(stop_1).
 
@@ -310,7 +288,7 @@ def sigmadd_stop1(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
     mtL : Left gauge eigenstate stop mass.
     mtR : Right gauge eigenstate stop mass.
     a_t : Soft trilinear scalar top coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -331,12 +309,12 @@ def sigmadd_stop1(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
     Sigmadd_stop1 = (3 / (32 * (np.power(np.pi, 2))))\
         * (((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)
            - (stop_num / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))\
-        * F(m_stop_1, Q_renorm)
+        * logfunc(m_stop_1, q_renorm)
     return Sigmadd_stop1
 
 
 def sigmauu_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
-                  m_stop_2, mtL, mtR, a_t, Q_renorm):
+                  m_stop_2, mtL, mtR, a_t, q_renorm):
     """
     Return one-loop correction Sigma_u^u(stop_2).
 
@@ -353,7 +331,7 @@ def sigmauu_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
     mtL : Left gauge eigenstate stop mass.
     mtR : Right gauge eigenstate stop mass.
     a_t : Soft trilinear scalar top coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -378,12 +356,12 @@ def sigmauu_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
                                                               g_prime) - 3)
                                    / 12)
            + (stop_num / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))\
-        * F(m_stop_2, Q_renorm)
+        * logfunc(m_stop_2, q_renorm)
     return Sigmauu_stop2
 
 
 def sigmadd_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
-                  m_stop_2, mtL, mtR, a_t, Q_renorm):
+                  m_stop_2, mtL, mtR, a_t, q_renorm):
     """
     Return one-loop correction Sigma_d^d(stop_2).
 
@@ -400,7 +378,7 @@ def sigmadd_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
     mtL : Left gauge eigenstate stop mass.
     mtR : Right gauge eigenstate stop mass.
     a_t : Soft trilinear scalar top coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -421,7 +399,7 @@ def sigmadd_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
     Sigmadd_stop2 = (3 / (32 * (np.power(np.pi, 2))))\
         * (((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)
            - (stop_num / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))\
-        * F(m_stop_2, Q_renorm)
+        * logfunc(m_stop_2, q_renorm)
     return Sigmadd_stop2
 
 
@@ -431,7 +409,7 @@ def sigmadd_stop2(v_higgs, mu, tanb, y_t, g_coupling, g_prime, m_stop_1,
 
 
 def sigmauu_sbottom1(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
-                     m_sbot_1, m_sbot_2, mbL, mbR, a_b, Q_renorm):
+                     m_sbot_1, m_sbot_2, mbL, mbR, a_b, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sbottom_1).
 
@@ -448,7 +426,7 @@ def sigmauu_sbottom1(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
     mbL : Left gauge eigenstate sbottom mass.
     mbR : Right gauge eigenstate sbottom mass.
     a_b : Soft trilinear scalar bottom coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -468,12 +446,12 @@ def sigmauu_sbottom1(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
     Sigmauu_sbot = (3 / (32 * np.power(np.pi, 2)))\
         * (((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            - (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))\
-        * F(m_sbot_1, Q_renorm)
+        * logfunc(m_sbot_1, q_renorm)
     return Sigmauu_sbot
 
 
 def sigmauu_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
-                     m_sbot_1, m_sbot_2, mbL, mbR, a_b, Q_renorm):
+                     m_sbot_1, m_sbot_2, mbL, mbR, a_b, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sbottom_2).
 
@@ -490,7 +468,7 @@ def sigmauu_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
     mbL : Left gauge eigenstate sbottom mass.
     mbR : Right gauge eigenstate sbottom mass.
     a_b : Soft trilinear scalar bottom coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -510,12 +488,12 @@ def sigmauu_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
     Sigmauu_sbot = (3 / (32 * np.power(np.pi, 2)))\
         * (((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            + (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))\
-        * F(m_sbot_2, Q_renorm)
+        * logfunc(m_sbot_2, q_renorm)
     return Sigmauu_sbot
 
 
 def sigmadd_sbottom1(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
-                     m_sbot_1, m_sbot_2, mbL, mbR, a_b, Q_renorm):
+                     m_sbot_1, m_sbot_2, mbL, mbR, a_b, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sbottom_1).
 
@@ -532,7 +510,7 @@ def sigmadd_sbottom1(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
     mbL : Left gauge eigenstate sbottom mass.
     mbR : Right gauge eigenstate sbottom mass.
     a_b : Soft trilinear scalar bottom coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -552,12 +530,12 @@ def sigmadd_sbottom1(v_higgs, mu, tanb, y_b, g_coupling, g_prime,
     Sigmadd_sbot = (3 / (32 * np.power(np.pi, 2)))\
         * (((-1) * (np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            - (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))\
-        * F(m_sbot_1, Q_renorm)
+        * logfunc(m_sbot_1, q_renorm)
     return Sigmadd_sbot
 
 
 def sigmadd_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime, m_sbot_1,
-                     m_sbot_2, mbL, mbR, a_b, Q_renorm):
+                     m_sbot_2, mbL, mbR, a_b, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sbottom_2).
 
@@ -574,7 +552,7 @@ def sigmadd_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime, m_sbot_1,
     mbL : Left gauge eigenstate sbottom mass.
     mbR : Right gauge eigenstate sbottom mass.
     a_b : Soft trilinear scalar bottom coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -594,7 +572,7 @@ def sigmadd_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime, m_sbot_1,
     Sigmadd_sbot = (3 / (32 * np.power(np.pi, 2)))\
         * (((-1) * (np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            + (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))\
-        * F(m_sbot_2, Q_renorm)
+        * logfunc(m_sbot_2, q_renorm)
     return Sigmadd_sbot
 
 
@@ -604,7 +582,7 @@ def sigmadd_sbottom2(v_higgs, mu, tanb, y_b, g_coupling, g_prime, m_sbot_1,
 
 
 def sigmauu_stau1(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
-                  m_stau_2, mtauL, mtauR, a_tau, Q_renorm):
+                  m_stau_2, mtauL, mtauR, a_tau, q_renorm):
     """
     Return one-loop correction Sigma_u^u(stau_1).
 
@@ -621,7 +599,7 @@ def sigmauu_stau1(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     mtauL : Left gauge eigenstate stau mass.
     mtauR : Right gauge eigenstate stau mass.
     a_tau : Soft trilinear scalar tau coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -641,12 +619,12 @@ def sigmauu_stau1(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     Sigmauu_stau = (1 / (32 * np.power(np.pi, 2)))\
         * (((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            - (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))\
-        * F(m_stau_1, Q_renorm)
+        * logfunc(m_stau_1, q_renorm)
     return Sigmauu_stau
 
 
 def sigmauu_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
-                  m_stau_2, mtauL, mtauR, a_tau, Q_renorm):
+                  m_stau_2, mtauL, mtauR, a_tau, q_renorm):
     """
     Return one-loop correction Sigma_u^u(stau_2).
 
@@ -663,7 +641,7 @@ def sigmauu_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     mtauL : Left gauge eigenstate stau mass.
     mtauR : Right gauge eigenstate stau mass.
     a_tau : Soft trilinear scalar tau coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -683,12 +661,12 @@ def sigmauu_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     Sigmauu_stau = (1 / (32 * np.power(np.pi, 2)))\
         * (((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            + (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))\
-        * F(m_stau_2, Q_renorm)
+        * logfunc(m_stau_2, q_renorm)
     return Sigmauu_stau
 
 
 def sigmadd_stau1(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
-                  m_stau_2, mtauL, mtauR, a_tau, Q_renorm):
+                  m_stau_2, mtauL, mtauR, a_tau, q_renorm):
     """
     Return one-loop correction Sigma_d^d(stau_1).
 
@@ -705,7 +683,7 @@ def sigmadd_stau1(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     mtauL : Left gauge eigenstate stau mass.
     mtauR : Right gauge eigenstate stau mass.
     a_tau : Soft trilinear scalar tau coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -725,12 +703,12 @@ def sigmadd_stau1(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     Sigmadd_stau = (1 / (32 * np.power(np.pi, 2)))\
         * (((-1) * (np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            - (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))\
-        * F(m_stau_1, Q_renorm)
+        * logfunc(m_stau_1, q_renorm)
     return Sigmadd_stau
 
 
 def sigmadd_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
-                  m_stau_2, mtauL, mtauR, a_tau, Q_renorm):
+                  m_stau_2, mtauL, mtauR, a_tau, q_renorm):
     """
     Return one-loop correction Sigma_d^d(stau_2).
 
@@ -747,7 +725,7 @@ def sigmadd_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     mtauL : Left gauge eigenstate stau mass.
     mtauR : Right gauge eigenstate stau mass.
     a_tau : Soft trilinear scalar tau coupling.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -767,7 +745,7 @@ def sigmadd_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
     Sigmadd_stau = (1 / (32 * np.power(np.pi, 2)))\
         * (((-1) * (np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)
            + (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))\
-        * F(m_stau_2, Q_renorm)
+        * logfunc(m_stau_2, q_renorm)
     return Sigmadd_stau
 
 
@@ -776,7 +754,7 @@ def sigmadd_stau2(v_higgs, mu, tanb, y_tau, g_coupling, g_prime, m_stau_1,
 #########################
 
 
-def sigmauu_sup_L(g_coupling, g_prime, msupL, Q_renorm):
+def sigmauu_sup_L(g_coupling, g_prime, msupL, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sup_L).
 
@@ -785,7 +763,7 @@ def sigmauu_sup_L(g_coupling, g_prime, msupL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msupL : Soft SUSY breaking mass for scalar up quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -795,11 +773,11 @@ def sigmauu_sup_L(g_coupling, g_prime, msupL, Q_renorm):
     SigmauusupL = ((-3) / (16 * np.power(np.pi, 2)))\
         * ((1 / 2) - (2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msupL, Q_renorm)
+        * logfunc(msupL, q_renorm)
     return SigmauusupL
 
 
-def sigmauu_sup_R(g_coupling, g_prime, msupR, Q_renorm):
+def sigmauu_sup_R(g_coupling, g_prime, msupR, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sup_R).
 
@@ -808,7 +786,7 @@ def sigmauu_sup_R(g_coupling, g_prime, msupR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msupR : Soft SUSY breaking mass for scalar up quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -818,11 +796,11 @@ def sigmauu_sup_R(g_coupling, g_prime, msupR, Q_renorm):
     SigmauusupR = ((-3) / (16 * np.power(np.pi, 2)))\
         * ((2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msupR, Q_renorm)
+        * logfunc(msupR, q_renorm)
     return SigmauusupR
 
 
-def sigmauu_sdown_L(g_coupling, g_prime, msdownL, Q_renorm):
+def sigmauu_sdown_L(g_coupling, g_prime, msdownL, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sdown_L).
 
@@ -831,7 +809,7 @@ def sigmauu_sdown_L(g_coupling, g_prime, msdownL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msdownL : Soft SUSY breaking mass for scalar down quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -841,11 +819,11 @@ def sigmauu_sdown_L(g_coupling, g_prime, msdownL, Q_renorm):
     SigmauusdownL = ((-3) / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + (1 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msdownL, Q_renorm)
+        * logfunc(msdownL, q_renorm)
     return SigmauusdownL
 
 
-def sigmauu_sdown_R(g_coupling, g_prime, msdownR, Q_renorm):
+def sigmauu_sdown_R(g_coupling, g_prime, msdownR, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sdown_R).
 
@@ -854,7 +832,7 @@ def sigmauu_sdown_R(g_coupling, g_prime, msdownR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msdownR : Soft SUSY breaking mass for scalar down quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -864,11 +842,11 @@ def sigmauu_sdown_R(g_coupling, g_prime, msdownR, Q_renorm):
     SigmauusdownR = ((-3) / (16 * np.power(np.pi, 2)))\
         * (((-1) / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msdownR, Q_renorm)
+        * logfunc(msdownR, q_renorm)
     return SigmauusdownR
 
 
-def sigmauu_selec_L(g_coupling, g_prime, mselecL, Q_renorm):
+def sigmauu_selec_L(g_coupling, g_prime, mselecL, q_renorm):
     """
     Return one-loop correction Sigma_u^u(selectron_L).
 
@@ -877,7 +855,7 @@ def sigmauu_selec_L(g_coupling, g_prime, mselecL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mselecL : Soft SUSY breaking mass for scalar electron (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -887,11 +865,11 @@ def sigmauu_selec_L(g_coupling, g_prime, mselecL, Q_renorm):
     SigmauuselecL = ((-1) / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mselecL, Q_renorm)
+        * logfunc(mselecL, q_renorm)
     return SigmauuselecL
 
 
-def sigmauu_selec_R(g_coupling, g_prime, mselecR, Q_renorm):
+def sigmauu_selec_R(g_coupling, g_prime, mselecR, q_renorm):
     """
     Return one-loop correction Sigma_u^u(selectron_R).
 
@@ -900,7 +878,7 @@ def sigmauu_selec_R(g_coupling, g_prime, mselecR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mselecR : Soft SUSY breaking mass for scalar electron (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -910,11 +888,11 @@ def sigmauu_selec_R(g_coupling, g_prime, mselecR, Q_renorm):
     SigmauuselecR = ((-1) / (16 * np.power(np.pi, 2)))\
         * ((-1) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mselecR, Q_renorm)
+        * logfunc(mselecR, q_renorm)
     return SigmauuselecR
 
 
-def sigmauu_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
+def sigmauu_selecSneut(g_coupling, g_prime, mselecSneut, q_renorm):
     """
     Return one-loop correction Sigma_u^u(selectron neutrino).
 
@@ -923,7 +901,7 @@ def sigmauu_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mselecSneut : Mass for scalar electron neutrino.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -932,11 +910,11 @@ def sigmauu_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
     """
     SigmauuselecSneut = ((-1) / (32 * np.power(np.pi, 2))) * (1 / 2)\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mselecSneut, Q_renorm)
+        * logfunc(mselecSneut, q_renorm)
     return SigmauuselecSneut
 
 
-def sigmadd_sup_L(g_coupling, g_prime, msupL, Q_renorm):
+def sigmadd_sup_L(g_coupling, g_prime, msupL, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sup_L).
 
@@ -945,7 +923,7 @@ def sigmadd_sup_L(g_coupling, g_prime, msupL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msupL : Soft SUSY breaking mass for scalar up quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -955,11 +933,11 @@ def sigmadd_sup_L(g_coupling, g_prime, msupL, Q_renorm):
     SigmaddsupL = (3 / (16 * np.power(np.pi, 2)))\
         * ((1 / 2) - (2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msupL, Q_renorm)
+        * logfunc(msupL, q_renorm)
     return SigmaddsupL
 
 
-def sigmadd_sup_R(g_coupling, g_prime, msupR, Q_renorm):
+def sigmadd_sup_R(g_coupling, g_prime, msupR, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sup_R).
 
@@ -968,7 +946,7 @@ def sigmadd_sup_R(g_coupling, g_prime, msupR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msupR : Soft SUSY breaking mass for scalar up quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -978,11 +956,11 @@ def sigmadd_sup_R(g_coupling, g_prime, msupR, Q_renorm):
     SigmaddsupR = (3 / (16 * np.power(np.pi, 2)))\
         * ((2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msupR, Q_renorm)
+        * logfunc(msupR, q_renorm)
     return SigmaddsupR
 
 
-def sigmadd_sdown_L(g_coupling, g_prime, msdownL, Q_renorm):
+def sigmadd_sdown_L(g_coupling, g_prime, msdownL, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sdown_L).
 
@@ -991,7 +969,7 @@ def sigmadd_sdown_L(g_coupling, g_prime, msdownL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msdownL : Soft SUSY breaking mass for scalar down quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1001,11 +979,11 @@ def sigmadd_sdown_L(g_coupling, g_prime, msdownL, Q_renorm):
     SigmaddsdownL = (3 / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + (1 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msdownL, Q_renorm)
+        * logfunc(msdownL, q_renorm)
     return SigmaddsdownL
 
 
-def sigmadd_sdown_R(g_coupling, g_prime, msdownR, Q_renorm):
+def sigmadd_sdown_R(g_coupling, g_prime, msdownR, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sdown_R).
 
@@ -1014,7 +992,7 @@ def sigmadd_sdown_R(g_coupling, g_prime, msdownR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msdownR : Soft SUSY breaking mass for scalar down quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1024,11 +1002,11 @@ def sigmadd_sdown_R(g_coupling, g_prime, msdownR, Q_renorm):
     SigmaddsdownR = (3 / (16 * np.power(np.pi, 2)))\
         * (((-1) / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msdownR, Q_renorm)
+        * logfunc(msdownR, q_renorm)
     return SigmaddsdownR
 
 
-def sigmadd_selec_L(g_coupling, g_prime, mselecL, Q_renorm):
+def sigmadd_selec_L(g_coupling, g_prime, mselecL, q_renorm):
     """
     Return one-loop correction Sigma_d^d(selectron_L).
 
@@ -1037,7 +1015,7 @@ def sigmadd_selec_L(g_coupling, g_prime, mselecL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mselecL : Soft SUSY breaking mass for scalar electron (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1047,11 +1025,11 @@ def sigmadd_selec_L(g_coupling, g_prime, mselecL, Q_renorm):
     SigmaddselecL = (1 / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mselecL, Q_renorm)
+        * logfunc(mselecL, q_renorm)
     return SigmaddselecL
 
 
-def sigmadd_selec_R(g_coupling, g_prime, mselecR, Q_renorm):
+def sigmadd_selec_R(g_coupling, g_prime, mselecR, q_renorm):
     """
     Return one-loop correction Sigma_d^d(selectron_R).
 
@@ -1060,7 +1038,7 @@ def sigmadd_selec_R(g_coupling, g_prime, mselecR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mselecR : Soft SUSY breaking mass for scalar electron (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1070,11 +1048,11 @@ def sigmadd_selec_R(g_coupling, g_prime, mselecR, Q_renorm):
     SigmaddselecR = (1 / (16 * np.power(np.pi, 2)))\
         * ((-1) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mselecR, Q_renorm)
+        * logfunc(mselecR, q_renorm)
     return SigmaddselecR
 
 
-def sigmadd_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
+def sigmadd_selecSneut(g_coupling, g_prime, mselecSneut, q_renorm):
     """
     Return one-loop correction Sigma_d^d(selectron neutrino).
 
@@ -1083,7 +1061,7 @@ def sigmadd_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mselecSneut : Mass for scalar electron neutrino.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1092,7 +1070,7 @@ def sigmadd_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
     """
     SigmauuselecSneut = (1 / (32 * np.power(np.pi, 2))) * (1 / 2)\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mselecSneut, Q_renorm)
+        * logfunc(mselecSneut, q_renorm)
     return SigmauuselecSneut
 
 
@@ -1101,7 +1079,7 @@ def sigmadd_selecSneut(g_coupling, g_prime, mselecSneut, Q_renorm):
 #########################
 
 
-def sigmauu_sstrange_L(g_coupling, g_prime, msstrangeL, Q_renorm):
+def sigmauu_sstrange_L(g_coupling, g_prime, msstrangeL, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sstrange_L).
 
@@ -1110,7 +1088,7 @@ def sigmauu_sstrange_L(g_coupling, g_prime, msstrangeL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msstrangeL : Soft SUSY breaking mass for scalar strange quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1120,11 +1098,11 @@ def sigmauu_sstrange_L(g_coupling, g_prime, msstrangeL, Q_renorm):
     SigmauusstrangeL = ((-3) / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + (1 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msstrangeL, Q_renorm)
+        * logfunc(msstrangeL, q_renorm)
     return SigmauusstrangeL
 
 
-def sigmauu_sstrange_R(g_coupling, g_prime, msstrangeR, Q_renorm):
+def sigmauu_sstrange_R(g_coupling, g_prime, msstrangeR, q_renorm):
     """
     Return one-loop correction Sigma_u^u(sstrange_R).
 
@@ -1133,7 +1111,7 @@ def sigmauu_sstrange_R(g_coupling, g_prime, msstrangeR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msstrangeR : Soft SUSY breaking mass for scalar strange quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1143,11 +1121,11 @@ def sigmauu_sstrange_R(g_coupling, g_prime, msstrangeR, Q_renorm):
     SigmauusstrangeR = ((-3) / (16 * np.power(np.pi, 2)))\
         * (((-1) / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msstrangeR, Q_renorm)
+        * logfunc(msstrangeR, q_renorm)
     return SigmauusstrangeR
 
 
-def sigmauu_scharm_L(g_coupling, g_prime, mscharmL, Q_renorm):
+def sigmauu_scharm_L(g_coupling, g_prime, mscharmL, q_renorm):
     """
     Return one-loop correction Sigma_u^u(scharm_L).
 
@@ -1156,7 +1134,7 @@ def sigmauu_scharm_L(g_coupling, g_prime, mscharmL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mscharmL : Soft SUSY breaking mass for scalar charm quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1166,11 +1144,11 @@ def sigmauu_scharm_L(g_coupling, g_prime, mscharmL, Q_renorm):
     SigmauuscharmL = ((-3) / (16 * np.power(np.pi, 2)))\
         * ((1 / 2) - (2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mscharmL, Q_renorm)
+        * logfunc(mscharmL, q_renorm)
     return SigmauuscharmL
 
 
-def sigmauu_scharm_R(g_coupling, g_prime, mscharmR, Q_renorm):
+def sigmauu_scharm_R(g_coupling, g_prime, mscharmR, q_renorm):
     """
     Return one-loop correction Sigma_u^u(scharm_R).
 
@@ -1179,7 +1157,7 @@ def sigmauu_scharm_R(g_coupling, g_prime, mscharmR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mscharmR : Soft SUSY breaking mass for scalar charm quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1189,11 +1167,11 @@ def sigmauu_scharm_R(g_coupling, g_prime, mscharmR, Q_renorm):
     SigmauuscharmR = ((-3) / (16 * np.power(np.pi, 2)))\
         * ((2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mscharmR, Q_renorm)
+        * logfunc(mscharmR, q_renorm)
     return SigmauuscharmR
 
 
-def sigmauu_smu_L(g_coupling, g_prime, msmuL, Q_renorm):
+def sigmauu_smu_L(g_coupling, g_prime, msmuL, q_renorm):
     """
     Return one-loop correction Sigma_u^u(smu_L).
 
@@ -1202,7 +1180,7 @@ def sigmauu_smu_L(g_coupling, g_prime, msmuL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msmuL : Soft SUSY breaking mass for scalar muon (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1212,11 +1190,11 @@ def sigmauu_smu_L(g_coupling, g_prime, msmuL, Q_renorm):
     SigmauusmuL = ((-1) / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msmuL, Q_renorm)
+        * logfunc(msmuL, q_renorm)
     return SigmauusmuL
 
 
-def sigmauu_smu_R(g_coupling, g_prime, msmuR, Q_renorm):
+def sigmauu_smu_R(g_coupling, g_prime, msmuR, q_renorm):
     """
     Return one-loop correction Sigma_u^u(smu_R).
 
@@ -1225,7 +1203,7 @@ def sigmauu_smu_R(g_coupling, g_prime, msmuR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msmuR : Soft SUSY breaking mass for scalar muon (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1235,11 +1213,11 @@ def sigmauu_smu_R(g_coupling, g_prime, msmuR, Q_renorm):
     SigmauusmuR = ((-1) / (16 * np.power(np.pi, 2)))\
         * (((-1)) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msmuR, Q_renorm)
+        * logfunc(msmuR, q_renorm)
     return SigmauusmuR
 
 
-def sigmauu_smuSneut(g_coupling, g_prime, msmuSneut, Q_renorm):
+def sigmauu_smuSneut(g_coupling, g_prime, msmuSneut, q_renorm):
     """
     Return one-loop correction Sigma_u^u(smuon neutrino).
 
@@ -1248,7 +1226,7 @@ def sigmauu_smuSneut(g_coupling, g_prime, msmuSneut, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msmuSneut : Mass for scalar muon neutrino.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1257,11 +1235,11 @@ def sigmauu_smuSneut(g_coupling, g_prime, msmuSneut, Q_renorm):
     """
     SigmauusmuSneut = ((-1) / (32 * np.power(np.pi, 2))) * (1 / 2)\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msmuSneut, Q_renorm)
+        * logfunc(msmuSneut, q_renorm)
     return SigmauusmuSneut
 
 
-def sigmadd_sstrange_L(g_coupling, g_prime, msstrangeL, Q_renorm):
+def sigmadd_sstrange_L(g_coupling, g_prime, msstrangeL, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sstrange_L).
 
@@ -1270,7 +1248,7 @@ def sigmadd_sstrange_L(g_coupling, g_prime, msstrangeL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msstrangeL : Soft SUSY breaking mass for scalar strange quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1280,11 +1258,11 @@ def sigmadd_sstrange_L(g_coupling, g_prime, msstrangeL, Q_renorm):
     SigmaddsstrangeL = (3 / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + (1 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msstrangeL, Q_renorm)
+        * logfunc(msstrangeL, q_renorm)
     return SigmaddsstrangeL
 
 
-def sigmadd_sstrange_R(g_coupling, g_prime, msstrangeR, Q_renorm):
+def sigmadd_sstrange_R(g_coupling, g_prime, msstrangeR, q_renorm):
     """
     Return one-loop correction Sigma_d^d(sstrange_R).
 
@@ -1293,7 +1271,7 @@ def sigmadd_sstrange_R(g_coupling, g_prime, msstrangeR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msstrangeR : Soft SUSY breaking mass for scalar strange quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1303,11 +1281,11 @@ def sigmadd_sstrange_R(g_coupling, g_prime, msstrangeR, Q_renorm):
     SigmaddsstrangeR = (3 / (16 * np.power(np.pi, 2)))\
         * (((-1) / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msstrangeR, Q_renorm)
+        * logfunc(msstrangeR, q_renorm)
     return SigmaddsstrangeR
 
 
-def sigmadd_scharm_L(g_coupling, g_prime, mscharmL, Q_renorm):
+def sigmadd_scharm_L(g_coupling, g_prime, mscharmL, q_renorm):
     """
     Return one-loop correction Sigma_d^d(scharm_L).
 
@@ -1316,7 +1294,7 @@ def sigmadd_scharm_L(g_coupling, g_prime, mscharmL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mscharmL : Soft SUSY breaking mass for scalar charm quark (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1326,11 +1304,11 @@ def sigmadd_scharm_L(g_coupling, g_prime, mscharmL, Q_renorm):
     SigmaddscharmL = (3 / (16 * np.power(np.pi, 2)))\
         * ((1 / 2) - (2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mscharmL, Q_renorm)
+        * logfunc(mscharmL, q_renorm)
     return SigmaddscharmL
 
 
-def sigmadd_scharm_R(g_coupling, g_prime, mscharmR, Q_renorm):
+def sigmadd_scharm_R(g_coupling, g_prime, mscharmR, q_renorm):
     """
     Return one-loop correction Sigma_d^d(scharm_R).
 
@@ -1339,7 +1317,7 @@ def sigmadd_scharm_R(g_coupling, g_prime, mscharmR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     mscharmR : Soft SUSY breaking mass for scalar charm quark (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1349,11 +1327,11 @@ def sigmadd_scharm_R(g_coupling, g_prime, mscharmR, Q_renorm):
     SigmaddscharmR = (3 / (16 * np.power(np.pi, 2)))\
         * ((2 / 3) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(mscharmR, Q_renorm)
+        * logfunc(mscharmR, q_renorm)
     return SigmaddscharmR
 
 
-def sigmadd_smu_L(g_coupling, g_prime, msmuL, Q_renorm):
+def sigmadd_smu_L(g_coupling, g_prime, msmuL, q_renorm):
     """
     Return one-loop correction Sigma_d^d(smu_L).
 
@@ -1362,7 +1340,7 @@ def sigmadd_smu_L(g_coupling, g_prime, msmuL, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msmuL : Soft SUSY breaking mass for scalar muon (left).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1372,11 +1350,11 @@ def sigmadd_smu_L(g_coupling, g_prime, msmuL, Q_renorm):
     SigmaddsmuL = (1 / (16 * np.power(np.pi, 2)))\
         * (((-1) / 2) + sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msmuL, Q_renorm)
+        * logfunc(msmuL, q_renorm)
     return SigmaddsmuL
 
 
-def sigmadd_smu_R(g_coupling, g_prime, msmuR, Q_renorm):
+def sigmadd_smu_R(g_coupling, g_prime, msmuR, q_renorm):
     """
     Return one-loop correction Sigma_d^d(smu_R).
 
@@ -1385,7 +1363,7 @@ def sigmadd_smu_R(g_coupling, g_prime, msmuR, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msmuR : Soft SUSY breaking mass for scalar muon (right).
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1395,11 +1373,11 @@ def sigmadd_smu_R(g_coupling, g_prime, msmuR, Q_renorm):
     SigmaddsmuR = (1 / (16 * np.power(np.pi, 2)))\
         * (((-1)) * sin_squared_theta_W(g_coupling, g_prime))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msmuR, Q_renorm)
+        * logfunc(msmuR, q_renorm)
     return SigmaddsmuR
 
 
-def sigmadd_smuSneut(g_coupling, g_prime, msmuSneut, Q_renorm):
+def sigmadd_smuSneut(g_coupling, g_prime, msmuSneut, q_renorm):
     """
     Return one-loop correction Sigma_d^d(smuon neutrino).
 
@@ -1408,7 +1386,7 @@ def sigmadd_smuSneut(g_coupling, g_prime, msmuSneut, Q_renorm):
     g_coupling : Electroweak coupling constant g.
     g_prime : Electroweak coupling constant g'.
     msmuSneut : Mass for scalar muon neutrino.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1417,7 +1395,7 @@ def sigmadd_smuSneut(g_coupling, g_prime, msmuSneut, Q_renorm):
     """
     SigmaddsmuSneut = (1 / (32 * np.power(np.pi, 2))) * (1 / 2)\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 2)\
-        * F(msmuSneut, Q_renorm)
+        * logfunc(msmuSneut, q_renorm)
     return SigmaddsmuSneut
 
 
@@ -1604,7 +1582,7 @@ def neutralino_deriv_denom(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb,
 
 
 def sigmauu_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
-                       Q_renorm):
+                       q_renorm):
     """
     Return one-loop correction Sigma_u^u(neutralino).
 
@@ -1618,7 +1596,7 @@ def sigmauu_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
     v_higgs : Higgs VEV.
     tanb : Ratio of Higgs VEVs, tan(beta) = v_u / v_d.
     msN : Neutralino mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1630,12 +1608,12 @@ def sigmauu_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
                                   v_higgs, tanb, msN)
            / neutralino_deriv_denom(M1, M2, mu, g_coupling, g_prime,
                                     v_higgs, tanb, msN))\
-        * F(msN, Q_renorm)
+        * logfunc(msN, q_renorm)
     return Sigmauu_neutralino
 
 
 def sigmadd_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
-                       Q_renorm):
+                       q_renorm):
     """
     Return one-loop correction Sigma_d^d(neutralino).
 
@@ -1649,7 +1627,7 @@ def sigmadd_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
     v_higgs : Higgs VEV.
     tanb : Ratio of Higgs VEVs, tan(beta) = v_u / v_d.
     msN : Neutralino mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1661,7 +1639,7 @@ def sigmadd_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
                                   v_higgs, tanb, msN)
            / neutralino_deriv_denom(M1, M2, mu, g_coupling, g_prime,
                                     v_higgs, tanb, msN))\
-        * F(msN, Q_renorm)
+        * logfunc(msN, q_renorm)
     return Sigmadd_neutralino
 
 
@@ -1670,7 +1648,7 @@ def sigmadd_neutralino(M1, M2, mu, g_coupling, g_prime, v_higgs, tanb, msN,
 #########################
 
 
-def sigmauu_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
+def sigmauu_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, q_renorm):
     """
     Return one-loop correction Sigma_u^u(chargino_1).
 
@@ -1682,7 +1660,7 @@ def sigmauu_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
     tanb : Ratio of Higgs VEVs, tan(beta) = v_u / v_d.
     mu : SUSY Higgs mass parameter, mu.
     msC : Chargino mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1702,11 +1680,11 @@ def sigmauu_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
                               + np.power((M2 + mu), 2)))
     Sigmauu_chargino1 = -1 * (np.power(g_coupling, 2) / (16 * np.power(np.pi,
                                                                        2)))\
-        * (1 - (chargino_num / chargino_den)) * F(msC, Q_renorm)
+        * (1 - (chargino_num / chargino_den)) * logfunc(msC, q_renorm)
     return Sigmauu_chargino1
 
 
-def sigmauu_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
+def sigmauu_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, q_renorm):
     """
     Return one-loop correction Sigma_u^u(chargino_2).
 
@@ -1718,7 +1696,7 @@ def sigmauu_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
     tanb : Ratio of Higgs VEVs, tan(beta) = v_u / v_d.
     mu : SUSY Higgs mass parameter, mu.
     msC : Chargino mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1738,11 +1716,11 @@ def sigmauu_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
                               + np.power((M2 + mu), 2)))
     Sigmauu_chargino2 = -1 * (np.power(g_coupling, 2) / (16 * np.power(np.pi,
                                                                        2)))\
-        * (1 + (chargino_num / chargino_den)) * F(msC, Q_renorm)
+        * (1 + (chargino_num / chargino_den)) * logfunc(msC, q_renorm)
     return Sigmauu_chargino2
 
 
-def sigmadd_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
+def sigmadd_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, q_renorm):
     """
     Return one-loop correction Sigma_d^d(chargino_1).
 
@@ -1754,7 +1732,7 @@ def sigmadd_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
     tanb : Ratio of Higgs VEVs, tan(beta) = v_u / v_d.
     mu : SUSY Higgs mass parameter, mu.
     msC : Chargino mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1774,11 +1752,11 @@ def sigmadd_chargino1(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
                               + np.power((M2 + mu), 2)))
     Sigmadd_chargino1 = -1 * (np.power(g_coupling, 2) / (16 * np.power(np.pi,
                                                                        2)))\
-        * (1 - (chargino_num / chargino_den)) * F(msC, Q_renorm)
+        * (1 - (chargino_num / chargino_den)) * logfunc(msC, q_renorm)
     return Sigmadd_chargino1
 
 
-def sigmadd_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
+def sigmadd_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, q_renorm):
     """
     Return one-loop correction Sigma_d^d(chargino_2).
 
@@ -1790,7 +1768,7 @@ def sigmadd_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
     tanb : Ratio of Higgs VEVs, tan(beta) = v_u / v_d.
     mu : SUSY Higgs mass parameter, mu.
     msC : Chargino mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1810,7 +1788,7 @@ def sigmadd_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
                               + np.power((M2 + mu), 2)))
     Sigmadd_chargino2 = -1 * (np.power(g_coupling, 2) / (16 * np.power(np.pi,
                                                                        2)))\
-        * (1 + (chargino_num / chargino_den)) * F(msC, Q_renorm)
+        * (1 + (chargino_num / chargino_den)) * logfunc(msC, q_renorm)
     return Sigmadd_chargino2
 
 
@@ -1820,7 +1798,7 @@ def sigmadd_chargino2(g_coupling, M2, v_higgs, tanb, mu, msC, Q_renorm):
 
 
 def sigmauu_h0(g_coupling, g_prime, v_higgs, tanb, mHusq, mHdsq, mu, mZ, mh0,
-               Q_renorm):
+               q_renorm):
     """
     Return one-loop correction Sigma_u,d^u,d(h_0) (lighter neutral Higgs).
 
@@ -1835,7 +1813,7 @@ def sigmauu_h0(g_coupling, g_prime, v_higgs, tanb, mHusq, mHdsq, mu, mZ, mh0,
     mu : SUSY Higgs mass parameter, mu.
     mZ : Z boson mass.
     mh0 : Lighter neutral Higgs mass.
-    Q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
+    q_renorm : Renormalization scale (usually sqrt(m_stop_1 * m_stop_2)).
 
     Returns
     -------
@@ -1844,15 +1822,15 @@ def sigmauu_h0(g_coupling, g_prime, v_higgs, tanb, mHusq, mHdsq, mu, mZ, mh0,
     """
     mynum = ((np.power(g_coupling, 2) + np.power(g_prime, 2))
              * np.power(v_higgs, 2))\
-        - (2 * mA0sq(mu, mHusq, mHdsq) * (np.power(cossqb(tanb), 2)
-                                          - 6 * cossqb(tanb) * sinsqb(tanb)
-                                          + np.power(sinsqb(tanb), 2)))
-    myden = np.sqrt(np.power((mA0sq(mu, mHusq, mHdsq) - np.power(mZ, 2)), 2)
-                    + (4 * np.power(mZ, 2) * mA0sq(mu, mHusq, mHdsq) * 4
+        - (2 * ma_0sq(mu, mHusq, mHdsq) * (np.power(cossqb(tanb), 2)
+                                           - 6 * cossqb(tanb) * sinsqb(tanb)
+                                           + np.power(sinsqb(tanb), 2)))
+    myden = np.sqrt(np.power((ma_0sq(mu, mHusq, mHdsq) - np.power(mZ, 2)), 2)
+                    + (4 * np.power(mZ, 2) * ma_0sq(mu, mHusq, mHdsq) * 4
                        * cossqb(tanb) * sinsqb(tanb)))
     Sigmauu_h0 = (1 / (32 * np.power(np.pi, 2)))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)\
-        * (1 - (mynum / myden)) * F(mh0, Q_renorm)
+        * (1 - (mynum / myden)) * logfunc(mh0, q_renorm)
     return Sigmauu_h0
 
 
@@ -1881,15 +1859,15 @@ def sigmauu_H0(g_coupling, g_prime, v_higgs, tanb, mHusq, mHdsq, mu, mZ, mH0,
     """
     mynum = ((np.power(g_coupling, 2) + np.power(g_prime, 2))
              * np.power(v_higgs, 2))\
-        - (2 * mA0sq(mu, mHusq, mHdsq) * (np.power(cossqb(tanb), 2)
-                                          - 6 * cossqb(tanb) * sinsqb(tanb)
-                                          + np.power(sinsqb(tanb), 2)))
-    myden = np.sqrt(np.power((mA0sq(mu, mHusq, mHdsq) - np.power(mZ, 2)), 2)
-                    + (4 * np.power(mZ, 2) * mA0sq(mu, mHusq, mHdsq)
+        - (2 * ma_0sq(mu, mHusq, mHdsq) * (np.power(cossqb(tanb), 2)
+                                           - 6 * cossqb(tanb) * sinsqb(tanb)
+                                           + np.power(sinsqb(tanb), 2)))
+    myden = np.sqrt(np.power((ma_0sq(mu, mHusq, mHdsq) - np.power(mZ, 2)), 2)
+                    + (4 * np.power(mZ, 2) * ma_0sq(mu, mHusq, mHdsq)
                        * 4 * cossqb(tanb) * sinsqb(tanb)))
     Sigmauu_H0 = (1/(32 * np.power(np.pi, 2)))\
         * ((np.power(g_coupling, 2) + np.power(g_prime, 2)) / 4)\
-        * (1 + (mynum / myden)) * F(mH0, Q_renorm)
+        * (1 + (mynum / myden)) * logfunc(mH0, Q_renorm)
     return Sigmauu_H0
 
 
@@ -1909,7 +1887,7 @@ def sigmauu_H_pm(g_coupling, mH_pm, Q_renorm):
 
     """
     Sigmauu_H_pm = (np.power(g_coupling, 2) / (64 * np.power(np.pi, 2)))\
-        * F(mH_pm, Q_renorm)
+        * logfunc(mH_pm, Q_renorm)
     return Sigmauu_H_pm
 
 
@@ -1935,7 +1913,7 @@ def sigmauu_W_pm(g_coupling, v_higgs, Q_renorm):
     """
     mymWsq = m_w_sq(g_coupling, v_higgs)
     Sigmauu_W_pm = (3 * np.power(g_coupling, 2) / (32 * np.power(np.pi, 2)))\
-        * F(np.sqrt(mymWsq), Q_renorm)
+        * logfunc(np.sqrt(mymWsq), Q_renorm)
     return Sigmauu_W_pm
 
 
@@ -1955,9 +1933,9 @@ def sigmauu_Z0(g_coupling, g_prime, v_higgs, Q_renorm):
     Sigmauu_Z0 : One-loop correction Sigma_u,d^u,d(Z_0).
 
     """
-    mymZsq = mZsq(g_coupling, g_prime, v_higgs)
+    mymZsq = mzsq(g_coupling, g_prime, v_higgs)
     Sigmauu_W_pm = (3 * np.power(g_coupling, 2) / (64 * np.power(np.pi, 2)))\
-        * F(np.sqrt(mymZsq), Q_renorm)
+        * logfunc(np.sqrt(mymZsq), Q_renorm)
     return Sigmauu_W_pm
 
 
@@ -1984,7 +1962,7 @@ def sigmauu_top(yt, v_higgs, tanb, Q_renorm):
     """
     mymt = yt * vu(v_higgs, tanb)
     Sigmauu_top = ((-1) * np.power(yt, 2) / (16 * np.power(np.pi, 2)))\
-        * F(mymt, Q_renorm)
+        * logfunc(mymt, Q_renorm)
     return Sigmauu_top
 
 
@@ -2016,7 +1994,7 @@ def sigmadd_bottom(yb, v_higgs, tanb, Q_renorm):
     """
     mymb = yb * vd(v_higgs, tanb)
     Sigmadd_bottom = (-1 * np.power(yb, 2) / (16 * np.power(np.pi, 2)))\
-        * F(mymb, Q_renorm)
+        * logfunc(mymb, Q_renorm)
     return Sigmadd_bottom
 
 
@@ -2043,7 +2021,7 @@ def sigmadd_tau(ytau, v_higgs, tanb, Q_renorm):
     """
     mymtau = ytau * vd(v_higgs, tanb)
     Sigmadd_tau = (-1 * np.power(ytau, 2) / (16 * np.power(np.pi, 2)))\
-        * F(mymtau, Q_renorm)
+        * logfunc(mymtau, Q_renorm)
     return Sigmadd_tau
 
 
