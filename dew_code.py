@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Compute naturalness measure Delta_EW and top ten contributions to DEW."""
+"""
+Compute naturalness measure Delta_EW and top ten contributions to DEW.
+
+Author: Dakotah Martinez
+"""
 
 import numpy as np
 import pyslha
