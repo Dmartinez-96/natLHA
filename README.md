@@ -47,10 +47,9 @@ pip install <package>
 ![image](https://user-images.githubusercontent.com/85904612/123335984-db442e80-d50a-11eb-8f73-5bb0d0040053.png)
 
 ## Descriptions of Source Code:
-Below are tables with descriptions of the parameters and contributions found in the source code. All eigenvalues are enumerated in increasing order in magnitude. Parameters with a description such as 'parameter(Q)' means that the parameter has been evolved to the renormalization scale, Q, with Q defined by
+Below are tables with descriptions of the parameters found in the source code. All mass eigenstate eigenvalues are enumerated in increasing order in magnitude. Parameters with a description such as 'parameter(Q)' means that the parameter has been evolved to the renormalization scale, Q, with Q taken to be
 
 ![image](https://user-images.githubusercontent.com/85904612/123335409-067a4e00-d50a-11eb-88b1-8df6b125055f.png)
-
 
 | Parameters | Description |
 | ------ | ------ |
@@ -60,53 +59,50 @@ Below are tables with descriptions of the parameters and contributions found in 
 | y_t | Top Yukawa coupling y_t(Q) |
 | y_b | Bottom Yukawa coupling y_b(Q) |
 | y_tau | Tau Yukawa coupling y_tau(Q) |
-| g_pr | Electroweak gauge coupling constant g' |
-| g_EW | Electroweak gauge coupling constant g |
+| g_pr | Electroweak gauge coupling constant g'(Q) |
+| g_EW | Electroweak gauge coupling constant g(Q) |
 | m_stop_1 | Stop mass eigenstate eigenvalue (EV) 1 |
 | m_stop_2 | Stop mass eigenstate EV 2 |
 | m_sbot_1 | Sbottom mass eigenstate EV 1 |
 | m_sbot_2 | Sbottom mass eigenstate EV 2 |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
-|  |  |
+| m_stau_1 | Stau mass eigenstate EV 1 |
+| m_stau_2 | Stau mass eigenstate EV 2 |
+| mtL | Left stop gauge eigenstate soft scalar mass, mqL3(Q) |
+| mtR | Right stop gauge eigenstate soft scalar mass, mtR(Q) |
+| mbL | Left sbottom gauge eigenstate soft scalar mass, mqL3(Q) |
+| mbR | Right sbottom gauge eigenstate soft scalar mass, mbR(Q) |
+| mtauL | Left stau gauge eigenstate soft scalar mass, mtauL(Q) |
+| mtauR | Right stau gauge eigenstate soft scalar mass, mtauR(Q) |
+| msupL | Left sup soft scalar mass, mqL1(Q) |
+| msupR | Right sup soft scalar mass, muR(Q) |
+| msdownL | Left sdown soft scalar mass, mqL1(Q) |
+| msdownR | Right sdown soft scalar mass, mdR(Q) |
+| mselecL | Left selectron soft scalar mass, meL(Q) |
+| mselecR | Right selectron soft scalar mass, meR(Q) |
+| mselecneut | Selectron sneutrino scalar mass |
+| msmuneut | Smuon snuetrino scalar mass |
+| msstrangeL | Left sstrange soft scalar mass, mqL2(Q) |
+| msstrangeR | Right sstrange soft scalar mass, msR(Q) |
+| mscharmL | Left scharm soft scalar mass, mqL2(Q) |
+| mscharmR | Right scharm soft scalar mass, mcR(Q) |
+| msmuL | Left smuon soft scalar mass, mmuL(Q) |
+| msmuR | Right smuon soft scalar mass, mmuR(Q) |
+| msN1 | Neutralino mass eigenstate EV 1 |
+| msN2 | Neutralino mass eigenstate EV 2 |
+| msN3 | Neutralino mass eigenstate EV 3 |
+| msN4 | Neutralino mass eigenstate EV 4 |
+| msC1 | Chargino mass eigenstate EV 1 |
+| msC2 | Chargino mass eigenstate EV 2 |
+| mZ | Z boson pole mass |
+| mh0 | Lighter neutral Higgs mass |
+| mH0 | Heavier neutral Higgs mass |
+| mHusq | Up-type Higgs squared mass, mH2^2(Q) |
+| mHdsq | Down-type Higgs squared mass, mH1^2(Q) |
+| mH_pm | Charged Higgs mass |
+| M_1 | Bino mass parameter, M_1(Q) |
+| M_2 | Wino mass parameter, M_2(Q) |
+| a_t | Trilinear stop scalar coupling, A_t(Q) * y_t(Q) |
+| a_b | Trilinear sbottom scalar coupling, A_b(Q) * y_b(Q) |
+| a_tau | Trilinear stau scalar coupling, A_tau(Q) * y_tau(Q) |
+| Q_renorm | Renormalization scale |
+| halfmzsq | Half of pole mass of Z boson squared |
