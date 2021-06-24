@@ -19,7 +19,7 @@ The contributions, C_i are given as
 
 Above, k denotes the various individual one-loop contributions to the minimization conditions. 
 
-## Package Installation
+## Package Installation for Running dew_source_code.py in Python3 IDE
 The source code can be compiled in a Python3 IDE. The required packages are:
 
 ```sh
@@ -33,7 +33,9 @@ The easiest way to install these packages is to use the pip install command:
 pip install <package>
 ```
 
-## Instructions
+## Instructions for Running dew_source_code.py in Python3 IDE
+- Obtain a SLHA format output file from your choice of spectrum calculator.
+
 - Compile the source code in your IDE. You will be prompted to enter the directory containing the output SLHA file from your spectrum calculator. See example below:
 
 ![image](https://user-images.githubusercontent.com/85904612/123331182-91584a00-d504-11eb-868f-fdea750dc179.png)
@@ -45,6 +47,32 @@ pip install <package>
 - The calculator will then produce the value of DEW, as well as the top ten contributions to DEW. See example below:
 
 ![image](https://user-images.githubusercontent.com/85904612/123335984-db442e80-d50a-11eb-8f73-5bb0d0040053.png)
+
+## Instructions for Running dew_code in Terminal
+- Module dependencies are already packaged into dew_code.
+
+- Obtain a SLHA format output file from your choice of spectrum calculator.
+
+- Run bash or open up terminal. See example below:
+
+![image](https://user-images.githubusercontent.com/85904612/123345416-9aa0e100-d51b-11eb-980f-5ab3b5545537.png)
+
+- cd to location of dew_code file. See example below:
+
+![image](https://user-images.githubusercontent.com/85904612/123344575-c4590880-d519-11eb-8e0b-8ba1ab1abf2b.png)
+
+- Run the following command: 
+```sh
+./dew_code
+```
+
+- Input the directory of your SLHA file when prompted. See example below:
+
+![image](https://user-images.githubusercontent.com/85904612/123344955-958f6200-d51a-11eb-98fa-f69e11cb5db4.png)
+
+- The calculator will then produce the value of DEW, as well as the top ten contributions to DEW. See example below:
+
+![image](https://user-images.githubusercontent.com/85904612/123345185-26663d80-d51b-11eb-9995-87dbd5f560ba.png)
 
 ## Descriptions of Source Code:
 Below are tables with descriptions of the parameters found in the source code. All mass eigenstate eigenvalues are enumerated in increasing order in magnitude, i.e., |m_1| < |m_2|. Parameters with a description such as 'parameter(Q)' means that the parameter has been evolved to the renormalization scale, Q, with Q taken to be:
