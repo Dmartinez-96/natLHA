@@ -49,7 +49,7 @@ pip install <package>
 ![image](https://user-images.githubusercontent.com/85904612/123335984-db442e80-d50a-11eb-8f73-5bb0d0040053.png)
 
 ## Instructions for Running dew_code in Terminal
-- Module dependencies are already packaged into dew_code.
+- Module dependencies are already packaged into dew_calculator.
 
 - Obtain a SLHA format output file from your choice of spectrum calculator.
 
@@ -63,16 +63,16 @@ pip install <package>
 
 - Run the following command: 
 ```sh
-./dew_code
+./dew_calculator
 ```
 
 - Input the directory of your SLHA file when prompted. See example below:
 
-![image](https://user-images.githubusercontent.com/85904612/123344955-958f6200-d51a-11eb-98fa-f69e11cb5db4.png)
+![image](https://user-images.githubusercontent.com/85904612/123346470-03895880-d51e-11eb-9168-686a081c2513.png)
 
 - The calculator will then produce the value of DEW, as well as the top ten contributions to DEW. See example below:
 
-![image](https://user-images.githubusercontent.com/85904612/123345185-26663d80-d51b-11eb-9995-87dbd5f560ba.png)
+![image](https://user-images.githubusercontent.com/85904612/123346509-1865ec00-d51e-11eb-84ca-3e332b8826d2.png)
 
 ## Descriptions of Source Code:
 Below are tables with descriptions of the parameters found in the source code. All mass eigenstate eigenvalues are enumerated in increasing order in magnitude, i.e., |m_1| < |m_2|. Parameters with a description such as 'parameter(Q)' means that the parameter has been evolved to the renormalization scale, Q, with Q taken to be:
