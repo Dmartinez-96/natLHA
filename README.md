@@ -1,5 +1,5 @@
 # DEW Calculator
-This program computes the naturalness measure Delta_EW (DEW) from an SLHA file provided by the user. The source code can be compiled in a Python3 IDE, version 3.8.5+.
+This program computes the naturalness measure Delta_EW (DEW) from an SLHA file provided by the user. The source code can be compiled in a Python3 IDE.
 
 ## Calculator Scope
 The calculator is designed to be an easy-to-use, quick method for obtaining this naturalness value by operating directly on the output SLHA file from a spectrum calculator (e.g., SoftSUSY, Isajet, SPHENO, etc.).
