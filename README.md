@@ -75,7 +75,7 @@ pip install <package>
 ![image](https://user-images.githubusercontent.com/85904612/123346509-1865ec00-d51e-11eb-84ca-3e332b8826d2.png)
 
 ## Description of Source Code Parameters
-Below are tables with descriptions of the parameters found in the source code. All mass eigenstate eigenvalues are enumerated in increasing order in magnitude, i.e., |m_1| < |m_2|. Parameters with a description such as 'parameter(Q)' means that the parameter has been evolved to the renormalization scale, Q, with Q taken to be:
+Below are tables with descriptions of the parameters found in the source code. All mass eigenstate eigenvalues are enumerated in increasing order in magnitude, i.e., |m_1| < |m_2|. Parameters with a description such as 'parameter(Q)' means that the parameter has been evolved to the renormalization scale, Q, with Q taken to be the geometric mean of the stop masses.
 
 ![image](https://user-images.githubusercontent.com/85904612/123335409-067a4e00-d50a-11eb-88b1-8df6b125055f.png)
 
