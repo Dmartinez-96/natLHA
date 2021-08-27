@@ -742,22 +742,18 @@ def sigmadd_h0():
 @nb.njit(fastmath=True)
 def sigmauu_heavy_h0():
     """Return one-loop correction Sigma_u^u(H_0) (heavier neutr. Higgs)."""
-    mynum = mz_q_sq() + (mA0sq * (1 + (4 * cos2b())
-                                  + (2 * np.power(cos2b(), 2))))
+    mynum = mz_q_sq() + (mA0sq * (1 + (4 * cos2b()) + (2 * np.power(cos2b(), 2))))
     myden = np.power(mH0, 2) - np.power(mh0, 2)
-    sigma_uu_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2)))\
-        * (1 + (mynum / myden)) * logfunc(mH0)
+    sigma_uu_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) * (1 + (mynum / myden)) * logfunc(mH0)
     return sigma_uu_heavy_h0
 
 
 @nb.njit(fastmath=True)
 def sigmadd_heavy_h0():
     """Return one-loop correction Sigma_d^d(H_0) (heavier neutr. Higgs)."""
-    mynum = mz_q_sq() + (mA0sq * (1 - (4 * cos2b())
-                                  + (2 * np.power(cos2b(), 2))))
+    mynum = mz_q_sq() + (mA0sq * (1 - (4 * cos2b()) + (2 * np.power(cos2b(), 2))))
     myden = np.power(mH0, 2) - np.power(mh0, 2)
-    sigma_dd_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2)))\
-        * (1 + (mynum / myden)) * logfunc(mH0)
+    sigma_dd_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) * (1 + (mynum / myden)) * logfunc(mH0)
     return sigma_dd_heavy_h0
 
 
@@ -824,8 +820,7 @@ def dew_funcu(inp):
     inp : One-loop correction or Higgs to be inputted into the DEW function.
 
     """
-    mycontribuu = np.abs(((-1) * inp * (np.power(tanb, 2)))
-                         / ((np.power(tanb, 2)) - 1))
+    mycontribuu = np.abs(((-1) * inp * (np.power(tanb, 2))) / ((np.power(tanb, 2)) - 1))
     return mycontribuu
 
 
@@ -839,8 +834,7 @@ def dew_funcd(inp):
     inp : One-loop correction or Higgs to be inputted into the DEW function.
 
     """
-    mycontribdd = np.abs((inp)
-                         / ((np.power(tanb, 2)) - 1))
+    mycontribdd = np.abs((inp) / ((np.power(tanb, 2)) - 1))
     return mycontribdd
 
 
@@ -848,7 +842,6 @@ if __name__ == "__main__":
     userContinue = True
     while userContinue:
         # SLHA input and definition of variables from SLHA file: #
-
         fileCheck = True
         while fileCheck:
             direc = input('Enter the full directory for your SLHA file: ')
@@ -860,25 +853,18 @@ if __name__ == "__main__":
                 print("The input file cannot be found.\n")
                 print("Please try checking your spelling and try again.\n")
                 fileCheck = True
-        [vHiggs, muQ] = [d.blocks['HMIX'][3], d.blocks['HMIX'][1]]
-        [tanb, y_t] = [d.blocks['HMIX'][2], d.blocks['YU'][3, 3]]
-        beta = np.arctan(tanb)
-        [y_b, y_tau] = [d.blocks['YD'][3, 3], d.blocks['YE'][3, 3]]
-        [g_pr, g_EW] = [d.blocks['GAUGE'][2], d.blocks['GAUGE'][1]]
-        [m_stop_1, m_stop_2] = [d.blocks['MASS'][1000006],
-                                d.blocks['MASS'][2000006]]
-        [m_sbot_1, m_sbot_2] = [d.blocks['MASS'][1000005],
-                                d.blocks['MASS'][2000005]]
-        [m_stau_1, m_stau_2] = [d.blocks['MASS'][1000015],
-                                d.blocks['MASS'][2000015]]
-        [mtL, mtR] = [d.blocks['MSOFT'][43], d.blocks['MSOFT'][46]]
-        [mbL, mbR] = [d.blocks['MSOFT'][43], d.blocks['MSOFT'][49]]
-        [mtauL, mtauR] = [d.blocks['MSOFT'][33], d.blocks['MSOFT'][36]]
+        [vHiggs, muQ, tanb, y_t] = [d.blocks['HMIX'][3], d.blocks['HMIX'][1], d.blocks['HMIX'][2], d.blocks['YU'][3, 3]]
+        [tanb, y_t, beta] = [d.blocks['HMIX'][2], d.blocks['YU'][3, 3], np.arctan(tanb)]
+        [y_b, y_tau, g_pr] = [d.blocks['YD'][3, 3], d.blocks['YE'][3, 3], d.blocks['GAUGE'][2]]
+        [m_stop_1, m_stop_2, g_EW] = [d.blocks['MASS'][1000006], d.blocks['MASS'][2000006], d.blocks['GAUGE'][1]]
+        [m_sbot_1, m_sbot_2] = [d.blocks['MASS'][1000005], d.blocks['MASS'][2000005]]
+        [m_stau_1, m_stau_2] = [d.blocks['MASS'][1000015], d.blocks['MASS'][2000015]]
+        [mtL, mtR, mbL] = [d.blocks['MSOFT'][43], d.blocks['MSOFT'][46], d.blocks['MSOFT'][43]]
+        [mbR, mtauL, mtauR] = [d.blocks['MSOFT'][49], d.blocks['MSOFT'][33], d.blocks['MSOFT'][36]]
         [msupL, msupR] = [d.blocks['MSOFT'][41], d.blocks['MSOFT'][44]]
         [msdownL, msdownR] = [d.blocks['MSOFT'][41], d.blocks['MSOFT'][47]]
         [mselecL, mselecR] = [d.blocks['MSOFT'][31], d.blocks['MSOFT'][34]]
-        [mselecneut, msmuneut] = [d.blocks['MASS'][1000012],
-                                  d.blocks['MASS'][1000014]]
+        [mselecneut, msmuneut] = [d.blocks['MASS'][1000012], d.blocks['MASS'][1000014]]
         [msstrangeL, msstrangeR] = [d.blocks['MSOFT'][42], d.blocks['MSOFT'][48]]
         [mscharmL, mscharmR] = [d.blocks['MSOFT'][42], d.blocks['MSOFT'][45]]
         [msmuL, msmuR] = [d.blocks['MSOFT'][32], d.blocks['MSOFT'][35]]
@@ -890,122 +876,64 @@ if __name__ == "__main__":
         [mHdsq, mH_pm] = [d.blocks['MSOFT'][21], d.blocks['MASS'][37]]
         [M_1, M_2] = [d.blocks['MSOFT'][1], d.blocks['MSOFT'][2]]
         [a_t, a_b] = [d.blocks['AU'][3, 3] * y_t, d.blocks['AD'][3, 3] * y_b]
-        mA0sq = d.blocks['HMIX'][4]
-        a_tau = d.blocks['AE'][3, 3] * y_tau
+        [a_tau, mA0sq] = [d.blocks['AE'][3, 3] * y_tau, d.blocks['HMIX'][4]]
         [Q_renorm_sq, halfmzsq] = [m_stop_1 * m_stop_2, np.power(mZ, 2) / 2]
-        [cmu, chu, chd] = [np.abs(np.power(muQ, 2)), dew_funcu(mHusq),
-                           dew_funcd(mHdsq)]
-        contribs = np.array([cmu, chu, chd, dew_funcd(sigmadd_stop1()),
-                             dew_funcd(sigmadd_stop2()),
-                             dew_funcd(sigmadd_sbottom1()),
-                             dew_funcd(sigmadd_sbottom2()),
-                             dew_funcd(sigmadd_stau1()),
+        [cmu, chu, chd] = [np.abs(np.power(muQ, 2)), dew_funcu(mHusq), dew_funcd(mHdsq)]
+        contribs = np.array([cmu, chu, chd, dew_funcd(sigmadd_stop1()), dew_funcd(sigmadd_stop2()),
+                             dew_funcd(sigmadd_sbottom1()), dew_funcd(sigmadd_sbottom2()), dew_funcd(sigmadd_stau1()),
                              dew_funcd(sigmadd_stau2()),
-                             dew_funcd(sigmadd_sup_l() + sigmadd_sup_r()
-                                       + sigmadd_sdown_l() + sigmadd_sdown_r()
-                                       + sigmadd_selec_l() + sigmadd_selec_r()
-                                       + sigmadd_sel_neut()),
-                             dew_funcd(sigmadd_sstrange_l() + sigmadd_sstrange_r()
-                                       + sigmadd_scharm_l() + sigmadd_scharm_r()
-                                       + sigmadd_smu_l() + sigmadd_smu_r()
-                                       + sigmadd_smu_sneut()),
-                             dew_funcd(sigmadd_neutralino(msN1)),
-                             dew_funcd(sigmadd_neutralino(msN2)),
-                             dew_funcd(sigmadd_neutralino(msN3)),
-                             dew_funcd(sigmadd_neutralino(msN4)),
-                             dew_funcd(sigmadd_chargino1()),
-                             dew_funcd(sigmadd_chargino2()),
-                             dew_funcd(sigmadd_h0()),
-                             dew_funcd(sigmadd_heavy_h0()),
-                             dew_funcd(sigmauu_h_pm()), dew_funcd(sigmauu_w_pm()),
-                             dew_funcd(sigmauu_z0()), dew_funcd(sigmadd_bottom()),
-                             dew_funcd(sigmadd_tau()), dew_funcu(sigmauu_stop1()),
-                             dew_funcu(sigmauu_stop2()),
-                             dew_funcu(sigmauu_sbottom1()),
-                             dew_funcu(sigmauu_sbottom2()),
-                             dew_funcu(sigmauu_stau1()),
-                             dew_funcu(sigmauu_stau2()),
-                             dew_funcu(sigmauu_sup_l() + sigmauu_sup_r()
-                                       + sigmauu_sdown_l() + sigmauu_sdown_r()
-                                       + sigmauu_selec_l() + sigmauu_selec_r()
-                                       + sigmauu_sel_neut()),
-                             dew_funcu(sigmauu_sstrange_l() + sigmauu_sstrange_r()
-                                       + sigmauu_scharm_l() + sigmauu_scharm_r()
-                                       + sigmauu_smu_l() + sigmauu_smu_r()
-                                       + sigmauu_smu_sneut()),
-                             dew_funcu(sigmauu_neutralino(msN1)),
-                             dew_funcu(sigmauu_neutralino(msN2)),
-                             dew_funcu(sigmauu_neutralino(msN3)),
-                             dew_funcu(sigmauu_neutralino(msN4)),
-                             dew_funcu(sigmauu_chargino1()),
-                             dew_funcu(sigmauu_chargino2()),
-                             dew_funcu(sigmauu_h0()),
-                             dew_funcu(sigmauu_heavy_h0()),
-                             dew_funcu(sigmauu_h_pm()),
-                             dew_funcu(sigmauu_w_pm()), dew_funcu(sigmauu_z0()),
-                             dew_funcu(sigmauu_top()),
-                             dew_funcu(sigmauu_h0()),
+                             dew_funcd(sigmadd_sup_l() + sigmadd_sup_r() + sigmadd_sdown_l() + sigmadd_sdown_r()
+                                       + sigmadd_selec_l() + sigmadd_selec_r() + sigmadd_sel_neut()),
+                             dew_funcd(sigmadd_sstrange_l() + sigmadd_sstrange_r() + sigmadd_scharm_l()
+                                       + sigmadd_scharm_r() + sigmadd_smu_l() + sigmadd_smu_r() + sigmadd_smu_sneut()),
+                             dew_funcd(sigmadd_neutralino(msN1)), dew_funcd(sigmadd_neutralino(msN2)),
+                             dew_funcd(sigmadd_neutralino(msN3)), dew_funcd(sigmadd_neutralino(msN4)),
+                             dew_funcd(sigmadd_chargino1()), dew_funcd(sigmadd_chargino2()), dew_funcd(sigmadd_h0()),
+                             dew_funcd(sigmadd_heavy_h0()), dew_funcd(sigmauu_h_pm()), dew_funcd(sigmauu_w_pm()),
+                             dew_funcd(sigmauu_z0()), dew_funcd(sigmadd_bottom()), dew_funcd(sigmadd_tau()),
+                             dew_funcu(sigmauu_stop1()), dew_funcu(sigmauu_stop2()), dew_funcu(sigmauu_sbottom1()),
+                             dew_funcu(sigmauu_sbottom2()), dew_funcu(sigmauu_stau1()), dew_funcu(sigmauu_stau2()),
+                             dew_funcu(sigmauu_sup_l() + sigmauu_sup_r() + sigmauu_sdown_l() + sigmauu_sdown_r()
+                                       + sigmauu_selec_l() + sigmauu_selec_r() + sigmauu_sel_neut()),
+                             dew_funcu(sigmauu_sstrange_l() + sigmauu_sstrange_r() + sigmauu_scharm_l()
+                                       + sigmauu_scharm_r() + sigmauu_smu_l() + sigmauu_smu_r() + sigmauu_smu_sneut()),
+                             dew_funcu(sigmauu_neutralino(msN1)), dew_funcu(sigmauu_neutralino(msN2)),
+                             dew_funcu(sigmauu_neutralino(msN3)), dew_funcu(sigmauu_neutralino(msN4)),
+                             dew_funcu(sigmauu_chargino1()), dew_funcu(sigmauu_chargino2()), dew_funcu(sigmauu_h0()),
+                             dew_funcu(sigmauu_heavy_h0()), dew_funcu(sigmauu_h_pm()), dew_funcu(sigmauu_w_pm()),
+                             dew_funcu(sigmauu_z0()), dew_funcu(sigmauu_top()), dew_funcu(sigmauu_h0()),
                              dew_funcu(sigmauu_heavy_h0())]) / halfmzsq
-        label_sort_array = np.sort(np.array([(contribs[0], 'mu'),
-                                             (contribs[1], 'H_u'),
-                                             (contribs[2], 'H_d'),
-                                             (contribs[3], 'Sigma_d^d(stop_1)'),
-                                             (contribs[4], 'Sigma_d^d(stop_2)'),
-                                             (contribs[5], 'Sigma_d^d(sbot_1)'),
-                                             (contribs[6], 'Sigma_d^d(sbot_2)'),
-                                             (contribs[7], 'Sigma_d^d(stau_1)'),
-                                             (contribs[8], 'Sigma_d^d(stau_2)'),
-                                             (contribs[9],
-                                              'Sigma_d^d(1st gen. squarks)'),
-                                             (contribs[10],
-                                              'Sigma_d^d(2nd gen squarks)'),
-                                             (contribs[11],
-                                              'Sigma_d^d(neutralino_1)'),
-                                             (contribs[12],
-                                              'Sigma_d^d(neutralino_2)'),
-                                             (contribs[13],
-                                              'Sigma_d^d(neutralino_3)'),
-                                             (contribs[14],
-                                              'Sigma_d^d(neutralino_4)'),
-                                             (contribs[15],
-                                              'Sigma_d^d(chargino_1)'),
-                                             (contribs[16],
-                                              'Sigma_d^d(chargino_2)'),
-                                             (contribs[17], 'Sigma_d^d(h_0)'),
-                                             (contribs[18], 'Sigma_d^d(H_0)'),
+        label_sort_array = np.sort(np.array([(contribs[0], 'mu'), (contribs[1], 'H_u'), (contribs[2], 'H_d'),
+                                             (contribs[3], 'Sigma_d^d(stop_1)'), (contribs[4], 'Sigma_d^d(stop_2)'),
+                                             (contribs[5], 'Sigma_d^d(sbot_1)'), (contribs[6], 'Sigma_d^d(sbot_2)'),
+                                             (contribs[7], 'Sigma_d^d(stau_1)'), (contribs[8], 'Sigma_d^d(stau_2)'),
+                                             (contribs[9], 'Sigma_d^d(1st gen. squarks)'),
+                                             (contribs[10], 'Sigma_d^d(2nd gen squarks)'),
+                                             (contribs[11], 'Sigma_d^d(neutralino_1)'),
+                                             (contribs[12], 'Sigma_d^d(neutralino_2)'),
+                                             (contribs[13], 'Sigma_d^d(neutralino_3)'),
+                                             (contribs[14], 'Sigma_d^d(neutralino_4)'),
+                                             (contribs[15], 'Sigma_d^d(chargino_1)'),
+                                             (contribs[16], 'Sigma_d^d(chargino_2)'),
+                                             (contribs[17], 'Sigma_d^d(h_0)'), (contribs[18], 'Sigma_d^d(H_0)'),
                                              (contribs[19], 'Sigma_d,u^d,u(H_+-)'),
                                              (contribs[20], 'Sigma_d,u^d,u(W_+-)'),
-                                             (contribs[21], 'Sigma_d,u^d,u(Z_0)'),
-                                             (contribs[22], 'Sigma_d^d(bottom)'),
-                                             (contribs[23], 'Sigma_d^d(tau)'),
-                                             (contribs[24], 'Sigma_u^u(stop_1)'),
-                                             (contribs[25], 'Sigma_u^u(stop_2)'),
-                                             (contribs[26], 'Sigma_u^u(sbot_1)'),
-                                             (contribs[27], 'Sigma_u^u(sbot_2)'),
-                                             (contribs[28], 'Sigma_u^u(stau_1)'),
+                                             (contribs[21], 'Sigma_d,u^d,u(Z_0)'), (contribs[22], 'Sigma_d^d(bottom)'),
+                                             (contribs[23], 'Sigma_d^d(tau)'), (contribs[24], 'Sigma_u^u(stop_1)'),
+                                             (contribs[25], 'Sigma_u^u(stop_2)'), (contribs[26], 'Sigma_u^u(sbot_1)'),
+                                             (contribs[27], 'Sigma_u^u(sbot_2)'), (contribs[28], 'Sigma_u^u(stau_1)'),
                                              (contribs[29], 'Sigma_u^u(stau_2)'),
-                                             (contribs[30],
-                                              'Sigma_u^u(sum 1st gen. squarks)'),
-                                             (contribs[31],
-                                              'Sigma_u^u(sum 2nd gen. squarks)'),
-                                             (contribs[32],
-                                              'Sigma_u^u(neutralino_1)'),
-                                             (contribs[33],
-                                              'Sigma_u^u(neutralino_2)'),
-                                             (contribs[34],
-                                              'Sigma_u^u(neutralino_3)'),
-                                             (contribs[35],
-                                              'Sigma_u^u(neutralino_4)'),
-                                             (contribs[36],
-                                              'Sigma_u^u(chargino_1)'),
-                                             (contribs[37],
-                                              'Sigma_u^u(chargino_2)'),
-                                             (contribs[38], 'Sigma_u^u(h_0)'),
-                                             (contribs[39], 'Sigma_u^u(H_0)'),
-                                             (contribs[40], 'Sigma_u^u(H_+-)'),
-                                             (contribs[41], 'Sigma_u^u(W_+-)'),
-                                             (contribs[42], 'Sigma_u^u(Z_0)'),
-                                             (contribs[43], 'Sigma_u^u(top)')],
+                                             (contribs[30], 'Sigma_u^u(sum 1st gen. squarks)'),
+                                             (contribs[31], 'Sigma_u^u(sum 2nd gen. squarks)'),
+                                             (contribs[32], 'Sigma_u^u(neutralino_1)'),
+                                             (contribs[33], 'Sigma_u^u(neutralino_2)'),
+                                             (contribs[34], 'Sigma_u^u(neutralino_3)'),
+                                             (contribs[35], 'Sigma_u^u(neutralino_4)'),
+                                             (contribs[36], 'Sigma_u^u(chargino_1)'),
+                                             (contribs[37], 'Sigma_u^u(chargino_2)'),
+                                             (contribs[38], 'Sigma_u^u(h_0)'), (contribs[39], 'Sigma_u^u(H_0)'),
+                                             (contribs[40], 'Sigma_u^u(H_+-)'), (contribs[41], 'Sigma_u^u(W_+-)'),
+                                             (contribs[42], 'Sigma_u^u(Z_0)'), (contribs[43], 'Sigma_u^u(top)')],
                                             dtype=[('Contrib', float),
                                                    ('label', 'U30')]),
                                    order='Contrib')
