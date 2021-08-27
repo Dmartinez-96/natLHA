@@ -1,3 +1,5 @@
+# THIS README IS OUT OF DATE. WILL BE UPDATED SOON. STILL CONTAINS USEFUL INFO FOR RUNNING THE PROGRAM.
+
 # DEW Calculator
 This program computes the naturalness measure Delta_EW (DEW) from an SLHA file provided by the user. The source code can be compiled in a Python3 IDE (if preferred), but the calculator itself is a standalone executable that can be run from a bash shell.
 
