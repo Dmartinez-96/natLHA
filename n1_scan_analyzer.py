@@ -69,12 +69,18 @@ def unif_dist_func(a, b):
 def input_writer():
     """Create random NUHM3 input with linear draw on soft terms for testing."""
     for j in range(0, 100):
-        m0_12_rand_val = lin_dist_func(100.0, 60000.0)
-        m0_3_rand_val = lin_dist_func(100.0, np.min([20000.0, m0_12_rand_val]))
-        mhf_rand_val = lin_dist_func(500.0, 10000.0)
-        A0_rand_val = lin_dist_func(-50000.0, 0.0)
-        mA_rand_val = lin_dist_func(300.0, 10000.0)
-        tanb_rand_val = unif_dist_func(3, 60)
+        # m0_12_rand_val = lin_dist_func(100.0, 60000.0)
+        m0_12_rand_val = lin_dist_func(100.0, 40000.0)
+        # m0_3_rand_val = lin_dist_func(100.0, np.min([20000.0, m0_12_rand_val]))
+        m0_3_rand_val = lin_dist_func(100.0, np.min([10000.0, m0_12_rand_val]))
+        # mhf_rand_val = lin_dist_func(500.0, 10000.0)
+        mhf_rand_val = lin_dist_func(500.0, 3500.0)
+        # A0_rand_val = lin_dist_func(-50000.0, 0.0)
+        A0_rand_val = lin_dist_func(-2.0, 0.0) * m0_12_rand_val
+        # mA_rand_val = lin_dist_func(300.0, 10000.0)
+        mA_rand_val = lin_dist_func(300.0, 8000.0)
+        # tanb_rand_val = unif_dist_func(3, 60)
+        tanb_rand_val = unif_dist_func(3, 30)
         print('Block MODSEL\n' + '    1   1\n'
               + 'Block SMINPUTS\n' + '    1   1.279340000e+02\n'
               + '    2   1.166370000e-05\n' + '    3   1.172000000e-01\n'
