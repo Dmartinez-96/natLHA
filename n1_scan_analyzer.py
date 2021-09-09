@@ -1,6 +1,5 @@
 """
 Created on Wed Aug 25 07:57:59 2021
-
 @author: Dakotah Martinez
 """
 
@@ -24,16 +23,13 @@ os.chdir('C:\\Users\\dakot\\Documents\\Research\\DEW_code\\softsusy-4.1.10')
 def lin_dist_func(a, b):
     """
     Return linearly increasing probability distr'n function w/ hit-or-miss.
-
     Parameters
     ----------
     a : Lowest value of random variable.
     b : Highest value of random variable.
-
     Returns
     -------
     Array with linearly increasing probability distribution for soft term.
-
     """
     check_if_keep = True
     while check_if_keep:
@@ -51,16 +47,13 @@ def lin_dist_func(a, b):
 def unif_dist_func(a, b):
     """
     Return uniform probability dist.'n function on array data.
-
     Parameters
     ----------
     a : Lowest value of uniform random variable.
     b : Highest value of uniform random variable.
-
     Returns
     -------
     Array with uniform probability distribution for tanb.
-
     """
     unif_val = np.random.uniform(a, b)
     return unif_val
@@ -68,19 +61,19 @@ def unif_dist_func(a, b):
 
 def input_writer():
     """Create random NUHM3 input with linear draw on soft terms for testing."""
-    for j in range(0, 100):
-        # m0_12_rand_val = lin_dist_func(100.0, 60000.0)
-        m0_12_rand_val = lin_dist_func(100.0, 40000.0)
-        # m0_3_rand_val = lin_dist_func(100.0, np.min([20000.0, m0_12_rand_val]))
-        m0_3_rand_val = lin_dist_func(100.0, np.min([10000.0, m0_12_rand_val]))
-        # mhf_rand_val = lin_dist_func(500.0, 10000.0)
-        mhf_rand_val = lin_dist_func(500.0, 3500.0)
-        # A0_rand_val = lin_dist_func(-50000.0, 0.0)
-        A0_rand_val = lin_dist_func(-2.0, 0.0) * m0_12_rand_val
-        # mA_rand_val = lin_dist_func(300.0, 10000.0)
-        mA_rand_val = lin_dist_func(300.0, 8000.0)
-        # tanb_rand_val = unif_dist_func(3, 60)
-        tanb_rand_val = unif_dist_func(3, 30)
+    for j in range(0, 20):
+        m0_12_rand_val = lin_dist_func(100.0, 60000.0)
+        # m0_12_rand_val = lin_dist_func(100.0, 55000.0)
+        m0_3_rand_val = lin_dist_func(100.0, np.min([20000.0, m0_12_rand_val]))
+        # m0_3_rand_val = lin_dist_func(100.0, np.min([17500.0, m0_12_rand_val]))
+        mhf_rand_val = lin_dist_func(500.0, 10000.0)
+        # mhf_rand_val = lin_dist_func(500.0, 8000.0)
+        A0_rand_val = lin_dist_func(-50000.0, 0.0)
+        # A0_rand_val = lin_dist_func(-2.85, 0.0) * m0_3_rand_val
+        mA_rand_val = lin_dist_func(300.0, 10000.0)
+        # mA_rand_val = lin_dist_func(300.0, 9000.0)
+        tanb_rand_val = unif_dist_func(3, 60)
+        # tanb_rand_val = unif_dist_func(3, 50)
         print('Block MODSEL\n' + '    1   1\n'
               + 'Block SMINPUTS\n' + '    1   1.279340000e+02\n'
               + '    2   1.166370000e-05\n' + '    3   1.172000000e-01\n'
@@ -121,19 +114,21 @@ def input_writer():
 @nb.jit(parallel=True, fastmath=True, forceobj=True)
 def output_writer():
     cmds_list = [['wsl', './softpoint.x', 'leshouches', '<', 'scan_test_inputs\\my_softsusy_input_' + str(i), '>',
-                  'scan_test_outputs\\my_softsusy_output_' + str(i), '&'] for i in prange(0, 100)]
+                  'scan_test_outputs\\my_softsusy_output_' + str(i), '&'] for i in prange(0, 20)]
     procs_list = [subprocess.Popen(cmd, shell=True, stdout=DEVNULL, stderr=STDOUT) for cmd in cmds_list]
-    outputcount = 0
+    print('Progress creating output set: ', end='')
     for proc in procs_list:
         proc.wait()
-        if outputcount % 2 == 0:
-            print('_', end='')
-        outputcount += 1
-    print('_')
+        print('___', end='')
+    print('_|')
+
+
+global num_pts_w_bad_min
+num_pts_w_bad_min = 0
 
 
 def main():
-    for i in range(0, 100):
+    for i in range(0, 20):
         try:
             d[i] = pyslha.read('scan_test_outputs\\my_softsusy_output_' + str(i))
             vHiggs[i] = d[i].blocks['HMIX'][3]
@@ -195,7 +190,7 @@ def main():
             cmu[i] = np.abs(np.power(muQ[i], 2))
         except (KeyError, ParseError, AttributeError):
             calculated_dew_array[i] = 1000
-    for i in range(0, 100):
+    for i in range(0, 20):
         try:
             chu[i] = dew_funcu(mHusq[i])[i]
             chd[i] = dew_funcd(mHdsq[i])[i]
@@ -266,8 +261,9 @@ def main():
             calculated_dew_array[i] = 1000
         try:  # get rid of bad minima points and other problematic points
             test_if_bad = d[i].blocks['SPINFO'][4]
-            print(test_if_bad)
+            print(str(i + 1) + ': ' + test_if_bad)
             calculated_dew_array[i] = 1000
+            num_pts_w_bad_min += 1
         except (KeyError):  # keep valid points
             pass
         except:
@@ -279,140 +275,140 @@ if __name__ == "__main__":
     vars_to_keep = ['vars_to_keep', 'DEVNULL', 'num_nat_count', 'min_dew_so_far', 'NumbaDeprecationWarning',
                     'NumbaPendingDeprecationWarning', 'input_writer', 'lin_dist_func', 'main', 'min_slha', 'nb',
                     'np', 'num_data_sets', 'os', 'output_writer', 'prange', 'pyslha', 'quit', 'shutil',
-                    'STDOUT', 'subprocess', 'ParseError',
+                    'STDOUT', 'subprocess', 'ParseError', 'num_pts_w_bad_min',
                     'unif_dist_func', 'vectorize', 'warnings']
-    d = [None] * 100
-    vHiggs = np.empty(100)
-    muQ = np.empty(100)
-    tanb = np.empty(100)
-    beta = np.empty(100)
-    y_t = np.empty(100)
-    y_b = np.empty(100)
-    y_tau = np.empty(100)
-    g_pr = np.empty(100)
-    g_EW = np.empty(100)
-    m_stop_1 = np.empty(100)
-    m_stop_2 = np.empty(100)
-    m_sbot_1 = np.empty(100)
-    m_sbot_2 = np.empty(100)
-    m_stau_1 = np.empty(100)
-    m_stau_2 = np.empty(100)
-    mtL = np.empty(100)
-    mtR = np.empty(100)
-    mbL = np.empty(100)
-    mbR = np.empty(100)
-    mtauL = np.empty(100)
-    mtauR = np.empty(100)
-    msupL = np.empty(100)
-    msupR = np.empty(100)
-    msdownL = np.empty(100)
-    msdownR = np.empty(100)
-    mselecL = np.empty(100)
-    mselecR = np.empty(100)
-    mselecneut = np.empty(100)
-    msmuneut = np.empty(100)
-    msstrangeL = np.empty(100)
-    msstrangeR = np.empty(100)
-    mscharmL = np.empty(100)
-    mscharmR = np.empty(100)
-    msmuL = np.empty(100)
-    msmuR = np.empty(100)
-    msN1 = np.empty(100)
-    msN2 = np.empty(100)
-    msN3 = np.empty(100)
-    msN4 = np.empty(100)
-    msC1 = np.empty(100)
-    msC2 = np.empty(100)
-    mZ = np.empty(100)
-    mA0sq = np.empty(100)
-    mh0 = np.empty(100)
-    mH0 = np.empty(100)
-    mHusq = np.empty(100)
-    mHdsq = np.empty(100)
-    mH_pm = np.empty(100)
-    mgl = np.empty(100)
-    M_1 = np.empty(100)
-    M_2 = np.empty(100)
-    a_t = np.empty(100)
-    a_b = np.empty(100)
-    a_tau = np.empty(100)
-    Q_renorm_sq = np.empty(100)
-    halfmzsq = np.empty(100)
-    cmu = np.empty(100)
-    chu = np.empty(100)
-    chd = np.empty(100)
-    calculated_dew_array = np.ones(100) * 1000
-    contribs = np.empty((100, 44))
+    d = [None] * 20
+    vHiggs = np.empty(20)
+    muQ = np.empty(20)
+    tanb = np.empty(20)
+    beta = np.empty(20)
+    y_t = np.empty(20)
+    y_b = np.empty(20)
+    y_tau = np.empty(20)
+    g_pr = np.empty(20)
+    g_EW = np.empty(20)
+    m_stop_1 = np.empty(20)
+    m_stop_2 = np.empty(20)
+    m_sbot_1 = np.empty(20)
+    m_sbot_2 = np.empty(20)
+    m_stau_1 = np.empty(20)
+    m_stau_2 = np.empty(20)
+    mtL = np.empty(20)
+    mtR = np.empty(20)
+    mbL = np.empty(20)
+    mbR = np.empty(20)
+    mtauL = np.empty(20)
+    mtauR = np.empty(20)
+    msupL = np.empty(20)
+    msupR = np.empty(20)
+    msdownL = np.empty(20)
+    msdownR = np.empty(20)
+    mselecL = np.empty(20)
+    mselecR = np.empty(20)
+    mselecneut = np.empty(20)
+    msmuneut = np.empty(20)
+    msstrangeL = np.empty(20)
+    msstrangeR = np.empty(20)
+    mscharmL = np.empty(20)
+    mscharmR = np.empty(20)
+    msmuL = np.empty(20)
+    msmuR = np.empty(20)
+    msN1 = np.empty(20)
+    msN2 = np.empty(20)
+    msN3 = np.empty(20)
+    msN4 = np.empty(20)
+    msC1 = np.empty(20)
+    msC2 = np.empty(20)
+    mZ = np.empty(20)
+    mA0sq = np.empty(20)
+    mh0 = np.empty(20)
+    mH0 = np.empty(20)
+    mHusq = np.empty(20)
+    mHdsq = np.empty(20)
+    mH_pm = np.empty(20)
+    mgl = np.empty(20)
+    M_1 = np.empty(20)
+    M_2 = np.empty(20)
+    a_t = np.empty(20)
+    a_b = np.empty(20)
+    a_tau = np.empty(20)
+    Q_renorm_sq = np.empty(20)
+    halfmzsq = np.empty(20)
+    cmu = np.empty(20)
+    chu = np.empty(20)
+    chd = np.empty(20)
+    calculated_dew_array = np.ones(20) * 1000
+    contribs = np.empty((20, 44))
     global num_nat_count
     num_nat_count = 0
     global min_dew_so_far
     min_dew_so_far = 1000
     global num_data_sets
     num_data_sets = 0
-    global min_slha  # Lets me keep the SLHA with lowest DUE so far
-    while num_nat_count <= 10:
-        d = [None] * 100
-        vHiggs = np.empty(100, dtype=np.float64)
-        muQ = np.empty(100, dtype=np.float64)
-        tanb = np.empty(100, dtype=np.float64)
-        beta = np.empty(100, dtype=np.float64)
-        y_t = np.empty(100, dtype=np.float64)
-        y_b = np.empty(100, dtype=np.float64)
-        y_tau = np.empty(100, dtype=np.float64)
-        g_pr = np.empty(100, dtype=np.float64)
-        g_EW = np.empty(100, dtype=np.float64)
-        m_stop_1 = np.empty(100, dtype=np.float64)
-        m_stop_2 = np.empty(100, dtype=np.float64)
-        m_sbot_1 = np.empty(100, dtype=np.float64)
-        m_sbot_2 = np.empty(100, dtype=np.float64)
-        m_stau_1 = np.empty(100, dtype=np.float64)
-        m_stau_2 = np.empty(100, dtype=np.float64)
-        mtL = np.empty(100, dtype=np.float64)
-        mtR = np.empty(100, dtype=np.float64)
-        mbL = np.empty(100, dtype=np.float64)
-        mbR = np.empty(100, dtype=np.float64)
-        mtauL = np.empty(100, dtype=np.float64)
-        mtauR = np.empty(100, dtype=np.float64)
-        msupL = np.empty(100, dtype=np.float64)
-        msupR = np.empty(100, dtype=np.float64)
-        msdownL = np.empty(100, dtype=np.float64)
-        msdownR = np.empty(100, dtype=np.float64)
-        mselecL = np.empty(100, dtype=np.float64)
-        mselecR = np.empty(100, dtype=np.float64)
-        mselecneut = np.empty(100, dtype=np.float64)
-        msmuneut = np.empty(100, dtype=np.float64)
-        msstrangeL = np.empty(100, dtype=np.float64)
-        msstrangeR = np.empty(100, dtype=np.float64)
-        mscharmL = np.empty(100, dtype=np.float64)
-        mscharmR = np.empty(100, dtype=np.float64)
-        msmuL = np.empty(100, dtype=np.float64)
-        msmuR = np.empty(100, dtype=np.float64)
-        msN1 = np.empty(100, dtype=np.float64)
-        msN2 = np.empty(100, dtype=np.float64)
-        msN3 = np.empty(100, dtype=np.float64)
-        msN4 = np.empty(100, dtype=np.float64)
-        msC1 = np.empty(100, dtype=np.float64)
-        msC2 = np.empty(100, dtype=np.float64)
-        mZ = np.empty(100, dtype=np.float64)
-        mA0sq = np.empty(100, dtype=np.float64)
-        mh0 = np.empty(100, dtype=np.float64)
-        mH0 = np.empty(100, dtype=np.float64)
-        mHusq = np.empty(100, dtype=np.float64)
-        mHdsq = np.empty(100, dtype=np.float64)
-        mH_pm = np.empty(100, dtype=np.float64)
-        mgl = np.empty(100, dtype=np.float64)
-        M_1 = np.empty(100, dtype=np.float64)
-        M_2 = np.empty(100, dtype=np.float64)
-        a_t = np.empty(100, dtype=np.float64)
-        a_b = np.empty(100, dtype=np.float64)
-        a_tau = np.empty(100, dtype=np.float64)
-        Q_renorm_sq = np.empty(100, dtype=np.float64)
-        halfmzsq = np.empty(100, dtype=np.float64)
-        cmu = np.empty(100, dtype=np.float64)
-        chu = np.empty(100, dtype=np.float64)
-        chd = np.empty(100, dtype=np.float64)
-        calculated_dew_array = np.ones(100, dtype=np.float64) * 1000
-        contribs = np.empty((100, 44), dtype=np.float64)
+    global min_slha  # Lets me keep the SLHA with lowest DEW so far
+    while num_nat_count <= 50:
+        d = [None] * 20
+        vHiggs = np.empty(20, dtype=np.float64)
+        muQ = np.empty(20, dtype=np.float64)
+        tanb = np.empty(20, dtype=np.float64)
+        beta = np.empty(20, dtype=np.float64)
+        y_t = np.empty(20, dtype=np.float64)
+        y_b = np.empty(20, dtype=np.float64)
+        y_tau = np.empty(20, dtype=np.float64)
+        g_pr = np.empty(20, dtype=np.float64)
+        g_EW = np.empty(20, dtype=np.float64)
+        m_stop_1 = np.empty(20, dtype=np.float64)
+        m_stop_2 = np.empty(20, dtype=np.float64)
+        m_sbot_1 = np.empty(20, dtype=np.float64)
+        m_sbot_2 = np.empty(20, dtype=np.float64)
+        m_stau_1 = np.empty(20, dtype=np.float64)
+        m_stau_2 = np.empty(20, dtype=np.float64)
+        mtL = np.empty(20, dtype=np.float64)
+        mtR = np.empty(20, dtype=np.float64)
+        mbL = np.empty(20, dtype=np.float64)
+        mbR = np.empty(20, dtype=np.float64)
+        mtauL = np.empty(20, dtype=np.float64)
+        mtauR = np.empty(20, dtype=np.float64)
+        msupL = np.empty(20, dtype=np.float64)
+        msupR = np.empty(20, dtype=np.float64)
+        msdownL = np.empty(20, dtype=np.float64)
+        msdownR = np.empty(20, dtype=np.float64)
+        mselecL = np.empty(20, dtype=np.float64)
+        mselecR = np.empty(20, dtype=np.float64)
+        mselecneut = np.empty(20, dtype=np.float64)
+        msmuneut = np.empty(20, dtype=np.float64)
+        msstrangeL = np.empty(20, dtype=np.float64)
+        msstrangeR = np.empty(20, dtype=np.float64)
+        mscharmL = np.empty(20, dtype=np.float64)
+        mscharmR = np.empty(20, dtype=np.float64)
+        msmuL = np.empty(20, dtype=np.float64)
+        msmuR = np.empty(20, dtype=np.float64)
+        msN1 = np.empty(20, dtype=np.float64)
+        msN2 = np.empty(20, dtype=np.float64)
+        msN3 = np.empty(20, dtype=np.float64)
+        msN4 = np.empty(20, dtype=np.float64)
+        msC1 = np.empty(20, dtype=np.float64)
+        msC2 = np.empty(20, dtype=np.float64)
+        mZ = np.empty(20, dtype=np.float64)
+        mA0sq = np.empty(20, dtype=np.float64)
+        mh0 = np.empty(20, dtype=np.float64)
+        mH0 = np.empty(20, dtype=np.float64)
+        mHusq = np.empty(20, dtype=np.float64)
+        mHdsq = np.empty(20, dtype=np.float64)
+        mH_pm = np.empty(20, dtype=np.float64)
+        mgl = np.empty(20, dtype=np.float64)
+        M_1 = np.empty(20, dtype=np.float64)
+        M_2 = np.empty(20, dtype=np.float64)
+        a_t = np.empty(20, dtype=np.float64)
+        a_b = np.empty(20, dtype=np.float64)
+        a_tau = np.empty(20, dtype=np.float64)
+        Q_renorm_sq = np.empty(20, dtype=np.float64)
+        halfmzsq = np.empty(20, dtype=np.float64)
+        cmu = np.empty(20, dtype=np.float64)
+        chu = np.empty(20, dtype=np.float64)
+        chd = np.empty(20, dtype=np.float64)
+        calculated_dew_array = np.ones(20, dtype=np.float64) * 1000
+        contribs = np.empty((20, 44), dtype=np.float64)
         input_writer()
         output_writer()
 
@@ -431,11 +427,9 @@ if __name__ == "__main__":
         def logfunc(mass):
             """
             Return F = m^2 * (ln(m^2 / Q^2) - 1).
-
             Parameters
             ----------
             mass : Input mass.
-
             """
             myf = np.power(mass, 2) * (np.log(np.abs((np.power(mass, 2)) / (Q_renorm_sq))) - 1)
             return myf
@@ -806,11 +800,9 @@ if __name__ == "__main__":
         def neutralinouu_deriv_num(msn):
             """
             Return numerator for one-loop uu correction derivative term of neutralino.
-
             Parameters
             ----------
             msn : Neutralino mass.
-
             """
             cubicterm = np.power(g_EW, 2) + np.power(g_pr, 2)
             quadrterm = (((np.power(g_EW, 2) * M_2 * muQ)
@@ -842,11 +834,9 @@ if __name__ == "__main__":
         def neutralinodd_deriv_num(msn):
             """
             Return numerator for one-loop dd correction derivative term of neutralino.
-
             Parameters
             ----------
             msn : Neutralino mass.
-
             """
             cubicterm = np.power(g_EW, 2) + np.power(g_pr, 2)
             quadrterm = (((np.power(g_EW, 2) * M_2 * muQ) + (np.power(g_pr, 2) * M_1
@@ -878,11 +868,9 @@ if __name__ == "__main__":
         def neutralino_deriv_denom(msn):
             """
             Return denominator for one-loop correction derivative term of neutralino.
-
             Parameters
             ----------
             msn : Neutralino mass.
-
             """
             quadrterm = -3 * ((np.power(M_1, 2)) + (np.power(M_2, 2))
                               + ((np.power(g_EW, 2) + np.power(g_pr, 2))
@@ -923,11 +911,9 @@ if __name__ == "__main__":
         def sigmauu_neutralino(msn):
             """
             Return one-loop correction Sigma_u^u(neutralino).
-
             Parameters
             ----------
             msn : Neutralino mass.
-
             """
             sigma_uu_neutralino = ((-1) / (16 * np.power(np.pi, 2))) \
                 * (neutralinouu_deriv_num(msn)
@@ -938,11 +924,9 @@ if __name__ == "__main__":
         def sigmadd_neutralino(msn):
             """
             Return one-loop correction Sigma_d^d(neutralino).
-
             Parameters
             ----------
             msn : Neutralino mass.
-
             """
             sigma_dd_neutralino = ((-1) / (16 * np.power(np.pi, 2))) \
                                   * (neutralinodd_deriv_num(msn)
@@ -1070,11 +1054,9 @@ if __name__ == "__main__":
         def dew_funcu(inp):
             """
             Compute individual one-loop DEW contributions from Sigma_u^u.
-
             Parameters
             ----------
             inp : One-loop correction or Higgs to be inputted into the DEW function.
-
             """
             mycontribuu = np.abs(((-1) * inp * (np.power(tanb, 2)))
                                  / ((np.power(tanb, 2)) - 1))
@@ -1083,34 +1065,40 @@ if __name__ == "__main__":
         def dew_funcd(inp):
             """
             Compute individual one-loop DEW contributions from Sigma_d^d.
-
             Parameters
             ----------
             inp : One-loop correction or Higgs to be inputted into the DEW function.
-
             """
             mycontribdd = np.abs((inp)
                                  / ((np.power(tanb, 2)) - 1))
             return mycontribdd
 
         main()
-        for i in range(0, 100):
+        for i in range(0, 20):
             min_dew_so_far = np.amin([calculated_dew_array[i], min_dew_so_far])
             if calculated_dew_array[i] <= 30:
-                shutil.copy('scan_test_outputs\\my_softsusy_output_' + str(i), 'valid_n1_scan_BM_points\\' + str(num_nat_count + 2))
+                shutil.copy('scan_test_outputs\\my_softsusy_output_' + str(i), 'valid_n1_scan_BM_points\\' + str(num_nat_count + 3))
                 num_nat_count += 1
                 min_dew_so_far = 1000
             if calculated_dew_array[i] <= min_dew_so_far:
                 min_slha = d[i]
+                shutil.copy('scan_test_outputs\\my_softsusy_output_' + str(i), 'valid_n1_scan_BM_points\\Best_so_far')
+            try:
+                test_if_bad = d[i].blocks['SPINFO'][4]
+                num_pts_w_bad_min += 1
+            except:
+                pass
 
         print('________________________________________________________')
-        print('Number of natural points so far: ' + str(num_nat_count))
-
-
+        num_data_sets += 1
+        print('Number of natural points so far: ' + str(num_nat_count) + ' (' + str(100 * num_nat_count / (num_data_sets * 20)) + '% of scanned points)')
 
         print('Minimum DEW so far: ' + str(min_dew_so_far))
-        num_data_sets += 1
-        print('Number of BM points scanned: ' + str(num_data_sets * 100))
+        print('Minimum DEW this set: ' + str(np.amin(calculated_dew_array)))
+        num_good_pts = (num_data_sets * 20) - num_pts_w_bad_min
+        print('Number of BM points scanned: ' + str(num_data_sets * 20))
+        print('Number of BM points with decent minima & no problems: ' + str(num_good_pts) + ' (' + str(100 * num_good_pts / (num_data_sets * 20)) + '% of scanned points)')
+
         for variable in dir():
             if variable[0:1] != "_" and variable not in vars_to_keep:
                 del globals()[variable]
