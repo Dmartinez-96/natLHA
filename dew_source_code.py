@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/python
 """
 Compute naturalness measure Delta_EW and contributions to DEW.
 
@@ -6,860 +6,1176 @@ Author: Dakotah Martinez
 """
 
 import numpy as np
+from scipy.special import spence
 import pyslha
 import time
-from pathlib import Path
-import numba as nb
-
-
-# Mass relations: #
-
-@nb.njit(fastmath=True)
-def m_w_sq():
-    """Return W boson squared mass."""
-    my_mw_sq = (np.power(g_EW, 2) / 2) * np.power(vHiggs, 2)
-    return my_mw_sq
-
-
-@nb.njit(fastmath=True)
-def mz_q_sq():
-    """Return m_Z(Q)^2."""
-    mzqsq = np.power(vHiggs, 2) * ((np.power(g_EW, 2) + np.power(g_pr, 2)) / 2)
-    return mzqsq
-
-
-@nb.njit(fastmath=True)
-def ma_0sq():
-    """Return A_0 squared mass."""
-    my_ma0_sq = 2 * np.power(np.abs(muQ), 2) + mHusq + mHdsq
-    return my_ma0_sq
-
-
-# Fundamental equations: #
-
-@nb.njit(fastmath=True)
-def logfunc(mass):
-    """
-    Return F = m^2 * (ln(m^2 / Q^2) - 1).
-
-    Parameters
-    ----------
-    mass : Input mass.
-
-    """
-    myf = np.power(mass, 2) * (np.log((np.power(mass, 2)) / (Q_renorm_sq)) - 1)
-    return myf
-
-
-@nb.njit(fastmath=True)
-def sinsqb():
-    """Return sin^2(beta)."""
-    mysinsqb = np.power(np.sin(beta), 2)
-    return mysinsqb
-
-
-@nb.njit(fastmath=True)
-def cossqb():
-    """Return cos^2(beta)."""
-    mycossqb = np.power(np.cos(beta), 2)
-    return mycossqb
-
-
-@nb.njit(fastmath=True)
-def v_higgs_u():
-    """Return up-type Higgs VEV."""
-    myvu = vHiggs * np.sin(beta)
-    return myvu
-
-
-@nb.njit(fastmath=True)
-def v_higgs_d():
-    """Return down-type Higgs VEV."""
-    myvd = vHiggs * np.cos(beta)
-    return myvd
-
-
-@nb.njit(fastmath=True)
-def tan_theta_w():
-    """Return tan(theta_W), the Weinberg angle."""
-    mytanthetaw = g_pr / g_EW
-    return mytanthetaw
-
-
-@nb.njit(fastmath=True)
-def sinsq_theta_w():
-    """Return sin^2(theta_W), the Weinberg angle."""
-    thetaw = np.arctan(tan_theta_w())
-    mysinsqthetaw = np.power(np.sin(thetaw), 2)
-    return mysinsqthetaw
-
-
-@nb.njit(fastmath=True)
-def cos2b():
-    """Return cos(2*beta)."""
-    mycos2b = cossqb() - sinsqb()
-    return mycos2b
-
-
-@nb.njit(fastmath=True)
-def gz_sq():
-    """Return g_Z^2 = (g^2 + g'^2) / 8."""
-    mygzsq = (np.power(g_EW, 2) + np.power(g_pr, 2)) / 8
-    return mygzsq
-
-
-# Stop squarks: #
-
-@nb.njit(fastmath=True)
-def sigmauu_stop1():
-    """Return one-loop correction Sigma_u^u(stop_1)."""
-    delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
-           + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
-    stop_num = np.power(a_t, 2) - (2 * gz_sq() * delta_stop)
-    sigmauu_stop_1 = (3 / (16 * (np.power(np.pi, 2)))) * logfunc(m_stop_1)\
-        * (np.power(y_t, 2) - gz_sq()
-           - (stop_num / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
-    return sigmauu_stop_1
-
-
-@nb.njit(fastmath=True)
-def sigmadd_stop1():
-    """Return one-loop correction Sigma_d^d(stop_1)."""
-    delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
-           + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
-    stop_num = np.power(y_t, 2) * np.power(muQ, 2)\
-        + (2 * gz_sq() * delta_stop)
-    sigmadd_stop_1 = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_stop_1)\
-        * (gz_sq() - (stop_num
-                      / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
-    return sigmadd_stop_1
-
-
-@nb.njit(fastmath=True)
-def sigmauu_stop2():
-    """Return one-loop correction Sigma_u^u(stop_2)."""
-    delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
-           + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
-    stop_num = np.power(a_t, 2) - (2 * gz_sq() * delta_stop)
-    sigmauu_stop_2 = (3 / (16 * (np.power(np.pi, 2)))) * logfunc(m_stop_2)\
-        * (np.power(y_t, 2) - gz_sq()
-           + (stop_num
-              / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
-    return sigmauu_stop_2
-
-
-@nb.njit(fastmath=True)
-def sigmadd_stop2():
-    """Return one-loop correction Sigma_d^d(stop_2)."""
-    delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
-           + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
-    stop_num = np.power(y_t, 2) * np.power(muQ, 2)\
-        + (2 * gz_sq() * delta_stop)
-    sigmadd_stop_2 = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_stop_2)\
-        * (gz_sq() + (stop_num
-                      / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
-    return sigmadd_stop_2
-
-
-# Sbottom squarks: #
-
-@nb.njit(fastmath=True)
-def sigmauu_sbottom1():
-    """Return one-loop correction Sigma_u^u(sbottom_1)."""
-    delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
-    sbot_num = np.power(a_b, 2) - (2 * gz_sq() * delta_sbot)
-    sigmauu_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_1)\
-        * (np.power(y_b, 2) - gz_sq()
-           - (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
-    return sigmauu_sbot
-
-
-@nb.njit(fastmath=True)
-def sigmauu_sbottom2():
-    """Return one-loop correction Sigma_u^u(sbottom_2)."""
-    delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
-    sbot_num = np.power(a_b, 2) - (2 * gz_sq() * delta_sbot)
-    sigmauu_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_2)\
-        * (np.power(y_b, 2) - gz_sq()
-           + (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
-    return sigmauu_sbot
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sbottom1():
-    """Return one-loop correction Sigma_d^d(sbottom_1)."""
-    delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
-    sbot_num = np.power(y_b, 2) * np.power(muQ, 2)\
-        + (2 * gz_sq() * delta_sbot)
-    sigmadd_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_1)\
-        * (gz_sq()
-           - (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
-    return sigmadd_sbot
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sbottom2():
-    """Return one-loop correction Sigma_d^d(sbottom_2)."""
-    delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2\
-        * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
-    sbot_num = np.power(y_b, 2) * np.power(muQ, 2)\
-        + (2 * gz_sq() * delta_sbot)
-    sigmadd_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_2)\
-        * (gz_sq()
-           + (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
-    return sigmadd_sbot
-
-
-# Stau sleptons: #
-
-@nb.njit(fastmath=True)
-def sigmauu_stau1():
-    """Return one-loop correction Sigma_u^u(stau_1)."""
-    delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2\
-        * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
-    stau_num = np.power(a_tau, 2) - (2 * gz_sq() * delta_stau)
-    sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_1)\
-        * (np.power(y_tau, 2) - gz_sq()
-           - (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))
-    return sigmauu_stau
-
-
-@nb.njit(fastmath=True)
-def sigmauu_stau2():
-    """Return one-loop correction Sigma_u^u(stau_2)."""
-    delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2\
-        * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
-    stau_num = np.power(a_tau, 2) - (2 * gz_sq() * delta_stau)
-    sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_2)\
-        * (np.power(y_tau, 2) - gz_sq()
-           + (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2)))
-           )
-    return sigmauu_stau
-
-
-@nb.njit(fastmath=True)
-def sigmadd_stau1():
-    """Return one-loop correction Sigma_d^d(stau_1)."""
-    delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2\
-        * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
-    stau_num = np.power(y_tau, 2) * np.power(muQ, 2)\
-        + (2 * gz_sq() * delta_stau)
-    sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_1)\
-        * (gz_sq()
-           - (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))
-    return sigmauu_stau
-
-
-@nb.njit(fastmath=True)
-def sigmadd_stau2():
-    """Return one-loop correction Sigma_d^d(stau_2)."""
-    delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2\
-        * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
-           - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
-    stau_num = np.power(y_tau, 2) * np.power(muQ, 2)\
-        + (2 * gz_sq() * delta_stau)
-    sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_2)\
-        * (gz_sq()
-           + (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2)))
-           )
-    return sigmauu_stau
-
-
-# Sfermions, 1st gen: #
-
-@nb.njit(fastmath=True)
-def sigmauu_sup_l():
-    """Return one-loop correction Sigma_u^u(sup_L)."""
-    sigmauusup_l = ((-3) / (4 * np.power(np.pi, 2)))\
-        * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * gz_sq()\
-        * logfunc(msupL)
-    return sigmauusup_l
-
-
-@nb.njit(fastmath=True)
-def sigmauu_sup_r():
-    """Return one-loop correction Sigma_u^u(sup_R)."""
-    sigmauusup_r = ((-3) / (4 * np.power(np.pi, 2)))\
-        * ((2 / 3) * sinsq_theta_w()) * gz_sq() * logfunc(msupR)
-    return sigmauusup_r
-
-
-@nb.njit(fastmath=True)
-def sigmauu_sdown_l():
-    """Return one-loop correction Sigma_u^u(sdown_L)."""
-    sigmauusdown_l = ((-3) / (4 * np.power(np.pi, 2))) * logfunc(msdownL)\
-        * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * gz_sq()
-    return sigmauusdown_l
-
-
-@nb.njit(fastmath=True)
-def sigmauu_sdown_r():
-    """Return one-loop correction Sigma_u^u(sdown_R)."""
-    sigmauusdown_r = ((-3) / (4 * np.power(np.pi, 2))) * logfunc(msdownR)\
-        * (((-1) / 3) * sinsq_theta_w()) * gz_sq()
-    return sigmauusdown_r
-
-
-@nb.njit(fastmath=True)
-def sigmauu_selec_l():
-    """Return one-loop correction Sigma_u^u(selectron_L)."""
-    sigmauuselec_l = ((-1) / (4 * np.power(np.pi, 2))) * logfunc(mselecL)\
-        * (((-1) / 2) + sinsq_theta_w()) * gz_sq()
-    return sigmauuselec_l
-
-
-@nb.njit(fastmath=True)
-def sigmauu_selec_r():
-    """Return one-loop correction Sigma_u^u(selectron_R)."""
-    sigmauuselec_r = ((-1) / (4 * np.power(np.pi, 2))) * logfunc(mselecR)\
-        * ((-1) * sinsq_theta_w()) * gz_sq()
-    return sigmauuselec_r
-
-
-@nb.njit(fastmath=True)
-def sigmauu_sel_neut():
-    """Return one-loop correction Sigma_u^u(selectron neutrino)."""
-    sigmauuselec_sneut = ((-1) / (4 * np.power(np.pi, 2))) * (1 / 2)\
-        * logfunc(mselecneut) * gz_sq()
-    return sigmauuselec_sneut
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sup_l():
-    """Return one-loop correction Sigma_d^d(sup_L)."""
-    sigmaddsup_l = (3 / (4 * np.power(np.pi, 2)))\
-        * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * gz_sq()\
-        * logfunc(msupL)
-    return sigmaddsup_l
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sup_r():
-    """Return one-loop correction Sigma_d^d(sup_R)."""
-    sigmaddsup_r = (3 / (4 * np.power(np.pi, 2)))\
-        * ((2 / 3) * sinsq_theta_w()) * gz_sq() * logfunc(msupR)
-    return sigmaddsup_r
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sdown_l():
-    """Return one-loop correction Sigma_d^d(sdown_L)."""
-    sigmaddsdown_l = (3 / (4 * np.power(np.pi, 2))) * logfunc(msdownL)\
-        * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * gz_sq()
-    return sigmaddsdown_l
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sdown_r():
-    """Return one-loop correction Sigma_d^d(sdown_R)."""
-    sigmaddsdown_r = (3 / (4 * np.power(np.pi, 2))) * logfunc(msdownR)\
-        * (((-1) / 3) * sinsq_theta_w()) * gz_sq()
-    return sigmaddsdown_r
-
-
-@nb.njit(fastmath=True)
-def sigmadd_selec_l():
-    """Return one-loop correction Sigma_d^d(selectron_L)."""
-    sigmaddselec_l = (1 / (4 * np.power(np.pi, 2))) * logfunc(mselecL)\
-        * (((-1) / 2) + sinsq_theta_w()) * gz_sq()
-    return sigmaddselec_l
-
-
-@nb.njit(fastmath=True)
-def sigmadd_selec_r():
-    """Return one-loop correction Sigma_d^d(selectron_R)."""
-    sigmaddselec_r = (1 / (4 * np.power(np.pi, 2))) * logfunc(mselecR)\
-        * ((-1) * sinsq_theta_w()) * gz_sq()
-    return sigmaddselec_r
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sel_neut():
-    """Return one-loop correction Sigma_d^d(selectron neutrino)."""
-    sigmaddselec_sneut = (1 / (4 * np.power(np.pi, 2))) * (1 / 2)\
-        * logfunc(mselecneut) * gz_sq()
-    return sigmaddselec_sneut
-
-
-# Sfermions, 2nd gen: #
-
-@nb.njit(fastmath=True)
-def sigmauu_sstrange_l():
-    """Return one-loop correction Sigma_u^u(sstrange_L)."""
-    sigmauusstrange_l = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * logfunc(msstrangeL)
-    return sigmauusstrange_l
-
-
-@nb.njit(fastmath=True)
-def sigmauu_sstrange_r():
-    """Return one-loop correction Sigma_u^u(sstrange_R)."""
-    sigmauusstrange_r = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (((-1) / 3) * sinsq_theta_w()) * logfunc(msstrangeR)
-    return sigmauusstrange_r
-
-
-@nb.njit(fastmath=True)
-def sigmauu_scharm_l():
-    """Return one-loop correction Sigma_u^u(scharm_L)."""
-    sigmauuscharm_l = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * logfunc(mscharmL)
-    return sigmauuscharm_l
-
-
-@nb.njit(fastmath=True)
-def sigmauu_scharm_r():
-    """Return one-loop correction Sigma_u^u(scharm_R)."""
-    sigmauuscharm_r = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * ((2 / 3) * sinsq_theta_w()) * logfunc(mscharmR)
-    return sigmauuscharm_r
-
-
-@nb.njit(fastmath=True)
-def sigmauu_smu_l():
-    """Return one-loop correction Sigma_u^u(smu_L)."""
-    sigmauusmu_l = ((-1) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (((-1) / 2) + sinsq_theta_w()) * logfunc(msmuL)
-    return sigmauusmu_l
-
-
-@nb.njit(fastmath=True)
-def sigmauu_smu_r():
-    """Return one-loop correction Sigma_u^u(smu_R)."""
-    sigmauusmu_r = ((-1) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * ((-1) * sinsq_theta_w()) * logfunc(msmuR)
-    return sigmauusmu_r
-
-
-@nb.njit(fastmath=True)
-def sigmauu_smu_sneut():
-    """Return one-loop correction Sigma_u^u(smuon neutrino)."""
-    sigmauusmu_sneut = ((-1) / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (1 / 2) * logfunc(msmuneut)
-    return sigmauusmu_sneut
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sstrange_l():
-    """Return one-loop correction Sigma_d^d(sstrange_L)."""
-    sigmaddsstrange_l = (3 / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * logfunc(msstrangeL)
-    return sigmaddsstrange_l
-
-
-@nb.njit(fastmath=True)
-def sigmadd_sstrange_r():
-    """Return one-loop correction Sigma_d^d(sstrange_R)."""
-    sigmaddsstrange_r = (3 / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (((-1) / 3) * sinsq_theta_w()) * logfunc(msstrangeR)
-    return sigmaddsstrange_r
-
-
-@nb.njit(fastmath=True)
-def sigmadd_scharm_l():
-    """Return one-loop correction Sigma_d^d(scharm_L)."""
-    sigmaddscharm_l = (3 / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * logfunc(mscharmL)
-    return sigmaddscharm_l
-
-
-@nb.njit(fastmath=True)
-def sigmadd_scharm_r():
-    """Return one-loop correction Sigma_d^d(scharm_R)."""
-    sigmaddscharm_r = (3 / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * ((2 / 3) * sinsq_theta_w()) * logfunc(mscharmR)
-    return sigmaddscharm_r
-
-
-@nb.njit(fastmath=True)
-def sigmadd_smu_l():
-    """Return one-loop correction Sigma_d^d(smu_L)."""
-    sigmaddsmu_l = (1 / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * (((-1) / 2) + sinsq_theta_w()) * logfunc(msmuL)
-    return sigmaddsmu_l
-
-
-@nb.njit(fastmath=True)
-def sigmadd_smu_r():
-    """Return one-loop correction Sigma_d^d(smu_R)."""
-    sigmaddsmu_r = (1 / (4 * np.power(np.pi, 2))) * gz_sq()\
-        * ((-1) * sinsq_theta_w()) * logfunc(msmuR)
-    return sigmaddsmu_r
-
-
-@nb.njit(fastmath=True)
-def sigmadd_smu_sneut():
-    """Return one-loop correction Sigma_d^d(smuon neutrino)."""
-    sigmaddsmu_sneut = (1 / (4 * np.power(np.pi, 2))) * (1 / 2)\
-        * gz_sq() * logfunc(msmuneut)
-    return sigmaddsmu_sneut
-
-
-# Neutralinos: #
-# Use method by Ibrahim and Nath for eigenvalue derivatives.
-
-@nb.njit(fastmath=True)
-def neutralinouu_deriv_num(msn):
-    """
-    Return numerator for one-loop uu correction derivative term of neutralino.
-
-    Parameters
-    ----------
-    msn : Neutralino mass.
-
-    """
-    cubicterm = np.power(g_EW, 2) + np.power(g_pr, 2)
-    quadrterm = (((np.power(g_EW, 2) * M_2 * muQ)
-                  + (np.power(g_pr, 2) * M_1 * muQ)) / (tanb))\
-        - ((np.power((g_EW * M_1), 2)) + (np.power((g_pr * M_2), 2))
-           + ((np.power(g_EW, 2) + np.power(g_pr, 2)) * (np.power(muQ, 2)))
-           + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2) / 2)
-           * np.power(vHiggs, 2))
-    linterm = (((-1) * muQ) * ((np.power(g_EW, 2) * M_2
-                                * (np.power(M_1, 2) + np.power(muQ, 2)))
-                               + np.power(g_pr, 2) * M_1
-                               * (np.power(M_2, 2) + np.power(muQ, 2)))
-               / tanb)\
-        + ((np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
-            / 2) * np.power(vHiggs, 2)) + (np.power(muQ, 2)
-                                           * ((np.power((g_EW * M_1), 2))
-                                              + (np.power((g_pr * M_2), 2))))\
-        + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2)
-           * np.power((vHiggs * muQ), 2) * cossqb())
-    constterm = (M_1 * M_2 * ((np.power(g_EW, 2) * M_1)
-                              + (np.power(g_pr, 2) * M_2))
-                 * np.power(muQ, 3) * (1 / tanb))\
-        - (np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
-           * np.power(vHiggs, 2) * np.power(muQ, 2) * cossqb())
-    mynum = (cubicterm * np.power(msn, 6)) + (quadrterm * np.power(msn, 4))\
-        + (linterm * np.power(msn, 2)) + constterm
-    return mynum
-
-
-@nb.njit(fastmath=True)
-def neutralinodd_deriv_num(msn):
-    """
-    Return numerator for one-loop dd correction derivative term of neutralino.
-
-    Parameters
-    ----------
-    msn : Neutralino mass.
-
-    """
-    cubicterm = np.power(g_EW, 2) + np.power(g_pr, 2)
-    quadrterm = (((np.power(g_EW, 2) * M_2 * muQ) + (np.power(g_pr, 2) * M_1
-                                                     * muQ)) * (tanb))\
-        - ((np.power((g_EW * M_1), 2)) + (np.power((g_pr * M_2), 2))
-           + ((np.power(g_EW, 2) + np.power(g_pr, 2)) * (np.power(muQ, 2)))
-           + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2) / 2)
-           * np.power(vHiggs, 2))
-    linterm = (((-1) * muQ) * ((np.power(g_EW, 2) * M_2
-                                * (np.power(M_1, 2) + np.power(muQ, 2)))
-                               + np.power(g_pr, 2) * M_1
-                               * (np.power(M_2, 2) + np.power(muQ, 2)))
-               * tanb)\
-        + ((np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
-            / 2) * np.power(vHiggs, 2))\
-        + (np.power(muQ, 2) * ((np.power((g_EW * M_1), 2))
-           + np.power(g_pr, 2) * np.power(M_2, 2)))\
-        + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2)
-           * np.power((vHiggs * muQ), 2) * sinsqb())
-    constterm = (M_1 * M_2 * (np.power(g_EW, 2) * M_1 + (np.power(g_pr, 2)
-                                                         * M_2))
-                 * np.power(muQ, 3) * tanb)\
-        - (np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
-           * np.power((vHiggs * muQ), 2) * sinsqb())
-    mynum = (cubicterm * np.power(msn, 6)) + (quadrterm * np.power(msn, 4))\
-        + (linterm * np.power(msn, 2)) + constterm
-    return mynum
-
-
-@nb.njit(fastmath=True)
-def neutralino_deriv_denom(msn):
-    """
-    Return denominator for one-loop correction derivative term of neutralino.
-
-    Parameters
-    ----------
-    msn : Neutralino mass.
-
-    """
-    quadrterm = -3 * ((np.power(M_1, 2)) + (np.power(M_2, 2))
-                      + ((np.power(g_EW, 2) + np.power(g_pr, 2))
-                         * np.power(vHiggs, 2)) + (2 * np.power(muQ, 2)))
-    linterm = (np.power(vHiggs, 4)
-               * np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2) / 2)\
-        + (np.power(vHiggs, 2)
-           * (2 * ((np.power((g_EW * M_1), 2)) + (np.power((g_pr * M_2), 2))
-                   + ((np.power(g_EW, 2) + np.power(g_pr, 2))
-                      * np.power(muQ, 2))
-                   - (muQ * (np.power(g_pr, 2) * M_1 + np.power(g_EW, 2) * M_2)
-                      * 2 * np.sqrt(sinsqb()) * np.sqrt(cossqb())))))\
-        + (2 * ((np.power((M_1 * M_2), 2))
-                + (2 * (np.power((M_1 * muQ), 2) + np.power((M_2 * muQ), 2)))
-                + (np.power(muQ, 4))))
-    constterm = (np.power(vHiggs, 4) * (1 / 8)
-                 * ((np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2)
-                     * np.power(muQ, 2) * (np.power(cossqb(), 2)
-                                           - (6 * cossqb() * sinsqb())
-                                           + np.power(sinsqb(), 2)))
-                    - (2 * np.power((np.power(g_EW, 2) * M_1
-                                     + np.power(g_pr, 2) * M_2), 2))
-                    - (np.power(muQ, 2)
-                       * np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2))
-                    ))\
-        + (np.power(vHiggs, 2) * 2 * muQ
-           * ((np.sqrt(cossqb()) * np.sqrt(sinsqb()))
-              * (np.power(g_EW, 2) * M_2
-                 * (np.power(M_1, 2) + np.power(muQ, 2))
-                 + (np.power(g_pr, 2) * M_1
-                 * (np.power(M_2, 2) + np.power(muQ, 2))))))\
-        - ((2 * np.power((M_2 * M_1 * muQ), 2))
-           + (np.power(muQ, 4) * (np.power(M_1, 2) + np.power(M_2, 2))))
-    mydenom = 4 * np.power(msn, 6) + quadrterm * np.power(msn, 4)\
-        + linterm * np.power(msn, 2) + constterm
-    return mydenom
-
-
-@nb.njit(fastmath=True)
-def sigmauu_neutralino(msn):
-    """
-    Return one-loop correction Sigma_u^u(neutralino).
-
-    Parameters
-    ----------
-    msn : Neutralino mass.
-
-    """
-    sigma_uu_neutralino = ((-1) / (16 * np.power(np.pi, 2))) \
-        * (neutralinouu_deriv_num(msn)
-           / neutralino_deriv_denom(msn))\
-        * logfunc(msn)
-    return sigma_uu_neutralino
-
-
-@nb.njit(fastmath=True)
-def sigmadd_neutralino(msn):
-    """
-    Return one-loop correction Sigma_d^d(neutralino).
-
-    Parameters
-    ----------
-    msn : Neutralino mass.
-
-    """
-    sigma_dd_neutralino = ((-1) / (16 * np.power(np.pi, 2))) \
-        * (neutralinodd_deriv_num(msn)
-           / neutralino_deriv_denom(msn))\
-        * logfunc(msn)
-    return sigma_dd_neutralino
-
-
-# Charginos: #
-
-@nb.njit(fastmath=True)
-def sigmauu_chargino1():
-    """Return one-loop correction Sigma_u^u(chargino_1)."""
-    chargino_num = ((-2) * m_w_sq() * cos2b()) + np.power(M_2, 2)\
-        + np.power(muQ, 2)
-    chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
-    sigma_uu_chargino1 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2)))\
-        * (1 - (chargino_num / chargino_den)) * logfunc(msC1)
-    return sigma_uu_chargino1
-
-
-@nb.njit(fastmath=True)
-def sigmauu_chargino2():
-    """Return one-loop correction Sigma_u^u(chargino_2)."""
-    chargino_num = ((-2) * m_w_sq() * cos2b()) + np.power(M_2, 2)\
-        + np.power(muQ, 2)
-    chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
-    sigma_uu_chargino2 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2)))\
-        * (1 + (chargino_num / chargino_den)) * logfunc(msC2)
-    return sigma_uu_chargino2
-
-
-@nb.njit(fastmath=True)
-def sigmadd_chargino1():
-    """Return one-loop correction Sigma_d^d(chargino_1)."""
-    chargino_num = (2 * m_w_sq() * cos2b()) + np.power(M_2, 2)\
-        + np.power(muQ, 2)
-    chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
-    sigma_dd_chargino1 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2)))\
-        * (1 - (chargino_num / chargino_den)) * logfunc(msC1)
-    return sigma_dd_chargino1
-
-
-@nb.njit(fastmath=True)
-def sigmadd_chargino2():
-    """Return one-loop correction Sigma_d^d(chargino_2)."""
-    chargino_num = (2 * m_w_sq() * cos2b()) + np.power(M_2, 2)\
-        + np.power(muQ, 2)
-    chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
-    sigma_dd_chargino2 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2)))\
-        * (1 + (chargino_num / chargino_den)) * logfunc(msC2)
-    return sigma_dd_chargino2
-
-
-# Higgs bosons (sigmauu = sigmadd here): #
-
-@nb.njit(fastmath=True)
-def sigmauu_h0():
-    """Return one-loop correction Sigma_u^u(h_0) (lighter neutral Higgs)."""
-    mynum = mz_q_sq() + (mA0sq * (1 + (4 * cos2b())
-                                  + (2 * np.power(cos2b(), 2))))
-    myden = np.power(mH0, 2) - np.power(mh0, 2)
-    sigma_uu_h0 = (gz_sq() / (16 * np.power(np.pi, 2)))\
-        * (1 - (mynum / myden)) * logfunc(mh0)
-    return sigma_uu_h0
-
-
-@nb.njit(fastmath=True)
-def sigmadd_h0():
-    """Return one-loop correction Sigma_d^d(h_0) (lighter neutral Higgs)."""
-    mynum = mz_q_sq() + (mA0sq * (1 - (4 * cos2b())
-                                  + (2 * np.power(cos2b(), 2))))
-    myden = np.power(mH0, 2) - np.power(mh0, 2)
-    sigma_dd_h0 = (gz_sq() / (16 * np.power(np.pi, 2)))\
-        * (1 - (mynum / myden)) * logfunc(mh0)
-    return sigma_dd_h0
-
-
-@nb.njit(fastmath=True)
-def sigmauu_heavy_h0():
-    """Return one-loop correction Sigma_u^u(H_0) (heavier neutr. Higgs)."""
-    mynum = mz_q_sq() + (mA0sq * (1 + (4 * cos2b()) + (2 * np.power(cos2b(), 2))))
-    myden = np.power(mH0, 2) - np.power(mh0, 2)
-    sigma_uu_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) * (1 + (mynum / myden)) * logfunc(mH0)
-    return sigma_uu_heavy_h0
-
-
-@nb.njit(fastmath=True)
-def sigmadd_heavy_h0():
-    """Return one-loop correction Sigma_d^d(H_0) (heavier neutr. Higgs)."""
-    mynum = mz_q_sq() + (mA0sq * (1 - (4 * cos2b()) + (2 * np.power(cos2b(), 2))))
-    myden = np.power(mH0, 2) - np.power(mh0, 2)
-    sigma_dd_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) * (1 + (mynum / myden)) * logfunc(mH0)
-    return sigma_dd_heavy_h0
-
-
-@nb.njit(fastmath=True)
-def sigmauu_h_pm():
-    """Return one-loop correction Sigma_u,d^u,d(H_{+-})."""
-    sigma_uu_h_pm = (np.power((g_EW / np.pi), 2) / (32)) * logfunc(mH_pm)
-    return sigma_uu_h_pm
-
-
-# Weak bosons (sigmauu = sigmadd here): #
-
-@nb.njit(fastmath=True)
-def sigmauu_w_pm():
-    """Return one-loop correction Sigma_u,d^u,d(W_{+-})."""
-    sigma_uu_w_pm = (3 * np.power((g_EW / np.pi), 2) / (32))\
-        * logfunc(np.sqrt(m_w_sq()))
-    return sigma_uu_w_pm
-
-
-@nb.njit(fastmath=True)
-def sigmauu_z0():
-    """Return one-loop correction Sigma_u,d^u,d(Z_0)."""
-    sigma_uu_z0 = (3 * (np.power(g_EW, 2) + np.power(g_pr, 2))
-                   / (64 * np.power(np.pi, 2))) * logfunc(np.sqrt(mz_q_sq()))
-    return sigma_uu_z0
-
-
-# SM fermions (sigmadd_t = sigmauu_b = sigmauu_tau = 0): #
-
-@nb.njit(fastmath=True)
-def sigmauu_top():
-    """Return one-loop correction Sigma_u^u(top)."""
-    mymt = y_t * v_higgs_u()
-    sigma_uu_top = ((-1) * np.power((y_t / np.pi), 2) / (16)) * logfunc(mymt)
-    return sigma_uu_top
-
-
-@nb.njit(fastmath=True)
-def sigmadd_bottom():
-    """Return one-loop correction Sigma_d^d(bottom)."""
-    mymb = y_b * v_higgs_d()
-    sigma_dd_bottom = (-1 * np.power((y_b / np.pi), 2) / (16)) * logfunc(mymb)
-    return sigma_dd_bottom
-
-
-@nb.njit(fastmath=True)
-def sigmadd_tau():
-    """Return one-loop correction Sigma_d^d(tau)."""
-    mymtau = y_tau * v_higgs_d()
-    sigma_dd_tau = (-1 * np.power((y_tau / np.pi), 2) / (16)) * logfunc(mymtau)
-    return sigma_dd_tau
-
-
-# DEW contribution computation: #
-
-@nb.njit(fastmath=True)
-def dew_funcu(inp):
-    """
-    Compute individual one-loop DEW contributions from Sigma_u^u.
-
-    Parameters
-    ----------
-    inp : One-loop correction or Higgs to be inputted into the DEW function.
-
-    """
-    mycontribuu = np.abs(((-1) * inp * (np.power(tanb, 2))) / ((np.power(tanb, 2)) - 1))
-    return mycontribuu
-
-
-@nb.njit(fastmath=True)
-def dew_funcd(inp):
-    """
-    Compute individual one-loop DEW contributions from Sigma_d^d.
-
-    Parameters
-    ----------
-    inp : One-loop correction or Higgs to be inputted into the DEW function.
-
-    """
-    mycontribdd = np.abs((inp) / ((np.power(tanb, 2)) - 1))
-    return mycontribdd
 
 
 if __name__ == "__main__":
     userContinue = True
     while userContinue:
+        # Mass relations: #
+
+
+        def m_w_sq():
+            """Return W boson squared mass."""
+            my_mw_sq = (np.power(g_EW, 2) / 2) * np.power(vHiggs, 2)
+            return my_mw_sq
+
+
+
+        def mz_q_sq():
+            """Return m_Z(Q)^2."""
+            mzqsq = np.power(vHiggs, 2) * ((np.power(g_EW, 2) + np.power(g_pr, 2)) / 2)
+            return mzqsq
+
+
+
+        def ma_0sq():
+            """Return A_0 squared mass."""
+            my_ma0_sq = 2 * np.power(np.abs(muQ), 2) + mHusq + mHdsq
+            return my_ma0_sq
+
+
+        # Fundamental equations: #
+
+
+        def logfunc(mass):
+            """
+            Return F = m^2 * (ln(m^2 / Q^2) - 1).
+
+            Parameters
+            ----------
+            mass : Input mass.
+
+            """
+            myf = np.power(mass, 2) * (np.log((np.power(mass, 2)) / (Q_renorm_sq)) - 1)
+            return myf
+
+
+
+        def sinsqb():
+            """Return sin^2(beta)."""
+            mysinsqb = np.power(np.sin(beta), 2)
+            return mysinsqb
+
+
+
+        def cossqb():
+            """Return cos^2(beta)."""
+            mycossqb = np.power(np.cos(beta), 2)
+            return mycossqb
+
+
+
+        def v_higgs_u():
+            """Return up-type Higgs VEV."""
+            myvu = vHiggs * np.sin(beta)
+            return myvu
+
+
+
+        def v_higgs_d():
+            """Return down-type Higgs VEV."""
+            myvd = vHiggs * np.cos(beta)
+            return myvd
+
+
+
+        def tan_theta_w():
+            """Return tan(theta_W), the Weinberg angle."""
+            mytanthetaw = g_pr / g_EW
+            return mytanthetaw
+
+
+
+        def sinsq_theta_w():
+            """Return sin^2(theta_W), the Weinberg angle."""
+            thetaw = np.arctan(tan_theta_w())
+            mysinsqthetaw = np.power(np.sin(thetaw), 2)
+            return mysinsqthetaw
+
+
+
+        def cos2b():
+            """Return cos(2*beta)."""
+            mycos2b = cossqb() - sinsqb()
+            return mycos2b
+
+
+
+        def gz_sq():
+            """Return g_Z^2 = (g^2 + g'^2) / 8."""
+            mygzsq = (np.power(g_EW, 2) + np.power(g_pr, 2)) / 8
+            return mygzsq
+
+
+        # Stop squarks: #
+
+
+        def sigmauu_stop1():
+            """Return one-loop correction Sigma_u^u(stop_1)."""
+            delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
+                            + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
+            stop_num = np.power(a_t, 2) - (2 * gz_sq() * delta_stop)
+            sigmauu_stop_1 = (3 / (16 * (np.power(np.pi, 2)))) * logfunc(m_stop_1) \
+                             * (np.power(y_t, 2) - gz_sq()
+                                - (stop_num / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
+            return sigmauu_stop_1
+
+
+
+        def sigmadd_stop1():
+            """Return one-loop correction Sigma_d^d(stop_1)."""
+            delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
+                            + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
+            stop_num = np.power(y_t, 2) * np.power(muQ, 2) \
+                       + (2 * gz_sq() * delta_stop)
+            sigmadd_stop_1 = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_stop_1) \
+                             * (gz_sq() - (stop_num
+                                           / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
+            return sigmadd_stop_1
+
+
+
+        def sigmauu_stop2():
+            """Return one-loop correction Sigma_u^u(stop_2)."""
+            delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
+                            + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
+            stop_num = np.power(a_t, 2) - (2 * gz_sq() * delta_stop)
+            sigmauu_stop_2 = (3 / (16 * (np.power(np.pi, 2)))) * logfunc(m_stop_2) \
+                             * (np.power(y_t, 2) - gz_sq()
+                                + (stop_num
+                                   / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
+            return sigmauu_stop_2
+
+
+
+        def sigmadd_stop2():
+            """Return one-loop correction Sigma_d^d(stop_2)."""
+            delta_stop = ((1 / 2) - (4 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtL, 2) - np.power(mtR, 2)) / 2)
+                            + (mz_q_sq()) * cos2b() * ((1 / 4) - (2 / 3) * sinsq_theta_w()))
+            stop_num = np.power(y_t, 2) * np.power(muQ, 2) \
+                       + (2 * gz_sq() * delta_stop)
+            sigmadd_stop_2 = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_stop_2) \
+                             * (gz_sq() + (stop_num
+                                           / (np.power(m_stop_2, 2) - np.power(m_stop_1, 2))))
+            return sigmadd_stop_2
+
+
+        # Sbottom squarks: #
+
+
+        def sigmauu_sbottom1():
+            """Return one-loop correction Sigma_u^u(sbottom_1)."""
+            delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
+            sbot_num = np.power(a_b, 2) - (2 * gz_sq() * delta_sbot)
+            sigmauu_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_1) \
+                           * (np.power(y_b, 2) - gz_sq()
+                              - (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
+            return sigmauu_sbot
+
+
+
+        def sigmauu_sbottom2():
+            """Return one-loop correction Sigma_u^u(sbottom_2)."""
+            delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
+            sbot_num = np.power(a_b, 2) - (2 * gz_sq() * delta_sbot)
+            sigmauu_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_2) \
+                           * (np.power(y_b, 2) - gz_sq()
+                              + (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
+            return sigmauu_sbot
+
+
+
+        def sigmadd_sbottom1():
+            """Return one-loop correction Sigma_d^d(sbottom_1)."""
+            delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
+            sbot_num = np.power(y_b, 2) * np.power(muQ, 2) \
+                       + (2 * gz_sq() * delta_sbot)
+            sigmadd_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_1) \
+                           * (gz_sq()
+                              - (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
+            return sigmadd_sbot
+
+
+
+        def sigmadd_sbottom2():
+            """Return one-loop correction Sigma_d^d(sbottom_2)."""
+            delta_sbot = ((1 / 2) - (2 / 3) * sinsq_theta_w()) * 2 \
+                         * (((np.power(mbL, 2) - np.power(mbR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - (1 / 3) * sinsq_theta_w()))
+            sbot_num = np.power(y_b, 2) * np.power(muQ, 2) \
+                       + (2 * gz_sq() * delta_sbot)
+            sigmadd_sbot = (3 / (16 * np.power(np.pi, 2))) * logfunc(m_sbot_2) \
+                           * (gz_sq()
+                              + (sbot_num / (np.power(m_sbot_2, 2) - np.power(m_sbot_1, 2))))
+            return sigmadd_sbot
+
+
+        # Stau sleptons: #
+
+
+        def sigmauu_stau1():
+            """Return one-loop correction Sigma_u^u(stau_1)."""
+            delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
+            stau_num = np.power(a_tau, 2) - (2 * gz_sq() * delta_stau)
+            sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_1) \
+                           * (np.power(y_tau, 2) - gz_sq()
+                              - (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))
+            return sigmauu_stau
+
+
+
+        def sigmauu_stau2():
+            """Return one-loop correction Sigma_u^u(stau_2)."""
+            delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
+            stau_num = np.power(a_tau, 2) - (2 * gz_sq() * delta_stau)
+            sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_2) \
+                           * (np.power(y_tau, 2) - gz_sq()
+                              + (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2)))
+                              )
+            return sigmauu_stau
+
+
+
+        def sigmadd_stau1():
+            """Return one-loop correction Sigma_d^d(stau_1)."""
+            delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
+            stau_num = np.power(y_tau, 2) * np.power(muQ, 2) \
+                       + (2 * gz_sq() * delta_stau)
+            sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_1) \
+                           * (gz_sq()
+                              - (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2))))
+            return sigmauu_stau
+
+
+
+        def sigmadd_stau2():
+            """Return one-loop correction Sigma_d^d(stau_2)."""
+            delta_stau = ((1 / 2) - 2 * sinsq_theta_w()) * 2 \
+                         * (((np.power(mtauL, 2) - np.power(mtauR, 2)) / 2)
+                            - (mz_q_sq()) * cos2b() * ((1 / 4) - sinsq_theta_w()))
+            stau_num = np.power(y_tau, 2) * np.power(muQ, 2) \
+                       + (2 * gz_sq() * delta_stau)
+            sigmauu_stau = (1 / (16 * np.power(np.pi, 2))) * logfunc(m_stau_2) \
+                           * (gz_sq()
+                              + (stau_num / (np.power(m_stau_2, 2) - np.power(m_stau_1, 2)))
+                              )
+            return sigmauu_stau
+
+
+        # Sfermions, 1st gen: #
+
+
+        def sigmauu_sup_l():
+            """Return one-loop correction Sigma_u^u(sup_L)."""
+            sigmauusup_l = ((-3) / (4 * np.power(np.pi, 2))) \
+                           * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * gz_sq() \
+                           * logfunc(msupL)
+            return sigmauusup_l
+
+
+
+        def sigmauu_sup_r():
+            """Return one-loop correction Sigma_u^u(sup_R)."""
+            sigmauusup_r = ((-3) / (4 * np.power(np.pi, 2))) \
+                           * ((2 / 3) * sinsq_theta_w()) * gz_sq() * logfunc(msupR)
+            return sigmauusup_r
+
+
+
+        def sigmauu_sdown_l():
+            """Return one-loop correction Sigma_u^u(sdown_L)."""
+            sigmauusdown_l = ((-3) / (4 * np.power(np.pi, 2))) * logfunc(msdownL) \
+                             * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * gz_sq()
+            return sigmauusdown_l
+
+
+
+        def sigmauu_sdown_r():
+            """Return one-loop correction Sigma_u^u(sdown_R)."""
+            sigmauusdown_r = ((-3) / (4 * np.power(np.pi, 2))) * logfunc(msdownR) \
+                             * (((-1) / 3) * sinsq_theta_w()) * gz_sq()
+            return sigmauusdown_r
+
+
+
+        def sigmauu_selec_l():
+            """Return one-loop correction Sigma_u^u(selectron_L)."""
+            sigmauuselec_l = ((-1) / (4 * np.power(np.pi, 2))) * logfunc(mselecL) \
+                             * (((-1) / 2) + sinsq_theta_w()) * gz_sq()
+            return sigmauuselec_l
+
+
+
+        def sigmauu_selec_r():
+            """Return one-loop correction Sigma_u^u(selectron_R)."""
+            sigmauuselec_r = ((-1) / (4 * np.power(np.pi, 2))) * logfunc(mselecR) \
+                             * ((-1) * sinsq_theta_w()) * gz_sq()
+            return sigmauuselec_r
+
+
+
+        def sigmauu_sel_neut():
+            """Return one-loop correction Sigma_u^u(selectron neutrino)."""
+            sigmauuselec_sneut = ((-1) / (4 * np.power(np.pi, 2))) * (1 / 2) \
+                                 * logfunc(mselecneut) * gz_sq()
+            return sigmauuselec_sneut
+
+
+
+        def sigmadd_sup_l():
+            """Return one-loop correction Sigma_d^d(sup_L)."""
+            sigmaddsup_l = (3 / (4 * np.power(np.pi, 2))) \
+                           * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * gz_sq() \
+                           * logfunc(msupL)
+            return sigmaddsup_l
+
+
+
+        def sigmadd_sup_r():
+            """Return one-loop correction Sigma_d^d(sup_R)."""
+            sigmaddsup_r = (3 / (4 * np.power(np.pi, 2))) \
+                           * ((2 / 3) * sinsq_theta_w()) * gz_sq() * logfunc(msupR)
+            return sigmaddsup_r
+
+
+
+        def sigmadd_sdown_l():
+            """Return one-loop correction Sigma_d^d(sdown_L)."""
+            sigmaddsdown_l = (3 / (4 * np.power(np.pi, 2))) * logfunc(msdownL) \
+                             * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * gz_sq()
+            return sigmaddsdown_l
+
+
+
+        def sigmadd_sdown_r():
+            """Return one-loop correction Sigma_d^d(sdown_R)."""
+            sigmaddsdown_r = (3 / (4 * np.power(np.pi, 2))) * logfunc(msdownR) \
+                             * (((-1) / 3) * sinsq_theta_w()) * gz_sq()
+            return sigmaddsdown_r
+
+
+
+        def sigmadd_selec_l():
+            """Return one-loop correction Sigma_d^d(selectron_L)."""
+            sigmaddselec_l = (1 / (4 * np.power(np.pi, 2))) * logfunc(mselecL) \
+                             * (((-1) / 2) + sinsq_theta_w()) * gz_sq()
+            return sigmaddselec_l
+
+
+
+        def sigmadd_selec_r():
+            """Return one-loop correction Sigma_d^d(selectron_R)."""
+            sigmaddselec_r = (1 / (4 * np.power(np.pi, 2))) * logfunc(mselecR) \
+                             * ((-1) * sinsq_theta_w()) * gz_sq()
+            return sigmaddselec_r
+
+
+
+        def sigmadd_sel_neut():
+            """Return one-loop correction Sigma_d^d(selectron neutrino)."""
+            sigmaddselec_sneut = (1 / (4 * np.power(np.pi, 2))) * (1 / 2) \
+                                 * logfunc(mselecneut) * gz_sq()
+            return sigmaddselec_sneut
+
+
+        # Sfermions, 2nd gen: #
+
+
+        def sigmauu_sstrange_l():
+            """Return one-loop correction Sigma_u^u(sstrange_L)."""
+            sigmauusstrange_l = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                                * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * logfunc(msstrangeL)
+            return sigmauusstrange_l
+
+
+
+        def sigmauu_sstrange_r():
+            """Return one-loop correction Sigma_u^u(sstrange_R)."""
+            sigmauusstrange_r = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                                * (((-1) / 3) * sinsq_theta_w()) * logfunc(msstrangeR)
+            return sigmauusstrange_r
+
+
+
+        def sigmauu_scharm_l():
+            """Return one-loop correction Sigma_u^u(scharm_L)."""
+            sigmauuscharm_l = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                              * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * logfunc(mscharmL)
+            return sigmauuscharm_l
+
+
+
+        def sigmauu_scharm_r():
+            """Return one-loop correction Sigma_u^u(scharm_R)."""
+            sigmauuscharm_r = ((-3) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                              * ((2 / 3) * sinsq_theta_w()) * logfunc(mscharmR)
+            return sigmauuscharm_r
+
+
+
+        def sigmauu_smu_l():
+            """Return one-loop correction Sigma_u^u(smu_L)."""
+            sigmauusmu_l = ((-1) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                           * (((-1) / 2) + sinsq_theta_w()) * logfunc(msmuL)
+            return sigmauusmu_l
+
+
+
+        def sigmauu_smu_r():
+            """Return one-loop correction Sigma_u^u(smu_R)."""
+            sigmauusmu_r = ((-1) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                           * ((-1) * sinsq_theta_w()) * logfunc(msmuR)
+            return sigmauusmu_r
+
+
+
+        def sigmauu_smu_sneut():
+            """Return one-loop correction Sigma_u^u(smuon neutrino)."""
+            sigmauusmu_sneut = ((-1) / (4 * np.power(np.pi, 2))) * gz_sq() \
+                               * (1 / 2) * logfunc(msmuneut)
+            return sigmauusmu_sneut
+
+
+
+        def sigmadd_sstrange_l():
+            """Return one-loop correction Sigma_d^d(sstrange_L)."""
+            sigmaddsstrange_l = (3 / (4 * np.power(np.pi, 2))) * gz_sq() \
+                                * (((-1) / 2) + (1 / 3) * sinsq_theta_w()) * logfunc(msstrangeL)
+            return sigmaddsstrange_l
+
+
+
+        def sigmadd_sstrange_r():
+            """Return one-loop correction Sigma_d^d(sstrange_R)."""
+            sigmaddsstrange_r = (3 / (4 * np.power(np.pi, 2))) * gz_sq() \
+                                * (((-1) / 3) * sinsq_theta_w()) * logfunc(msstrangeR)
+            return sigmaddsstrange_r
+
+
+
+        def sigmadd_scharm_l():
+            """Return one-loop correction Sigma_d^d(scharm_L)."""
+            sigmaddscharm_l = (3 / (4 * np.power(np.pi, 2))) * gz_sq() \
+                              * ((1 / 2) - (2 / 3) * sinsq_theta_w()) * logfunc(mscharmL)
+            return sigmaddscharm_l
+
+
+
+        def sigmadd_scharm_r():
+            """Return one-loop correction Sigma_d^d(scharm_R)."""
+            sigmaddscharm_r = (3 / (4 * np.power(np.pi, 2))) * gz_sq() \
+                              * ((2 / 3) * sinsq_theta_w()) * logfunc(mscharmR)
+            return sigmaddscharm_r
+
+
+
+        def sigmadd_smu_l():
+            """Return one-loop correction Sigma_d^d(smu_L)."""
+            sigmaddsmu_l = (1 / (4 * np.power(np.pi, 2))) * gz_sq() \
+                           * (((-1) / 2) + sinsq_theta_w()) * logfunc(msmuL)
+            return sigmaddsmu_l
+
+
+
+        def sigmadd_smu_r():
+            """Return one-loop correction Sigma_d^d(smu_R)."""
+            sigmaddsmu_r = (1 / (4 * np.power(np.pi, 2))) * gz_sq() \
+                           * ((-1) * sinsq_theta_w()) * logfunc(msmuR)
+            return sigmaddsmu_r
+
+
+
+        def sigmadd_smu_sneut():
+            """Return one-loop correction Sigma_d^d(smuon neutrino)."""
+            sigmaddsmu_sneut = (1 / (4 * np.power(np.pi, 2))) * (1 / 2) \
+                               * gz_sq() * logfunc(msmuneut)
+            return sigmaddsmu_sneut
+
+
+        # Neutralinos: #
+        # Use method by Ibrahim and Nath for eigenvalue derivatives.
+
+
+        def neutralinouu_deriv_num(msn):
+            """
+            Return numerator for one-loop uu correction derivative term of neutralino.
+
+            Parameters
+            ----------
+            msn : Neutralino mass.
+
+            """
+            cubicterm = np.power(g_EW, 2) + np.power(g_pr, 2)
+            quadrterm = (((np.power(g_EW, 2) * M_2 * muQ)
+                          + (np.power(g_pr, 2) * M_1 * muQ)) / (tanb)) \
+                        - ((np.power((g_EW * M_1), 2)) + (np.power((g_pr * M_2), 2))
+                           + ((np.power(g_EW, 2) + np.power(g_pr, 2)) * (np.power(muQ, 2)))
+                           + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2) / 2)
+                           * np.power(vHiggs, 2))
+            linterm = (((-1) * muQ) * ((np.power(g_EW, 2) * M_2
+                                        * (np.power(M_1, 2) + np.power(muQ, 2)))
+                                       + np.power(g_pr, 2) * M_1
+                                       * (np.power(M_2, 2) + np.power(muQ, 2)))
+                       / tanb) \
+                      + ((np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
+                          / 2) * np.power(vHiggs, 2)) + (np.power(muQ, 2)
+                                                         * ((np.power((g_EW * M_1), 2))
+                                                            + (np.power((g_pr * M_2), 2)))) \
+                      + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2)
+                         * np.power((vHiggs * muQ), 2) * cossqb())
+            constterm = (M_1 * M_2 * ((np.power(g_EW, 2) * M_1)
+                                      + (np.power(g_pr, 2) * M_2))
+                         * np.power(muQ, 3) * (1 / tanb)) \
+                        - (np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
+                           * np.power(vHiggs, 2) * np.power(muQ, 2) * cossqb())
+            mynum = (cubicterm * np.power(msn, 6)) + (quadrterm * np.power(msn, 4)) \
+                    + (linterm * np.power(msn, 2)) + constterm
+            return mynum
+
+
+
+        def neutralinodd_deriv_num(msn):
+            """
+            Return numerator for one-loop dd correction derivative term of neutralino.
+
+            Parameters
+            ----------
+            msn : Neutralino mass.
+
+            """
+            cubicterm = np.power(g_EW, 2) + np.power(g_pr, 2)
+            quadrterm = (((np.power(g_EW, 2) * M_2 * muQ) + (np.power(g_pr, 2) * M_1
+                                                             * muQ)) * (tanb)) \
+                        - ((np.power((g_EW * M_1), 2)) + (np.power((g_pr * M_2), 2))
+                           + ((np.power(g_EW, 2) + np.power(g_pr, 2)) * (np.power(muQ, 2)))
+                           + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2) / 2)
+                           * np.power(vHiggs, 2))
+            linterm = (((-1) * muQ) * ((np.power(g_EW, 2) * M_2
+                                        * (np.power(M_1, 2) + np.power(muQ, 2)))
+                                       + np.power(g_pr, 2) * M_1
+                                       * (np.power(M_2, 2) + np.power(muQ, 2)))
+                       * tanb) \
+                      + ((np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
+                          / 2) * np.power(vHiggs, 2)) \
+                      + (np.power(muQ, 2) * ((np.power((g_EW * M_1), 2))
+                                             + np.power(g_pr, 2) * np.power(M_2, 2))) \
+                      + (np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2)
+                         * np.power((vHiggs * muQ), 2) * sinsqb())
+            constterm = (M_1 * M_2 * (np.power(g_EW, 2) * M_1 + (np.power(g_pr, 2)
+                                                                 * M_2))
+                         * np.power(muQ, 3) * tanb) \
+                        - (np.power((np.power(g_EW, 2) * M_1 + np.power(g_pr, 2) * M_2), 2)
+                           * np.power((vHiggs * muQ), 2) * sinsqb())
+            mynum = (cubicterm * np.power(msn, 6)) + (quadrterm * np.power(msn, 4)) \
+                    + (linterm * np.power(msn, 2)) + constterm
+            return mynum
+
+
+
+        def neutralino_deriv_denom(msn):
+            """
+            Return denominator for one-loop correction derivative term of neutralino.
+
+            Parameters
+            ----------
+            msn : Neutralino mass.
+
+            """
+            quadrterm = -3 * ((np.power(M_1, 2)) + (np.power(M_2, 2))
+                              + ((np.power(g_EW, 2) + np.power(g_pr, 2))
+                                 * np.power(vHiggs, 2)) + (2 * np.power(muQ, 2)))
+            linterm = (np.power(vHiggs, 4)
+                       * np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2) / 2) \
+                      + (np.power(vHiggs, 2)
+                         * (2 * ((np.power((g_EW * M_1), 2)) + (np.power((g_pr * M_2), 2))
+                                 + ((np.power(g_EW, 2) + np.power(g_pr, 2))
+                                    * np.power(muQ, 2))
+                                 - (muQ * (np.power(g_pr, 2) * M_1 + np.power(g_EW, 2) * M_2)
+                                    * 2 * np.sqrt(sinsqb()) * np.sqrt(cossqb()))))) \
+                      + (2 * ((np.power((M_1 * M_2), 2))
+                              + (2 * (np.power((M_1 * muQ), 2) + np.power((M_2 * muQ), 2)))
+                              + (np.power(muQ, 4))))
+            constterm = (np.power(vHiggs, 4) * (1 / 8)
+                         * ((np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2)
+                             * np.power(muQ, 2) * (np.power(cossqb(), 2)
+                                                   - (6 * cossqb() * sinsqb())
+                                                   + np.power(sinsqb(), 2)))
+                            - (2 * np.power((np.power(g_EW, 2) * M_1
+                                             + np.power(g_pr, 2) * M_2), 2))
+                            - (np.power(muQ, 2)
+                               * np.power((np.power(g_EW, 2) + np.power(g_pr, 2)), 2))
+                            )) \
+                        + (np.power(vHiggs, 2) * 2 * muQ
+                           * ((np.sqrt(cossqb()) * np.sqrt(sinsqb()))
+                              * (np.power(g_EW, 2) * M_2
+                                 * (np.power(M_1, 2) + np.power(muQ, 2))
+                                 + (np.power(g_pr, 2) * M_1
+                                    * (np.power(M_2, 2) + np.power(muQ, 2)))))) \
+                        - ((2 * np.power((M_2 * M_1 * muQ), 2))
+                           + (np.power(muQ, 4) * (np.power(M_1, 2) + np.power(M_2, 2))))
+            mydenom = 4 * np.power(msn, 6) + quadrterm * np.power(msn, 4) \
+                      + linterm * np.power(msn, 2) + constterm
+            return mydenom
+
+
+
+        def sigmauu_neutralino(msn):
+            """
+            Return one-loop correction Sigma_u^u(neutralino).
+
+            Parameters
+            ----------
+            msn : Neutralino mass.
+
+            """
+            sigma_uu_neutralino = ((-1) / (16 * np.power(np.pi, 2))) \
+                                  * (neutralinouu_deriv_num(msn)
+                                     / neutralino_deriv_denom(msn)) \
+                                  * logfunc(msn)
+            return sigma_uu_neutralino
+
+
+
+        def sigmadd_neutralino(msn):
+            """
+            Return one-loop correction Sigma_d^d(neutralino).
+
+            Parameters
+            ----------
+            msn : Neutralino mass.
+
+            """
+            sigma_dd_neutralino = ((-1) / (16 * np.power(np.pi, 2))) \
+                                  * (neutralinodd_deriv_num(msn)
+                                     / neutralino_deriv_denom(msn)) \
+                                  * logfunc(msn)
+            return sigma_dd_neutralino
+
+
+        # Charginos: #
+
+
+        def sigmauu_chargino1():
+            """Return one-loop correction Sigma_u^u(chargino_1)."""
+            chargino_num = ((-2) * m_w_sq() * cos2b()) + np.power(M_2, 2) \
+                           + np.power(muQ, 2)
+            chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
+            sigma_uu_chargino1 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2))) \
+                                 * (1 - (chargino_num / chargino_den)) * logfunc(msC1)
+            return sigma_uu_chargino1
+
+
+
+        def sigmauu_chargino2():
+            """Return one-loop correction Sigma_u^u(chargino_2)."""
+            chargino_num = ((-2) * m_w_sq() * cos2b()) + np.power(M_2, 2) \
+                           + np.power(muQ, 2)
+            chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
+            sigma_uu_chargino2 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2))) \
+                                 * (1 + (chargino_num / chargino_den)) * logfunc(msC2)
+            return sigma_uu_chargino2
+
+
+
+        def sigmadd_chargino1():
+            """Return one-loop correction Sigma_d^d(chargino_1)."""
+            chargino_num = (2 * m_w_sq() * cos2b()) + np.power(M_2, 2) \
+                           + np.power(muQ, 2)
+            chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
+            sigma_dd_chargino1 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2))) \
+                                 * (1 - (chargino_num / chargino_den)) * logfunc(msC1)
+            return sigma_dd_chargino1
+
+
+
+        def sigmadd_chargino2():
+            """Return one-loop correction Sigma_d^d(chargino_2)."""
+            chargino_num = (2 * m_w_sq() * cos2b()) + np.power(M_2, 2) \
+                           + np.power(muQ, 2)
+            chargino_den = np.power(msC2, 2) - np.power(msC1, 2)
+            sigma_dd_chargino2 = -1 * (np.power(g_EW, 2) / (16 * np.power(np.pi, 2))) \
+                                 * (1 + (chargino_num / chargino_den)) * logfunc(msC2)
+            return sigma_dd_chargino2
+
+
+        # Higgs bosons (sigmauu = sigmadd here): #
+
+
+        def sigmauu_h0():
+            """Return one-loop correction Sigma_u^u(h_0) (lighter neutral Higgs)."""
+            mynum = mz_q_sq() + (mA0sq * (1 + (4 * cos2b())
+                                          + (2 * np.power(cos2b(), 2))))
+            myden = np.power(mH0, 2) - np.power(mh0, 2)
+            sigma_uu_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) \
+                          * (1 - (mynum / myden)) * logfunc(mh0)
+            return sigma_uu_h0
+
+
+
+        def sigmadd_h0():
+            """Return one-loop correction Sigma_d^d(h_0) (lighter neutral Higgs)."""
+            mynum = mz_q_sq() + (mA0sq * (1 - (4 * cos2b())
+                                          + (2 * np.power(cos2b(), 2))))
+            myden = np.power(mH0, 2) - np.power(mh0, 2)
+            sigma_dd_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) \
+                          * (1 - (mynum / myden)) * logfunc(mh0)
+            return sigma_dd_h0
+
+
+
+        def sigmauu_heavy_h0():
+            """Return one-loop correction Sigma_u^u(H_0) (heavier neutr. Higgs)."""
+            mynum = mz_q_sq() + (mA0sq * (1 + (4 * cos2b()) + (2 * np.power(cos2b(), 2))))
+            myden = np.power(mH0, 2) - np.power(mh0, 2)
+            sigma_uu_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) * (1 + (mynum / myden)) * logfunc(mH0)
+            return sigma_uu_heavy_h0
+
+
+
+        def sigmadd_heavy_h0():
+            """Return one-loop correction Sigma_d^d(H_0) (heavier neutr. Higgs)."""
+            mynum = mz_q_sq() + (mA0sq * (1 - (4 * cos2b()) + (2 * np.power(cos2b(), 2))))
+            myden = np.power(mH0, 2) - np.power(mh0, 2)
+            sigma_dd_heavy_h0 = (gz_sq() / (16 * np.power(np.pi, 2))) * (1 + (mynum / myden)) * logfunc(mH0)
+            return sigma_dd_heavy_h0
+
+
+
+        def sigmauu_h_pm():
+            """Return one-loop correction Sigma_u,d^u,d(H_{+-})."""
+            sigma_uu_h_pm = (np.power((g_EW / np.pi), 2) / (32)) * logfunc(mH_pm)
+            return sigma_uu_h_pm
+
+
+        # Weak bosons (sigmauu = sigmadd here): #
+
+
+        def sigmauu_w_pm():
+            """Return one-loop correction Sigma_u,d^u,d(W_{+-})."""
+            sigma_uu_w_pm = (3 * np.power((g_EW / np.pi), 2) / (32)) \
+                            * logfunc(np.sqrt(m_w_sq()))
+            return sigma_uu_w_pm
+
+
+
+        def sigmauu_z0():
+            """Return one-loop correction Sigma_u,d^u,d(Z_0)."""
+            sigma_uu_z0 = (3 * (np.power(g_EW, 2) + np.power(g_pr, 2))
+                           / (64 * np.power(np.pi, 2))) * logfunc(np.sqrt(mz_q_sq()))
+            return sigma_uu_z0
+
+
+        # SM fermions (sigmadd_t = sigmauu_b = sigmauu_tau = 0): #
+
+
+        def sigmauu_top():
+            """Return one-loop correction Sigma_u^u(top)."""
+            mymt = y_t * v_higgs_u()
+            sigma_uu_top = ((-1) * np.power((y_t / np.pi), 2) / (16)) * logfunc(mymt)
+            return sigma_uu_top
+
+
+
+        def sigmadd_bottom():
+            """Return one-loop correction Sigma_d^d(bottom)."""
+            mymb = y_b * v_higgs_d()
+            sigma_dd_bottom = (-1 * np.power((y_b / np.pi), 2) / (16)) * logfunc(mymb)
+            return sigma_dd_bottom
+
+
+
+        def sigmadd_tau():
+            """Return one-loop correction Sigma_d^d(tau)."""
+            mymtau = y_tau * v_higgs_d()
+            sigma_dd_tau = (-1 * np.power((y_tau / np.pi), 2) / (16)) * logfunc(mymtau)
+            return sigma_dd_tau
+
+        ##### Two loop calculations #####
+        # Include two-loop O(alpha_t alpha_s) corrections from Dedes, Slavich
+        # paper arxiv: hep-ph 0212132
+
+
+        def sigmadd_2loop():
+            def Deltafunc(x,y,z):
+                mydelta = np.power(x, 2) + np.power(y, 2) + np.power(z, 2)\
+                    - (2 * ((x * y) + (x * z) + (y * z)))
+                return mydelta
+
+            def Phifunc(x,y,z):
+                if(x / z < 1 and y / z < 1):
+                    myu = x / z
+                    myv = y / z
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                              - (np.log(myu) * np.log(myv))
+                                              - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                              + (np.power(np.pi, 2) / 3))
+                elif(x / z > 1 and y / z < 1):
+                    myu = z / x
+                    myv = y / x
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / x) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                elif(x/z > 1 and y/ z > 1 and x > y):
+                    myu = z / x
+                    myv = y / x
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / x) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                elif(x / z < 1 and y / z > 1):
+                    myu = z / y
+                    myv = x / y
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / y) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                elif (x / z > 1 and y / z > 1 and y>x):
+                    myu = z / y
+                    myv = x / y
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / y) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                return myphi
+
+            mymt = y_t * v_higgs_u()
+            mymtsq = np.power(mymt, 2)
+            mst1sq = np.power(m_stop_1, 2)
+            mst2sq = np.power(m_stop_2, 2)
+            s2theta = (2 * mymt * (A_t + (muQ / tanb)))\
+                / (np.power(m_stop_1, 2) - np.power(m_stop_2, 2))
+            s2sqtheta = np.power(s2theta, 2)
+            c2sqtheta = 1 - s2sqtheta
+            mglsq = np.power(mgl, 2)
+            myunits = np.power(g_s, 2) * 4\
+                / np.power((16 * np.power(np.pi, 2)), 2)
+            myF = myunits\
+                * ((4 * mgl * mymt / s2theta) * (1 + 4 * c2sqtheta)
+                   - (((2 * (mst1sq - mst2sq))
+                      + (4 * mgl * mymt / s2theta))
+                      * np.log(mglsq / Q_renorm_sq)
+                      * np.log(mymtsq / Q_renorm_sq))
+                   - (2 * (4 - s2sqtheta)
+                      * (mst1sq - mst2sq))
+                   + ((((4 * mst1sq * mst2sq)
+                        - s2sqtheta * np.power((mst1sq + mst2sq), 2))
+                       / (mst1sq - mst2sq)) * (np.log(mst1sq / Q_renorm_sq))
+                      * (np.log(mst2sq / Q_renorm_sq)))
+                   + ((((4 * (mglsq + mymtsq + (2 * mst1sq)))
+                       - (s2sqtheta * ((3 * mst1sq) + mst2sq))
+                       - ((16 * c2sqtheta * mgl * mymt * mst1sq)
+                          / (s2theta * (mst1sq - mst2sq)))
+                       - (4 * s2theta * mgl * mymt))
+                       * np.log(mst1sq / Q_renorm_sq))
+                      + ((mst1sq / (mst1sq - mst2sq))
+                         * ((s2sqtheta * (mst1sq + mst2sq))
+                            - ((4 * mst1sq) - (2 * mst2sq)))
+                         * np.power(np.log(mst1sq / Q_renorm_sq), 2))
+                      + (2 * (mst1sq - mglsq - mymtsq
+                              + (mgl * mymt * s2theta)
+                              + ((2 * c2sqtheta * mgl * mymt * mst1sq)
+                                 / (s2theta * (mst1sq - mst2sq))))
+                         * np.log(mglsq * mymtsq
+                                  / (np.power(Q_renorm_sq, 2)))
+                         * np.log(mst1sq / Q_renorm_sq))
+                      + (((4 * mgl * mymt * c2sqtheta * (mymtsq - mglsq))
+                          / (s2theta * (mst1sq - mst2sq)))
+                         * np.log(mymtsq / mglsq)
+                         * np.log(mst1sq / Q_renorm_sq))
+                      + ((((4 * mglsq * mymtsq) + (2 * Deltafunc(mglsq, mymtsq, mst1sq))) / mst1sq)
+                         - (((2 * mgl * mymt * s2theta) / mst1sq)
+                            * (mglsq + mymtsq - mst1sq))
+                         + ((4 * c2sqtheta * mgl * mymt * Deltafunc(mglsq, mymtsq, mst1sq))
+                            / (s2theta * mst1sq * (mst1sq - mst2sq)))) * Phifunc(mglsq, mymtsq, mst1sq))
+                   - ((((4 * (mglsq + mymtsq + (2 * mst2sq)))
+                       - (s2sqtheta * ((3 * mst2sq) + mst1sq))
+                       - ((16 * c2sqtheta * mgl * mymt * mst2sq)
+                          / (((-1) * s2theta) * (mst2sq - mst1sq)))
+                       - ((-4) * s2theta * mgl * mymt))
+                       * np.log(mst2sq / Q_renorm_sq))
+                      + ((mst2sq / (mst2sq - mst1sq))
+                         * ((s2sqtheta * (mst2sq + mst1sq))
+                            - ((4 * mst2sq) - (2 * mst1sq)))
+                         * np.power(np.log(mst2sq / Q_renorm_sq), 2))
+                      + (2 * (mst2sq - mglsq - mymtsq
+                              - (mgl * mymt * s2theta)
+                              + ((2 * c2sqtheta * mgl * mymt * mst2sq)
+                                 / (s2theta * (mst1sq - mst2sq))))
+                         * np.log(mglsq * mymtsq
+                                  / (np.power(Q_renorm_sq, 2)))
+                         * np.log(mst2sq / Q_renorm_sq))
+                      + (((4 * mgl * mymt * c2sqtheta * (mymtsq - mglsq))
+                          / (s2theta * (mst1sq - mst2sq)))
+                         * np.log(mymtsq / mglsq)
+                         * np.log(mst2sq / Q_renorm_sq))
+                      + ((((4 * mglsq * mymtsq) + (2 * Deltafunc(mglsq, mymtsq, mst2sq))) / mst2sq)
+                         - ((((-2) * mgl * mymt * s2theta) / mst2sq)
+                            * (mglsq + mymtsq - mst2sq))
+                         + ((4 * c2sqtheta * mgl * mymt * Deltafunc(mglsq, mymtsq, mst2sq))
+                            / (s2theta * mst2sq * (mst1sq - mst2sq)))) * Phifunc(mglsq, mymtsq, mst2sq)))
+            mysigmadd_2loop = (mymt * muQ * (1 / tanb) * s2theta * myF)\
+                / (np.power((vHiggs), 2) * cossqb())
+            return mysigmadd_2loop
+
+
+
+        def sigmauu_2loop():
+            def Deltafunc(x, y, z):
+                mydelta = np.power(x, 2) + np.power(y, 2) + np.power(z, 2) \
+                          - (2 * ((x * y) + (x * z) + (y * z)))
+                return mydelta
+
+            def Phifunc(x, y, z):
+                if(x / z < 1 and y / z < 1):
+                    myu = x / z
+                    myv = y / z
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                              - (np.log(myu) * np.log(myv))
+                                              - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                              + (np.power(np.pi, 2) / 3))
+                elif(x / z > 1 and y / z < 1):
+                    myu = z / x
+                    myv = y / x
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / x) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                elif(x/z > 1 and y/ z > 1 and x > y):
+                    myu = z / x
+                    myv = y / x
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / x) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                elif(x / z < 1 and y / z > 1):
+                    myu = z / y
+                    myv = x / y
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / y) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                elif (x / z > 1 and y / z > 1 and y > x):
+                    myu = z / y
+                    myv = x / y
+                    mylambda = np.sqrt(np.power((1 - myu - myv), 2) - (4 * myu * myv))
+                    myxp = 0.5 * (1 + myu - myv - mylambda)
+                    myxm = 0.5 * (1 - myu + myv - mylambda)
+                    myphi = (z / y) * (1 / mylambda) * ((2 * np.log(myxp) * np.log(myxm))
+                                                        - (np.log(myu) * np.log(myv))
+                                                        - (2 * (spence(1 - myxp) + spence(1 - myxm)))
+                                                        + (np.power(np.pi, 2) / 3))
+                return myphi
+
+            mymt = y_t * v_higgs_u()
+            mymtsq = np.power(mymt, 2)
+            mst1sq = np.power(m_stop_1, 2)
+            mst2sq = np.power(m_stop_2, 2)
+            s2theta = (2 * mymt * (A_t + (muQ / tanb)))\
+                / (np.power(m_stop_1, 2) - np.power(m_stop_2, 2))
+            s2sqtheta = np.power(s2theta, 2)
+            c2sqtheta = 1 - s2sqtheta
+            mglsq = np.power(mgl, 2)
+            myunits = np.power(g_s, 2) * 4 \
+                      / np.power((16 * np.power(np.pi, 2)), 2)
+            myF = myunits\
+                  * ((4 * mgl * mymt / s2theta) * (1 + 4 * c2sqtheta)
+                     - (((2 * (mst1sq - mst2sq))
+                         + (4 * mgl * mymt / s2theta))
+                        * np.log(mglsq / Q_renorm_sq)
+                        * np.log(mymtsq / Q_renorm_sq))
+                     - (2 * (4 - s2sqtheta)
+                        * (mst1sq - mst2sq))
+                     + ((((4 * mst1sq * mst2sq)
+                          - s2sqtheta * np.power((mst1sq + mst2sq), 2))
+                         / (mst1sq - mst2sq)) * (np.log(mst1sq / Q_renorm_sq))
+                        * (np.log(mst2sq / Q_renorm_sq)))
+                     + ((((4 * (mglsq + mymtsq + (2 * mst1sq)))
+                          - (s2sqtheta * ((3 * mst1sq) + mst2sq))
+                          - ((16 * c2sqtheta * mgl * mymt * mst1sq)
+                             / (s2theta * (mst1sq - mst2sq)))
+                          - (4 * s2theta * mgl * mymt))
+                         * np.log(mst1sq / Q_renorm_sq))
+                        + ((mst1sq / (mst1sq - mst2sq))
+                           * ((s2sqtheta * (mst1sq + mst2sq))
+                              - ((4 * mst1sq) - (2 * mst2sq)))
+                           * np.power(np.log(mst1sq / Q_renorm_sq), 2))
+                        + (2 * (mst1sq - mglsq - mymtsq
+                                + (mgl * mymt * s2theta)
+                                + ((2 * c2sqtheta * mgl * mymt * mst1sq)
+                                   / (s2theta * (mst1sq - mst2sq))))
+                           * np.log(mglsq * mymtsq
+                                    / (np.power(Q_renorm_sq, 2)))
+                           * np.log(mst1sq / Q_renorm_sq))
+                        + (((4 * mgl * mymt * c2sqtheta * (mymtsq - mglsq))
+                            / (s2theta * (mst1sq - mst2sq)))
+                           * np.log(mymtsq / mglsq)
+                           * np.log(mst1sq / Q_renorm_sq))
+                        + ((((4 * mglsq * mymtsq) + (2 * Deltafunc(mglsq, mymtsq, mst1sq))) / mst1sq)
+                           - (((2 * mgl * mymt * s2theta) / mst1sq)
+                              * (mglsq + mymtsq - mst1sq))
+                           + ((4 * c2sqtheta * mgl * mymt * Deltafunc(mglsq, mymtsq, mst1sq))
+                              / (s2theta * mst1sq * (mst1sq - mst2sq)))) * Phifunc(mglsq, mymtsq, mst1sq))
+                     - ((((4 * (mglsq + mymtsq + (2 * mst2sq)))
+                          - (s2sqtheta * ((3 * mst2sq) + mst1sq))
+                          - ((16 * c2sqtheta * mgl * mymt * mst2sq)
+                             / (((-1) * s2theta) * (mst2sq - mst1sq)))
+                          - ((-4) * s2theta * mgl * mymt))
+                         * np.log(mst2sq / Q_renorm_sq))
+                        + ((mst2sq / (mst2sq - mst1sq))
+                           * ((s2sqtheta * (mst2sq + mst1sq))
+                              - ((4 * mst2sq) - (2 * mst1sq)))
+                           * np.power(np.log(mst2sq / Q_renorm_sq), 2))
+                        + (2 * (mst2sq - mglsq - mymtsq
+                                - (mgl * mymt * s2theta)
+                                + ((2 * c2sqtheta * mgl * mymt * mst2sq)
+                                   / (s2theta * (mst1sq - mst2sq))))
+                           * np.log(mglsq * mymtsq
+                                    / (np.power(Q_renorm_sq, 2)))
+                           * np.log(mst2sq / Q_renorm_sq))
+                        + (((4 * mgl * mymt * c2sqtheta * (mymtsq - mglsq))
+                            / (s2theta * (mst1sq - mst2sq)))
+                           * np.log(mymtsq / mglsq)
+                           * np.log(mst2sq / Q_renorm_sq))
+                        + ((((4 * mglsq * mymtsq) + (2 * Deltafunc(mglsq, mymtsq, mst2sq))) / mst2sq)
+                           - ((((-2) * mgl * mymt * s2theta) / mst2sq)
+                              * (mglsq + mymtsq - mst2sq))
+                           + ((4 * c2sqtheta * mgl * mymt * Deltafunc(mglsq, mymtsq, mst2sq))
+                              / (s2theta * mst2sq * (mst1sq - mst2sq)))) * Phifunc(mglsq, mymtsq, mst2sq)))
+            myG = myunits\
+                  * ((5 * mgl * s2theta * (mst1sq - mst2sq) / mymt)
+                     - (10 * (mst1sq + mst2sq - (2 * mymtsq)))
+                     - (4 * mglsq) + ((12 * mymtsq) * (np.power(np.log(mymtsq / Q_renorm_sq), 2)
+                                                       - (2 * np.log(mymtsq / Q_renorm_sq))))
+                     + (((4 * mglsq) - ((mgl * s2theta / mymt) * (mst1sq - mst2sq)))
+                        * np.log(mglsq / Q_renorm_sq) * np.log(mymtsq / Q_renorm_sq))
+                     + (s2sqtheta * (mst1sq + mst2sq) * np.log(mst1sq / Q_renorm_sq) * np.log(mst2sq / Q_renorm_sq))
+                     + (((4 * (mglsq + mymtsq + (2 * mst1sq)))
+                         + (s2sqtheta * (mst1sq - mst2sq))
+                         - ((4 * mgl * s2theta / mymt) * (mymtsq + mst1sq))) * np.log(mst1sq / Q_renorm_sq)
+                        + (((mgl * s2theta * ((5 * mymtsq) - mglsq + mst1sq) / mymt)
+                            - (2 * (mglsq + 2 * mymtsq))) * np.log(mymtsq / Q_renorm_sq)
+                           * np.log(mst1sq / Q_renorm_sq))
+                        + (((mgl * s2theta * (mglsq - mymtsq + mst1sq) / mymt) - (2 * mglsq))
+                           * np.log(mglsq / Q_renorm_sq) * np.log(mst1sq / Q_renorm_sq))
+                        - ((2 + s2sqtheta) * mst1sq * np.power(np.log(mst1sq / Q_renorm_sq), 2))
+                        + ((2 * mglsq * (mglsq + mymtsq - mst1sq - (2 * mgl * mymt * s2theta)) / mst1sq)
+                           + ((mgl * s2theta / (mymt * mst1sq)) * Deltafunc(mglsq, mymtsq, mst1sq)))
+                        * Phifunc(mglsq, mymtsq, mst1sq))
+                     + (((4 * (mglsq + mymtsq + (2 * mst2sq)))
+                         + (s2sqtheta * (mst2sq - mst1sq))
+                         - (((-4) * mgl * s2theta / mymt) * (mymtsq + mst2sq))) * np.log(mst2sq / Q_renorm_sq)
+                        + ((((-1) * mgl * s2theta * ((5 * mymtsq) - mglsq + mst2sq) / mymt)
+                            - (2 * (mglsq + 2 * mymtsq))) * np.log(mymtsq / Q_renorm_sq)
+                           * np.log(mst2sq / Q_renorm_sq))
+                        + ((((-1) * mgl * s2theta * (mglsq - mymtsq + mst2sq) / mymt) - (2 * mglsq))
+                           * np.log(mglsq / Q_renorm_sq) * np.log(mst2sq / Q_renorm_sq))
+                        - ((2 + s2sqtheta) * mst2sq * np.power(np.log(mst2sq / Q_renorm_sq), 2))
+                        + ((2 * mglsq * (mglsq + mymtsq - mst2sq + (2 * mgl * mymt * s2theta)) / mst2sq)
+                           + ((mgl * (-1) * s2theta / (mymt * mst2sq)) * Deltafunc(mglsq, mymtsq, mst2sq)))
+                        * Phifunc(mglsq, mymtsq, mst2sq)))
+            mysigmauu_2loop = (mymt * A_t * s2theta * myF
+                               + 2 * np.power(mymt, 2) * myG)\
+                / (np.power((vHiggs), 2) * sinsqb())
+            return mysigmauu_2loop
+
+
+        # DEW contribution computation: #
+
+        def dew_funcu(inp):
+            """
+            Compute individual one-loop DEW contributions from Sigma_u^u.
+
+            Parameters
+            ----------
+            inp : One-loop correction or Higgs to be inputted into the DEW function.
+
+            """
+            mycontribuu = np.abs(((-1) * inp * (np.power(tanb, 2))) / ((np.power(tanb, 2)) - 1))
+            return mycontribuu
+
+
+        def dew_funcd(inp):
+            """
+            Compute individual one-loop DEW contributions from Sigma_d^d.
+
+            Parameters
+            ----------
+            inp : One-loop correction or Higgs to be inputted into the DEW function.
+
+            """
+            mycontribdd = np.abs((inp) / ((np.power(tanb, 2)) - 1))
+            return mycontribdd
+
+
         # SLHA input and definition of variables from SLHA file: #
         fileCheck = True
         while fileCheck:
-            direc = input('Enter the full directory for your SLHA file: ')
-            fileName = Path(direc)
-            if fileName.exists():
+            try:
+                direc = input('Enter the full directory for your SLHA file: ')
                 d = pyslha.read(direc)
                 fileCheck = False
-            else:
+            except FileNotFoundError:
                 print("The input file cannot be found.\n")
                 print("Please try checking your spelling and try again.\n")
                 fileCheck = True
-        [vHiggs, muQ, tanb, y_t] = [d.blocks['HMIX'][3], d.blocks['HMIX'][1], d.blocks['HMIX'][2], d.blocks['YU'][3, 3]]
-        [tanb, y_t, beta] = [d.blocks['HMIX'][2], d.blocks['YU'][3, 3], np.arctan(tanb)]
+        [vHiggs, muQ, tanb, y_t] = [d.blocks['HMIX'][3] / np.sqrt(2),
+                                    d.blocks['HMIX'][1], d.blocks['HMIX'][2],
+                                    d.blocks['YU'][3, 3]]
+        beta = np.arctan(tanb)
         [y_b, y_tau, g_pr] = [d.blocks['YD'][3, 3], d.blocks['YE'][3, 3], d.blocks['GAUGE'][2]]
         [m_stop_1, m_stop_2, g_EW] = [d.blocks['MASS'][1000006], d.blocks['MASS'][2000006], d.blocks['GAUGE'][1]]
+        g_s = d.blocks['GAUGE'][3]
         [m_sbot_1, m_sbot_2] = [d.blocks['MASS'][1000005], d.blocks['MASS'][2000005]]
         [m_stau_1, m_stau_2] = [d.blocks['MASS'][1000015], d.blocks['MASS'][2000015]]
         [mtL, mtR, mbL] = [d.blocks['MSOFT'][43], d.blocks['MSOFT'][46], d.blocks['MSOFT'][43]]
+        thetastop = np.arccos(d.blocks['STOPMIX'][1, 1])
         [mbR, mtauL, mtauR] = [d.blocks['MSOFT'][49], d.blocks['MSOFT'][33], d.blocks['MSOFT'][36]]
         [msupL, msupR] = [d.blocks['MSOFT'][41], d.blocks['MSOFT'][44]]
         [msdownL, msdownR] = [d.blocks['MSOFT'][41], d.blocks['MSOFT'][47]]
@@ -868,6 +1184,7 @@ if __name__ == "__main__":
         [msstrangeL, msstrangeR] = [d.blocks['MSOFT'][42], d.blocks['MSOFT'][48]]
         [mscharmL, mscharmR] = [d.blocks['MSOFT'][42], d.blocks['MSOFT'][45]]
         [msmuL, msmuR] = [d.blocks['MSOFT'][32], d.blocks['MSOFT'][35]]
+        mgl = d.blocks['MASS'][1000021]
         [msN1, msN2] = [d.blocks['MASS'][1000022], d.blocks['MASS'][1000023]]
         [msN3, msN4] = [d.blocks['MASS'][1000025], d.blocks['MASS'][1000035]]
         [msC1, msC2] = [d.blocks['MASS'][1000024], d.blocks['MASS'][1000037]]
@@ -875,6 +1192,7 @@ if __name__ == "__main__":
         [mH0, mHusq] = [d.blocks['MASS'][35], d.blocks['MSOFT'][22]]
         [mHdsq, mH_pm] = [d.blocks['MSOFT'][21], d.blocks['MASS'][37]]
         [M_1, M_2] = [d.blocks['MSOFT'][1], d.blocks['MSOFT'][2]]
+        [A_t, A_b, A_tau] = [d.blocks['AU'][3, 3], d.blocks['AD'][3, 3], d.blocks['AE'][3, 3]]
         [a_t, a_b] = [d.blocks['AU'][3, 3] * y_t, d.blocks['AD'][3, 3] * y_b]
         [a_tau, mA0sq] = [d.blocks['AE'][3, 3] * y_tau, d.blocks['HMIX'][4]]
         [Q_renorm_sq, halfmzsq] = [m_stop_1 * m_stop_2, np.power(mZ, 2) / 2]
@@ -901,8 +1219,9 @@ if __name__ == "__main__":
                              dew_funcu(sigmauu_neutralino(msN3)), dew_funcu(sigmauu_neutralino(msN4)),
                              dew_funcu(sigmauu_chargino1()), dew_funcu(sigmauu_chargino2()), dew_funcu(sigmauu_h0()),
                              dew_funcu(sigmauu_heavy_h0()), dew_funcu(sigmauu_h_pm()), dew_funcu(sigmauu_w_pm()),
-                             dew_funcu(sigmauu_z0()), dew_funcu(sigmauu_top()), dew_funcu(sigmauu_h0()),
-                             dew_funcu(sigmauu_heavy_h0())]) / halfmzsq
+                             dew_funcu(sigmauu_z0()), dew_funcu(sigmauu_top()),
+                             dew_funcu(sigmauu_2loop()), dew_funcd(sigmadd_2loop())])\
+                   / halfmzsq
         label_sort_array = np.sort(np.array([(contribs[0], 'mu'), (contribs[1], 'H_u'), (contribs[2], 'H_d'),
                                              (contribs[3], 'Sigma_d^d(stop_1)'), (contribs[4], 'Sigma_d^d(stop_2)'),
                                              (contribs[5], 'Sigma_d^d(sbot_1)'), (contribs[6], 'Sigma_d^d(sbot_2)'),
@@ -933,7 +1252,9 @@ if __name__ == "__main__":
                                              (contribs[37], 'Sigma_u^u(chargino_2)'),
                                              (contribs[38], 'Sigma_u^u(h_0)'), (contribs[39], 'Sigma_u^u(H_0)'),
                                              (contribs[40], 'Sigma_u^u(H_+-)'), (contribs[41], 'Sigma_u^u(W_+-)'),
-                                             (contribs[42], 'Sigma_u^u(Z_0)'), (contribs[43], 'Sigma_u^u(top)')],
+                                             (contribs[42], 'Sigma_u^u(Z_0)'), (contribs[43], 'Sigma_u^u(top)'),
+                                             (contribs[44], 'Sigma_u^u(O(alpha_s alpha_t))'),
+                                             (contribs[45], 'Sigma_d^d(O(alpha_s alpha_t))')],
                                             dtype=[('Contrib', float),
                                                    ('label', 'U30')]),
                                    order='Contrib')
@@ -995,3 +1316,7 @@ if __name__ == "__main__":
         else:
             userContinue = True
             print("\nInvalid user input. Returning to SLHA directory input.\n")
+        del vHiggs, muQ, tanb, y_t, beta, y_b, y_tau, g_pr, g_s, mgl, m_stop_1, m_stop_2, g_EW, m_sbot_1, m_sbot_2, m_stau_1, m_stau_2, mtL, mtR
+        del mbL, mbR, mtauL, mtauR, msupL, msupR, msdownL, msdownR, mselecL, mselecR, mselecneut, msmuneut, msstrangeL, msstrangeR
+        del mscharmL, mscharmR, msmuL, msmuR, msN1, msN2, msN3, msN4, msC1, msC2, mZ, mh0, mH0, mHusq, mHdsq, mH_pm, M_1, M_2, a_t, a_b
+        del a_tau, A_t, A_b, A_tau, mA0sq, Q_renorm_sq, halfmzsq, cmu, chu, chd, contribs, label_sort_array, reverse_sort_array, d
