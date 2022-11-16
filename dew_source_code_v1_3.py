@@ -5553,11 +5553,12 @@ def my_radcorr_calc(myQ, vHiggs_wk, mu_wk,
             sigmaud_down, sigmauu_elec, sigmadd_elec, sigmaud_elec,
             sigmauu_2loop(), sigmadd_2loop()]
 
-def Delta_BG_calc(modselno, mHdsqGUT, mHusqGUT, M1GUT, M2GUT, M3GUT,
+def Delta_BG_calc(modselno, muGUT, mHdsqGUT, mHusqGUT, M1GUT, M2GUT, M3GUT,
                   mQ3sqGUT, mQ2sqGUT, mQ1sqGUT, mU3sqGUT, mU2sqGUT, mU1sqGUT,
                   mD3sqGUT, mD2sqGUT, mD1sqGUT, mL3sqGUT, mL2sqGUT, mL1sqGUT,
                   mE3sqGUT, mE2sqGUT, mE1sqGUT, atGUT, acGUT, auGUT, abGUT,
-                  asGUT, adGUT, atauGUT, amuGUT, aeGUT):
+                  asGUT, adGUT, atauGUT, amuGUT, aeGUT, ytGUT, ycGUT, yuGUT,
+                  ybGUT, ysGUT, ydGUT, ytauGUT, ymuGUT, yeGUT, mymzsq):
     """
     Compute the fine-tuning measure Delta_BG for the selected model.
 
@@ -5565,84 +5566,239 @@ def Delta_BG_calc(modselno, mHdsqGUT, mHusqGUT, M1GUT, M2GUT, M3GUT,
     ----------
     modselno : Int.
         Selected model number from model list.
+    muGUT: Float.
+        GUT-scale mu.
     mHdsqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mHd^2.
     mHusqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mHu^2.
     M1GUT : Float.
-        DESCRIPTION.
+        GUT-scale M_1.
     M2GUT : Float.
-        DESCRIPTION.
+        GUT-scale M_2.
     M3GUT : Float.
-        DESCRIPTION.
+        GUT-scale M_3.
     mQ3sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mQ_3^2.
     mQ2sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mQ_2^2.
     mQ1sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mQ_1^2.
     mU3sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mU_3^2.
     mU2sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mU_2^2.
     mU1sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mU_1^2.
     mD3sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mD_3^2.
     mD2sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mD_2^2.
     mD1sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mD_1^2.
     mL3sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mL_3^2.
     mL2sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mL_2^2.
     mL1sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mL_1^2.
     mE3sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mE_3^2.
     mE2sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mE_2^2.
     mE1sqGUT : Float.
-        DESCRIPTION.
+        GUT-scale mE_1^2.
     atGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_t.
     acGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_c.
     auGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_u.
     abGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_b.
     asGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_s.
     adGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_d.
     atauGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_tau.
     amuGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_mu.
     aeGUT : Float.
-        DESCRIPTION.
+        GUT-scale soft trilinear a_e.
+    ytGUT : Float.
+        GUT-scale Yukawa y_t.
+    ycGUT : Float.
+        GUT-scale Yukawa y_c.
+    yuGUT : Float.
+        GUT-scale Yukawa y_u.
+    ybGUT : Float.
+        GUT-scale Yukawa y_b.
+    ysGUT : Float.
+        GUT-scale Yukawa y_s.
+    ydGUT : Float.
+        GUT-scale Yukawa y_d.
+    ytauGUT : Float.
+        GUT-scale Yukawa y_tau.
+    ymuGUT : Float.
+        GUT-scale Yukawa y_mu.
+    yeGUT : Float.
+        GUT-scale Yukawa y_e.
+    mymzsq: Float.
+        Running mZ^2, evaluated at Q=2 TeV.
 
     Returns
     -------
     Delta_BG : Float.
-        DESCRIPTION.
+        Naturalness measure Delta_BG.
 
     """
+    deriv_calc = 0
     if (modselno == 1):
-        Delta_BG = 0
+        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0'),
+                                        (np.abs((M1GUT / mymzsq)
+                                                * deriv_calc), 'c_m_1/2'),
+                                        (np.abs(((atGUT / ytGUT) / mymzsq)
+                                                * deriv_calc), 'c_A_0'),
+                                        (np.abs((muGUT / mymzsq)
+                                                * deriv_calc), 'c_mu')],
+                                       dtype=[('BGContrib', float),
+                                              ('BGlabel', 'U40')]),
+                              order='BGContrib')
     elif (modselno == 2):
-        Delta_BG = 0
+        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0'),
+                                        (np.abs((M1GUT / mymzsq)
+                                                * deriv_calc), 'c_m_1/2'),
+                                        (np.abs(((atGUT / ytGUT) / mymzsq)
+                                                * deriv_calc), 'c_A_0'),
+                                        (np.abs((muGUT / mymzsq)
+                                                * deriv_calc), 'c_mu'),
+                                        (np.abs((mHusqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHu^2')],
+                                       dtype=[('BGContrib', float),
+                                              ('BGlabel', 'U40')]),
+                              order='BGContrib')
     elif (modselno == 3):
-        Delta_BG = 0
+        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0'),
+                                        (np.abs((M1GUT / mymzsq)
+                                                * deriv_calc), 'c_m_1/2'),
+                                        (np.abs(((atGUT / ytGUT) / mymzsq)
+                                                * deriv_calc), 'c_A_0'),
+                                        (np.abs((muGUT / mymzsq)
+                                                * deriv_calc), 'c_mu'),
+                                        (np.abs((mHusqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHu^2'),
+                                        (np.abs((mHdsqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHd^2')],
+                                       dtype=[('BGContrib', float),
+                                              ('BGlabel', 'U40')]),
+                              order='BGContrib')
     elif (modselno == 4):
-        Delta_BG = 0
+        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0(3)'),
+                                        (np.abs((np.sqrt(mQ2sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0(1,2)'),
+                                        (np.abs((M1GUT / mymzsq)
+                                                * deriv_calc), 'c_m_1/2'),
+                                        (np.abs(((atGUT / ytGUT) / mymzsq)
+                                                * deriv_calc), 'c_A_0'),
+                                        (np.abs((muGUT / mymzsq)
+                                                * deriv_calc), 'c_mu'),
+                                        (np.abs((mHusqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHu^2'),
+                                        (np.abs((mHdsqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHd^2')],
+                                       dtype=[('BGContrib', float),
+                                              ('BGlabel', 'U40')]),
+                              order='BGContrib')
     elif (modselno == 5):
-        Delta_BG = 0
+        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0(3)'),
+                                        (np.abs((np.sqrt(mQ2sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0(2)'),
+                                        (np.abs((np.sqrt(mQ1sqGUT) / mymzsq)
+                                                * deriv_calc), 'c_m_0(1)'),
+                                        (np.abs((M1GUT / mymzsq)
+                                                * deriv_calc), 'c_m_1/2'),
+                                        (np.abs(((atGUT / ytGUT) / mymzsq)
+                                                * deriv_calc), 'c_A_0'),
+                                        (np.abs((muGUT / mymzsq)
+                                                * deriv_calc), 'c_mu'),
+                                        (np.abs((mHusqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHu^2'),
+                                        (np.abs((mHdsqGUT / mymzsq)
+                                                * deriv_calc), 'c_mHd^2')],
+                                       dtype=[('BGContrib', float),
+                                              ('BGlabel', 'U40')]),
+                              order='BGContrib')
     elif (modselno == 6):
-        Delta_BG = 0
-    return Delta_BG
+       sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_Q3'),
+                                       (np.abs((np.sqrt(mQ2sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_Q2'),
+                                       (np.abs((np.sqrt(mQ1sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_Q1'),
+                                       (np.abs((np.sqrt(mU3sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_U3'),
+                                       (np.abs((np.sqrt(mU2sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_U2'),
+                                       (np.abs((np.sqrt(mU1sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_U1'),
+                                       (np.abs((np.sqrt(mD3sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_D3'),
+                                       (np.abs((np.sqrt(mD2sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_D2'),
+                                       (np.abs((np.sqrt(mD1sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_D1'),
+                                       (np.abs((np.sqrt(mL3sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_L3'),
+                                       (np.abs((np.sqrt(mL2sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_L2'),
+                                       (np.abs((np.sqrt(mL1sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_L1'),
+                                       (np.abs((np.sqrt(mE3sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_E3'),
+                                       (np.abs((np.sqrt(mE2sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_E2'),
+                                       (np.abs((np.sqrt(mE1sqGUT) / mymzsq)
+                                               * deriv_calc), 'c_m_E1'),
+                                       (np.abs((M1GUT / mymzsq)
+                                               * deriv_calc), 'c_M_1'),
+                                       (np.abs((M2GUT / mymzsq)
+                                               * deriv_calc), 'c_M_2'),
+                                       (np.abs((M3GUT / mymzsq)
+                                               * deriv_calc), 'c_M_3'),
+                                       (np.abs(((atGUT / ytGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_t'),
+                                       (np.abs(((acGUT / ycGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_c'),
+                                       (np.abs(((auGUT / yuGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_u'),
+                                       (np.abs(((abGUT / ybGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_b'),
+                                       (np.abs(((asGUT / ysGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_s'),
+                                       (np.abs(((adGUT / ydGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_d'),
+                                       (np.abs(((atauGUT / ytauGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_tau'),
+                                       (np.abs(((amuGUT / ymuGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_mu'),
+                                       (np.abs(((aeGUT / yeGUT) / mymzsq)
+                                               * deriv_calc), 'c_A_e'),
+                                       (np.abs((muGUT / mymzsq)
+                                               * deriv_calc), 'c_mu'),
+                                       (np.abs((mHusqGUT / mymzsq)
+                                               * deriv_calc), 'c_mHu^2'),
+                                       (np.abs((mHdsqGUT / mymzsq)
+                                               * deriv_calc), 'c_mHd^2')],
+                                      dtype=[('BGContrib', float),
+                                             ('BGlabel', 'U40')]),
+                             order='BGContrib')
+    return sens_params
 
 def Delta_HS_calc(mHdsq_Lambda, delta_mHdsq, mHusq_Lambda, delta_mHusq,
                   mu_Lambdasq, delta_musq, running_mz_sq, tanb_sq, sigmauutot,
@@ -6310,6 +6466,8 @@ if __name__ == "__main__":
         mE2sq = RGE_sols[42]
         mE3sq = RGE_sols[43]
         my_b_weak = RGE_sols[44]
+        tree_mzsq = (2 * (mHdsq - (mHusq * np.power(tanb, 2)))
+                     / (np.power(tanb, 2) - 1)) - (2 * np.power(muQ, 2))
         radcorrs_at_2TeV = my_radcorr_calc(2000, vHiggs, muQ, beta,
                                            y_t, y_c, y_u, y_b, y_s, y_d,
                                            y_tau, y_mu, y_e,
@@ -6352,9 +6510,30 @@ if __name__ == "__main__":
                                    np.power(RGE_sols[88], 2),
                                    radcorrs_at_2TeV[0],
                                    radcorrs_at_2TeV[1])
-        print('\nGiven the submitted SLHA file, your value for the high-scale'
-              + ' naturalness measure, Delta_HS, is: '
-              + str(myDelta_HS))
+        print('\nYour value for the high-scale naturalness measure, Delta_HS,'
+              + ' is: ' + str(myDelta_HS))
+        myDelta_BG = Delta_BG_calc(modinp, RGE_sols[51], RGE_sols[71],
+                                   RGE_sols[70], RGE_sols[48], RGE_sols[49],
+                                   RGE_sols[50], RGE_sols[74], RGE_sols[73],
+                                   RGE_sols[72], RGE_sols[80], RGE_sols[79],
+                                   RGE_sols[78], RGE_sols[83], RGE_sols[82],
+                                   RGE_sols[81], RGE_sols[77], RGE_sols[76],
+                                   RGE_sols[75], RGE_sols[86], RGE_sols[85],
+                                   RGE_sols[84], RGE_sols[61], RGE_sols[62],
+                                   RGE_sols[63], RGE_sols[64], RGE_sols[65],
+                                   RGE_sols[66], RGE_sols[67], RGE_sols[68],
+                                   RGE_sols[69], RGE_sols[70], RGE_sols[52],
+                                   RGE_sols[53], RGE_sols[54], RGE_sols[55],
+                                   RGE_sols[56], RGE_sols[57], RGE_sols[58],
+                                   RGE_sols[59], RGE_sols[60], tree_mzsq)
+        print('\nYour value for the Barbieri-Giudice naturalness measure,'
+              + ' Delta_BG, is: ' + str(myDelta_BG[0][0]))
+        print('\nThe ordered contributions to Delta_BG are as follows '
+              + '(decr. order): ')
+        print('')
+        for i in range(0, len(myDelta_BG)):
+            print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
+                  + str(myDelta_BG[i][1]))
         checksavebool = True
         while checksavebool:
             checksave = input("\nWould you like to save these DEW results to a"
