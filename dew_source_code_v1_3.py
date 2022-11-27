@@ -9109,7 +9109,7 @@ def my_radcorr_calc(myQ, vHiggs_wk, mu_wk,
             sigmaud_down, sigmauu_elec, sigmadd_elec, sigmaud_elec,
             sigmauu_2loop(), sigmadd_2loop()]
 
-def Delta_BG_calc(modselno, mymzsq, inputGUT_BCs):
+def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
     """
     Compute the fine-tuning measure Delta_BG for the selected model.
 
@@ -9142,17 +9142,199 @@ def Delta_BG_calc(modselno, mymzsq, inputGUT_BCs):
         # Boundary conditions first
         testBCs = inputGUT_BCs
         # Deviate m0 by small amount and square soft scalar masses for BCs
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + hm0, 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + hm0, 2)
         testBCs[27] = np.power(inputGUT_BCs[27] + hm0, 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] + hm0, 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] + hm0, 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] + hm0, 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] + hm0, 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] + hm0, 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] + hm0, 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] + hm0, 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] + hm0, 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] + hm0, 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] + hm0, 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] + hm0, 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] + hm0, 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] + hm0, 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] + hm0, 2)
 
-        deriv_array = np.array([0, 0, 0, 0])
-        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0'),
+        weaksol_m0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0ph = 91.2
+
+        # Two deviations to right
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + (2 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + (2 * hm0), 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] + (2 * hm0), 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] + (2 * hm0), 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] + (2 * hm0), 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] + (2 * hm0), 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] + (2 * hm0), 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] + (2 * hm0), 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] + (2 * hm0), 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] + (2 * hm0), 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] + (2 * hm0), 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] + (2 * hm0), 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] + (2 * hm0), 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] + (2 * hm0), 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] + (2 * hm0), 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] + (2 * hm0), 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] + (2 * hm0), 2)
+
+        weaksol_m0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0pph = 91.2
+
+        # Three deviations to right
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + (3 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + (3 * hm0), 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] + (3 * hm0), 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] + (3 * hm0), 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] + (3 * hm0), 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] + (3 * hm0), 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] + (3 * hm0), 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] + (3 * hm0), 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] + (3 * hm0), 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] + (3 * hm0), 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] + (3 * hm0), 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] + (3 * hm0), 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] + (3 * hm0), 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] + (3 * hm0), 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] + (3 * hm0), 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] + (3 * hm0), 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] + (3 * hm0), 2)
+
+        weaksol_m0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0ppph = 91.2
+
+        # Four deviations to right
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + (4 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + (4 * hm0), 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] + (4 * hm0), 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] + (4 * hm0), 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] + (4 * hm0), 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] + (4 * hm0), 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] + (4 * hm0), 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] + (4 * hm0), 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] + (4 * hm0), 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] + (4 * hm0), 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] + (4 * hm0), 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] + (4 * hm0), 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] + (4 * hm0), 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] + (4 * hm0), 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] + (4 * hm0), 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] + (4 * hm0), 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] + (4 * hm0), 2)
+
+        weaksol_m0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0pppph = 91.2
+
+        # Deviate m0 by small amount LEFT and square soft scalar masses for BCs
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - hm0, 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - hm0, 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] - hm0, 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] - hm0, 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] - hm0, 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] - hm0, 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] - hm0, 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] - hm0, 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] - hm0, 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] - hm0, 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] - hm0, 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] - hm0, 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] - hm0, 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] - hm0, 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] - hm0, 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] - hm0, 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] - hm0, 2)
+        
+        weaksol_m0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mh = 91.2
+        
+        # Two deviations to left
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - (2 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - (2 * hm0), 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] - (2 * hm0), 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] - (2 * hm0), 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] - (2 * hm0), 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] - (2 * hm0), 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] - (2 * hm0), 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] - (2 * hm0), 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] - (2 * hm0), 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] - (2 * hm0), 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] - (2 * hm0), 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] - (2 * hm0), 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] - (2 * hm0), 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] - (2 * hm0), 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] - (2 * hm0), 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] - (2 * hm0), 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] - (2 * hm0), 2)
+        
+        weaksol_m0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmh = 91.2
+        
+        # Three deviations to left
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - (3 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - (3 * hm0), 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] - (3 * hm0), 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] - (3 * hm0), 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] - (3 * hm0), 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] - (3 * hm0), 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] - (3 * hm0), 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] - (3 * hm0), 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] - (3 * hm0), 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] - (3 * hm0), 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] - (3 * hm0), 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] - (3 * hm0), 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] - (3 * hm0), 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] - (3 * hm0), 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] - (3 * hm0), 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] - (3 * hm0), 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] - (3 * hm0), 2)
+        
+        weaksol_m0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmmh = 91.2
+        
+        # Four deviations to left
+        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - (4 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - (4 * hm0), 2)
+        testBCs[27] = np.power(inputGUT_BCs[27] - (4 * hm0), 2)
+        testBCs[28] = np.power(inputGUT_BCs[28] - (4 * hm0), 2)
+        testBCs[29] = np.power(inputGUT_BCs[29] - (4 * hm0), 2)
+        testBCs[30] = np.power(inputGUT_BCs[30] - (4 * hm0), 2)
+        testBCs[31] = np.power(inputGUT_BCs[31] - (4 * hm0), 2)
+        testBCs[32] = np.power(inputGUT_BCs[32] - (4 * hm0), 2)
+        testBCs[33] = np.power(inputGUT_BCs[33] - (4 * hm0), 2)
+        testBCs[34] = np.power(inputGUT_BCs[34] - (4 * hm0), 2)
+        testBCs[35] = np.power(inputGUT_BCs[35] - (4 * hm0), 2)
+        testBCs[36] = np.power(inputGUT_BCs[36] - (4 * hm0), 2)
+        testBCs[37] = np.power(inputGUT_BCs[37] - (4 * hm0), 2)
+        testBCs[38] = np.power(inputGUT_BCs[38] - (4 * hm0), 2)
+        testBCs[39] = np.power(inputGUT_BCs[39] - (4 * hm0), 2)
+        testBCs[40] = np.power(inputGUT_BCs[40] - (4 * hm0), 2)
+        testBCs[41] = np.power(inputGUT_BCs[41] - (4 * hm0), 2)
+        
+        weaksol_m0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmmmh = 91.2
+
+        deriv_array = np.array([(1 / hm0)
+                                * ((mz_m0mmmmh / 280)
+                                   - ((4 / 105) * mz_m0mmmh)
+                                   + (mz_m0mmh / 5)
+                                   - ((4 / 5) * mz_m0mh)
+                                   + ((4 / 5) * mz_m0ph)
+                                   - (mz_m0pph / 5)
+                                   + ((4 / 105) * mz_m0ppph)
+                                   - (mz_m0pppph / 280)), 0, 0, 0])
+        sens_params = np.sort(np.array([(np.abs((np.sqrt(inputGUT_BCs[25])
+                                                 / np.power(91.2, 2))#/ mymzsq)
+                                                * deriv_array[0]), 'c_m_0'),
                                         (np.abs((M1GUT / mymzsq)
-                                                * deriv_calc), 'c_m_1/2'),
+                                                * deriv_array[1]), 'c_m_1/2'),
                                         (np.abs(((atGUT / ytGUT) / mymzsq)
-                                                * deriv_calc), 'c_A_0'),
+                                                * deriv_array[2]), 'c_A_0'),
                                         (np.abs((muGUT / mymzsq)
-                                                * deriv_calc), 'c_mu')],
+                                                * deriv_array[3]), 'c_mu')],
                                        dtype=[('BGContrib', float),
                                               ('BGlabel', 'U40')]),
                               order='BGContrib')
