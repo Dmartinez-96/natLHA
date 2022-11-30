@@ -1,13 +1,13 @@
-Given the submitted SLHA file, your value for the electroweak
+Given the submitted SLHA file, your value for the high-scale
 naturalness measure, Delta_HS, is: 5883.502584453058
 
 The ordered contributions to Delta_HS are as follows (decr. order): 
 
-1: 5883.502584453058, Delta_HS(delta(mHd^2))
+1: 5883.502584453058, Delta_HS(delta(mHu^2))
 2: 5091.110429654173, Delta_HS(mu(GUT))
-3: 436.0297816239394, Delta_HS(delta(mu))
+3: 863.1031826891776, Delta_HS(delta(mu))
 4: 303.3154901554982, Delta_HS(mHu^2(GUT))
 5: 87.98710621644972, Delta_HS(Sigma_u^u)
-6: 2.986584108719582, Delta_HS(delta(mHu^2))
+6: 2.986584108719582, Delta_HS(delta(mHd^2))
 7: 0.8002517098359404, Delta_HS(mHd^2(GUT))
 8: 0.49389166162290293, Delta_HS(Sigma_d^d)

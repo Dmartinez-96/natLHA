@@ -23955,7 +23955,7 @@ if __name__ == "__main__":
         print("5: NUHM4")
         print("6: pMSSM-30 (pMSSM-19 + 6 diagonal, real "
               + "2nd & 1st gen. soft trilinears + non-universal 1st & 2nd gen."
-              + "squark and slepton masses)")
+              + " squark and slepton masses)")
         print("")
         modelCheck = True
         while modelCheck:
@@ -23971,9 +23971,11 @@ if __name__ == "__main__":
                     print("2: NUHM1")
                     print("3: NUHM2")
                     print("4: NUHM3")
-                    print("5: NUHM4")
-                    print("6: pMSSM-25 (pMSSM-19 + 6 diagonal, real "
-                          + "2nd & 1st gen. soft trilinears)")
+                    print("5: NUHM4")  
+                    print("6: pMSSM-30 (pMSSM-19 + 6 diagonal, real "
+                          + "2nd & 1st gen. soft trilinears + non-universal "
+                          + "1st & 2nd gen. "
+                          + "squark and slepton masses)")
                     print("")
                     modelCheck = True
                 else:
@@ -23987,8 +23989,10 @@ if __name__ == "__main__":
                 print("3: NUHM2")
                 print("4: NUHM3")
                 print("5: NUHM4")
-                print("6: pMSSM-25 (pMSSM-19 + 6 diagonal, real "
-                      + "2nd & 1st gen. soft trilinears)")
+                print("6: pMSSM-30 (pMSSM-19 + 6 diagonal, real "
+                      + "2nd & 1st gen. soft trilinears + non-universal "
+                      + "1st & 2nd gen. "
+                      + "squark and slepton masses)")
                 print("")
                 modelCheck = True
         # SLHA input and definition of variables from SLHA file: #
@@ -24272,7 +24276,9 @@ if __name__ == "__main__":
                                    RGE_sols[27] - RGE_sols[70],
                                    np.power(RGE_sols[51], 2),
                                    np.power(RGE_sols[8], 2)
-                                   - np.power(RGE_sols[51], 2),
+                                   - np.power(RGE_sols[51], 2)
+                                   - (2 * RGE_sols[51]
+                                      * (RGE_sols[51] - RGE_sols[8])),
                                    np.power(vHiggs, 2)
                                    * ((1 / 2)
                                       * (np.power(RGE_sols[3], 2)
@@ -24415,7 +24421,7 @@ if __name__ == "__main__":
                                         + 'extension (e.g. "my_SLHA_DHS_list"'
                                         + ' without the quotes): ')
                     print('Given the submitted SLHA file, ' + str(direc) +
-                          ', your value for the electroweak\n'
+                          ', your value for the high-scale\n'
                           + 'naturalness measure, Delta_HS, is: '
                           + str(myDelta_HS[0][0]),
                           file=open(newfilename + ".txt", "w"))
