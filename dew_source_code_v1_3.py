@@ -9128,195 +9128,1141 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
         Naturalness measure Delta_BG.
 
     """
-    deriv_calc = 0
+    def mz_tree_calc(mHdsqweak, mHusqweak, musqweak, tanbsqweak):
+        """
+        
+
+        Parameters
+        ----------
+        mHdsqweak : Float.
+            Weak-scale mHd^2(weak) for computing tree-level mZ^2.
+        mHusqweak : Float.
+            Weak-scale mHu^2(weak) for computing tree-level mZ^2.
+        musqweak : Float.
+            Weak-scale mu^2(weak) for computing tree-level mZ^2.
+        tanbsqweak : Float.
+            Weak-scale tan(beta)^2(weak) for computing tree-level mZ^2.
+
+        Returns
+        -------
+        mzsq_tree_wk : Float.
+            Value of m_{Z}^{2}(weak) computed from tree-level Higgs min. cond. 
+
+        """
+        return 2 * ((mHdsqweak - (mHusqweak * tanbsqweak))
+                    / (tanbsqweak - 1)) - (2 * musqweak)
+
     if (modselno == 1):
+        print("Computing sensitivity coefficient derivatives...")
         mym0 = inputGUT_BCs[27]
-        hm0 = mym0 * 1e-4
+        hm0 = 1e-6
         mymhf = inputGUT_BCs[3]
-        hmhf = mymhf * 1e-4
+        hmhf = 1e-6
         myA0 = inputGUT_BCs[16] / inputGUT_BCs[7]
-        hA0 = myA0 * 1e-4
+        hA0 = 1e-6
         mymu0 = inputGUT_BCs[6]
-        hmu0 = mymu0 * 1e-4
+        hmu0 = 1e-6
         ##### Set up solutions for m_0 derivative #####
         # Boundary conditions first
-        testBCs = inputGUT_BCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
         # Deviate m0 by small amount and square soft scalar masses for BCs
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + hm0, 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + hm0, 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] + hm0, 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] + hm0, 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] + hm0, 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] + hm0, 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] + hm0, 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] + hm0, 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] + hm0, 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] + hm0, 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] + hm0, 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] + hm0, 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] + hm0, 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] + hm0, 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] + hm0, 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] + hm0, 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] + hm0, 2)
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) + hm0, 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) + hm0, 2)
+        testBCs[27] = np.power(testBCs[27] + hm0, 2)
+        testBCs[28] = np.power(testBCs[28] + hm0, 2)
+        testBCs[29] = np.power(testBCs[29] + hm0, 2)
+        testBCs[30] = np.power(testBCs[30] + hm0, 2)
+        testBCs[31] = np.power(testBCs[31] + hm0, 2)
+        testBCs[32] = np.power(testBCs[32] + hm0, 2)
+        testBCs[33] = np.power(testBCs[33] + hm0, 2)
+        testBCs[34] = np.power(testBCs[34] + hm0, 2)
+        testBCs[35] = np.power(testBCs[35] + hm0, 2)
+        testBCs[36] = np.power(testBCs[36] + hm0, 2)
+        testBCs[37] = np.power(testBCs[37] + hm0, 2)
+        testBCs[38] = np.power(testBCs[38] + hm0, 2)
+        testBCs[39] = np.power(testBCs[39] + hm0, 2)
+        testBCs[40] = np.power(testBCs[40] + hm0, 2)
+        testBCs[41] = np.power(testBCs[41] + hm0, 2)
+        #print(testBCs)
 
         weaksol_m0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0ph = 91.2
+        mz_m0ph = mz_tree_calc(weaksol_m0ph[26],
+                               weaksol_m0ph[25],
+                               np.power(weaksol_m0ph[6], 2),
+                               np.power(weaksol_m0ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
 
         # Two deviations to right
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + (2 * hm0), 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + (2 * hm0), 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] + (2 * hm0), 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] + (2 * hm0), 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] + (2 * hm0), 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] + (2 * hm0), 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] + (2 * hm0), 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] + (2 * hm0), 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] + (2 * hm0), 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] + (2 * hm0), 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] + (2 * hm0), 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] + (2 * hm0), 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] + (2 * hm0), 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] + (2 * hm0), 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] + (2 * hm0), 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] + (2 * hm0), 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] + (2 * hm0), 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) + (2 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) + (2 * hm0), 2)
+        testBCs[27] = np.power(testBCs[27] + (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (2 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (2 * hm0), 2)
+        #print(testBCs)
 
         weaksol_m0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0pph = 91.2
+        mz_m0pph = mz_tree_calc(weaksol_m0pph[26],
+                                weaksol_m0pph[25],
+                                np.power(weaksol_m0pph[6], 2),
+                                np.power(weaksol_m0pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
 
         # Three deviations to right
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + (3 * hm0), 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + (3 * hm0), 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] + (3 * hm0), 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] + (3 * hm0), 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] + (3 * hm0), 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] + (3 * hm0), 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] + (3 * hm0), 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] + (3 * hm0), 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] + (3 * hm0), 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] + (3 * hm0), 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] + (3 * hm0), 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] + (3 * hm0), 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] + (3 * hm0), 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] + (3 * hm0), 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] + (3 * hm0), 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] + (3 * hm0), 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] + (3 * hm0), 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) + (3 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) + (3 * hm0), 2)
+        testBCs[27] = np.power(testBCs[27] + (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (3 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (3 * hm0), 2)
+        #print(testBCs)
 
         weaksol_m0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0ppph = 91.2
+        mz_m0ppph = mz_tree_calc(weaksol_m0ppph[26],
+                                 weaksol_m0ppph[25],
+                                 np.power(weaksol_m0ppph[6], 2),
+                                 np.power(weaksol_m0ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
 
         # Four deviations to right
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) + (4 * hm0), 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) + (4 * hm0), 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] + (4 * hm0), 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] + (4 * hm0), 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] + (4 * hm0), 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] + (4 * hm0), 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] + (4 * hm0), 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] + (4 * hm0), 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] + (4 * hm0), 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] + (4 * hm0), 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] + (4 * hm0), 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] + (4 * hm0), 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] + (4 * hm0), 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] + (4 * hm0), 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] + (4 * hm0), 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] + (4 * hm0), 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] + (4 * hm0), 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) + (4 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) + (4 * hm0), 2)
+        testBCs[27] = np.power(testBCs[27] + (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (4 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (4 * hm0), 2)
 
         weaksol_m0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0pppph = 91.2
+        mz_m0pppph = mz_tree_calc(weaksol_m0pppph[26],
+                                  weaksol_m0pppph[25],
+                                  np.power(weaksol_m0pppph[6], 2),
+                                  np.power(weaksol_m0pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
 
         # Deviate m0 by small amount LEFT and square soft scalar masses for BCs
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - hm0, 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - hm0, 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] - hm0, 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] - hm0, 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] - hm0, 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] - hm0, 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] - hm0, 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] - hm0, 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] - hm0, 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] - hm0, 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] - hm0, 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] - hm0, 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] - hm0, 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] - hm0, 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] - hm0, 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] - hm0, 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] - hm0, 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) - hm0, 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) - hm0, 2)
+        testBCs[27] = np.power(testBCs[27] - hm0, 2)
+        testBCs[28] = np.power(testBCs[28] - hm0, 2)
+        testBCs[29] = np.power(testBCs[29] - hm0, 2)
+        testBCs[30] = np.power(testBCs[30] - hm0, 2)
+        testBCs[31] = np.power(testBCs[31] - hm0, 2)
+        testBCs[32] = np.power(testBCs[32] - hm0, 2)
+        testBCs[33] = np.power(testBCs[33] - hm0, 2)
+        testBCs[34] = np.power(testBCs[34] - hm0, 2)
+        testBCs[35] = np.power(testBCs[35] - hm0, 2)
+        testBCs[36] = np.power(testBCs[36] - hm0, 2)
+        testBCs[37] = np.power(testBCs[37] - hm0, 2)
+        testBCs[38] = np.power(testBCs[38] - hm0, 2)
+        testBCs[39] = np.power(testBCs[39] - hm0, 2)
+        testBCs[40] = np.power(testBCs[40] - hm0, 2)
+        testBCs[41] = np.power(testBCs[41] - hm0, 2)
         
         weaksol_m0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0mh = 91.2
+        mz_m0mh = mz_tree_calc(weaksol_m0mh[26],
+                               weaksol_m0mh[25],
+                               np.power(weaksol_m0mh[6], 2),
+                               np.power(weaksol_m0mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
         
         # Two deviations to left
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - (2 * hm0), 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - (2 * hm0), 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] - (2 * hm0), 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] - (2 * hm0), 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] - (2 * hm0), 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] - (2 * hm0), 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] - (2 * hm0), 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] - (2 * hm0), 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] - (2 * hm0), 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] - (2 * hm0), 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] - (2 * hm0), 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] - (2 * hm0), 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] - (2 * hm0), 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] - (2 * hm0), 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] - (2 * hm0), 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] - (2 * hm0), 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] - (2 * hm0), 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) - (2 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) - (2 * hm0), 2)
+        testBCs[27] = np.power(testBCs[27] - (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (2 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (2 * hm0), 2)
         
         weaksol_m0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0mmh = 91.2
+        mz_m0mmh = mz_tree_calc(weaksol_m0mmh[26],
+                                weaksol_m0mmh[25],
+                                np.power(weaksol_m0mmh[6], 2),
+                                np.power(weaksol_m0mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
         
         # Three deviations to left
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - (3 * hm0), 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - (3 * hm0), 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] - (3 * hm0), 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] - (3 * hm0), 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] - (3 * hm0), 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] - (3 * hm0), 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] - (3 * hm0), 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] - (3 * hm0), 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] - (3 * hm0), 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] - (3 * hm0), 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] - (3 * hm0), 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] - (3 * hm0), 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] - (3 * hm0), 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] - (3 * hm0), 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] - (3 * hm0), 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] - (3 * hm0), 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] - (3 * hm0), 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) - (3 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) - (3 * hm0), 2)
+        testBCs[27] = np.power(testBCs[27] - (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (3 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (3 * hm0), 2)
         
         weaksol_m0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0mmmh = 91.2
+        mz_m0mmmh = mz_tree_calc(weaksol_m0mmmh[26],
+                                 weaksol_m0mmmh[25],
+                                 np.power(weaksol_m0mmmh[6], 2),
+                                 np.power(weaksol_m0mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
         
         # Four deviations to left
-        testBCs[25] = np.power(np.sqrt(inputGUT_BCs[25]) - (4 * hm0), 2)
-        testBCs[26] = np.power(np.sqrt(inputGUT_BCs[26]) - (4 * hm0), 2)
-        testBCs[27] = np.power(inputGUT_BCs[27] - (4 * hm0), 2)
-        testBCs[28] = np.power(inputGUT_BCs[28] - (4 * hm0), 2)
-        testBCs[29] = np.power(inputGUT_BCs[29] - (4 * hm0), 2)
-        testBCs[30] = np.power(inputGUT_BCs[30] - (4 * hm0), 2)
-        testBCs[31] = np.power(inputGUT_BCs[31] - (4 * hm0), 2)
-        testBCs[32] = np.power(inputGUT_BCs[32] - (4 * hm0), 2)
-        testBCs[33] = np.power(inputGUT_BCs[33] - (4 * hm0), 2)
-        testBCs[34] = np.power(inputGUT_BCs[34] - (4 * hm0), 2)
-        testBCs[35] = np.power(inputGUT_BCs[35] - (4 * hm0), 2)
-        testBCs[36] = np.power(inputGUT_BCs[36] - (4 * hm0), 2)
-        testBCs[37] = np.power(inputGUT_BCs[37] - (4 * hm0), 2)
-        testBCs[38] = np.power(inputGUT_BCs[38] - (4 * hm0), 2)
-        testBCs[39] = np.power(inputGUT_BCs[39] - (4 * hm0), 2)
-        testBCs[40] = np.power(inputGUT_BCs[40] - (4 * hm0), 2)
-        testBCs[41] = np.power(inputGUT_BCs[41] - (4 * hm0), 2)
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[25] = np.power(np.sqrt(testBCs[25]) - (4 * hm0), 2)
+        testBCs[26] = np.power(np.sqrt(testBCs[26]) - (4 * hm0), 2)
+        testBCs[27] = np.power(testBCs[27] - (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (4 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (4 * hm0), 2)
         
         weaksol_m0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
-        mz_m0mmmmh = 91.2
+        mz_m0mmmmh = mz_tree_calc(weaksol_m0mmmmh[26],
+                                  weaksol_m0mmmmh[25],
+                                  np.power(weaksol_m0mmmmh[6], 2),
+                                  np.power(weaksol_m0mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('1/4')
+        ##### Set up solutions for m_1/2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        # Deviate m_1/2 by small amount right
+        testBCs[3] = testBCs[3] + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf
+        testBCs[5] = testBCs[5] + hmhf
+        #print(testBCs)
 
+        weaksol_mhfph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfph = mz_tree_calc(weaksol_mhfph[26],
+                                weaksol_mhfph[25],
+                                np.power(weaksol_mhfph[6], 2),
+                                np.power(weaksol_mhfph[43], 2))
+        # print("m_Z^2(m_1/2+h): " + str(mz_mhfph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        testBCs[3] = testBCs[3] + hmhf + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpph = mz_tree_calc(weaksol_mhfpph[26],
+                                 weaksol_mhfpph[25],
+                                 np.power(weaksol_mhfpph[6], 2),
+                                 np.power(weaksol_mhfpph[43], 2))
+        # print("m_Z^2(m_1/2+2h): " + str(mz_mhfpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfppph = mz_tree_calc(weaksol_mhfppph[26],
+                                  weaksol_mhfppph[25],
+                                  np.power(weaksol_mhfppph[6], 2),
+                                  np.power(weaksol_mhfppph[43], 2))
+        # print("m_Z^2(m_1/2+3h): " + str(mz_mhfppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpppph = mz_tree_calc(weaksol_mhfpppph[26],
+                                   weaksol_mhfpppph[25],
+                                   np.power(weaksol_mhfpppph[6], 2),
+                                   np.power(weaksol_mhfpppph[43], 2))
+        # print("m_Z^2(m_1/2+4h): " + str(mz_mhfpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m_1/2 by small amount left
+        testBCs[3] = testBCs[3] - hmhf
+        testBCs[4] = testBCs[4] - hmhf
+        testBCs[5] = testBCs[5] - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmh = mz_tree_calc(weaksol_mhfmh[26],
+                                weaksol_mhfmh[25],
+                                np.power(weaksol_mhfmh[6], 2),
+                                np.power(weaksol_mhfmh[43], 2))
+        # print("m_Z^2(m_1/2-h): " + str(mz_mhfmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmh = mz_tree_calc(weaksol_mhfmmh[26],
+                                 weaksol_mhfmmh[25],
+                                 np.power(weaksol_mhfmmh[6], 2),
+                                 np.power(weaksol_mhfmmh[43], 2))
+        # print("m_Z^2(m_1/2-2h): " + str(mz_mhfmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmh = mz_tree_calc(weaksol_mhfmmmh[26],
+                                  weaksol_mhfmmmh[25],
+                                  np.power(weaksol_mhfmmmh[6], 2),
+                                  np.power(weaksol_mhfmmmh[43], 2))
+        # print("m_Z^2(m_1/2-3h): " + str(mz_mhfmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmmh = mz_tree_calc(weaksol_mhfmmmmh[26],
+                                   weaksol_mhfmmmmh[25],
+                                   np.power(weaksol_mhfmmmmh[6], 2),
+                                   np.power(weaksol_mhfmmmmh[43], 2))
+        # print("m_Z^2(m_1/2-4h): " + str(mz_mhfmmmmh))
+        print('2/4')
+
+        ##### Set up solutions for A_0 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ph = mz_tree_calc(weaksol_A0ph[26],
+                               weaksol_A0ph[25],
+                               np.power(weaksol_A0ph[6], 2),
+                               np.power(weaksol_A0ph[43], 2))
+        # print("m_Z^2(A_0+h): " + str(mz_A0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pph = mz_tree_calc(weaksol_A0pph[26],
+                                weaksol_A0pph[25],
+                                np.power(weaksol_A0pph[6], 2),
+                                np.power(weaksol_A0pph[43], 2))
+        # print("m_Z^2(A_0+2h): " + str(mz_A0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ppph = mz_tree_calc(weaksol_A0ppph[26],
+                                 weaksol_A0ppph[25],
+                                 np.power(weaksol_A0ppph[6], 2),
+                                 np.power(weaksol_A0ppph[43], 2))
+        # print("m_Z^2(A_0+3h): " + str(mz_A0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pppph = mz_tree_calc(weaksol_A0pppph[26],
+                                  weaksol_A0pppph[25],
+                                  np.power(weaksol_A0pppph[6], 2),
+                                  np.power(weaksol_A0pppph[43], 2))
+        # print("m_Z^2(A_0+4h): " + str(mz_A0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mh = mz_tree_calc(weaksol_A0mh[26],
+                               weaksol_A0mh[25],
+                               np.power(weaksol_A0mh[6], 2),
+                               np.power(weaksol_A0mh[43], 2))
+        # print("m_Z^2(A_0-h): " + str(mz_A0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmh = mz_tree_calc(weaksol_A0mmh[26],
+                                weaksol_A0mmh[25],
+                                np.power(weaksol_A0mmh[6], 2),
+                                np.power(weaksol_A0mmh[43], 2))
+        # print("m_Z^2(A_0-2h): " + str(mz_A0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmh = mz_tree_calc(weaksol_A0mmmh[26],
+                                 weaksol_A0mmmh[25],
+                                 np.power(weaksol_A0mmmh[6], 2),
+                                 np.power(weaksol_A0mmmh[43], 2))
+        # print("m_Z^2(A_0-3h): " + str(mz_A0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmmh = mz_tree_calc(weaksol_A0mmmmh[26],
+                                  weaksol_A0mmmmh[25],
+                                  np.power(weaksol_A0mmmmh[6], 2),
+                                  np.power(weaksol_A0mmmmh[43], 2))
+        # print("m_Z^2(A_0-4h): " + str(mz_A0mmmmh))
+        print('3/4')
+
+        ##### Set up solutions for mu derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mu_0 by small amount right
+        testBCs[6] = testBCs[6] + hmu0
+
+        weaksol_mu0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ph = mz_tree_calc(weaksol_mu0ph[26],
+                                weaksol_mu0ph[25],
+                                np.power(weaksol_mu0ph[6], 2),
+                                np.power(weaksol_mu0ph[43], 2))
+        # print("m_Z^2(mu_0+h): " + str(mz_mu0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pph = mz_tree_calc(weaksol_mu0pph[26],
+                                 weaksol_mu0pph[25],
+                                 np.power(weaksol_mu0pph[6], 2),
+                                 np.power(weaksol_mu0pph[43], 2))
+        # print("m_Z^2(mu_0+2h): " + str(mz_mu0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ppph = mz_tree_calc(weaksol_mu0ppph[26],
+                                  weaksol_mu0ppph[25],
+                                  np.power(weaksol_mu0ppph[6], 2),
+                                  np.power(weaksol_mu0ppph[43], 2))
+        # print("m_Z^2(mu_0+3h): " + str(mz_mu0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pppph = mz_tree_calc(weaksol_mu0pppph[26],
+                                   weaksol_mu0pppph[25],
+                                   np.power(weaksol_mu0pppph[6], 2),
+                                   np.power(weaksol_mu0pppph[43], 2))
+        # print("m_Z^2(mu_0+4h): " + str(mz_mu0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mu_0 by small amount left
+        testBCs[6] = testBCs[6] - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mh = mz_tree_calc(weaksol_mu0mh[26],
+                                weaksol_mu0mh[25],
+                                np.power(weaksol_mu0mh[6], 2),
+                                np.power(weaksol_mu0mh[43], 2))
+        # print("m_Z^2(mu_0-h): " + str(mz_mu0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmh = mz_tree_calc(weaksol_mu0mmh[26],
+                                 weaksol_mu0mmh[25],
+                                 np.power(weaksol_mu0mmh[6], 2),
+                                 np.power(weaksol_mu0mmh[43], 2))
+        # print("m_Z^2(mu_0-2h): " + str(mz_mu0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmh = mz_tree_calc(weaksol_mu0mmmh[26],
+                                  weaksol_mu0mmmh[25],
+                                  np.power(weaksol_mu0mmmh[6], 2),
+                                  np.power(weaksol_mu0mmmh[43], 2))
+        # print("m_Z^2(mu_0-3h): " + str(mz_mu0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmmh = mz_tree_calc(weaksol_mu0mmmmh[26],
+                                   weaksol_mu0mmmmh[25],
+                                   np.power(weaksol_mu0mmmmh[6], 2),
+                                   np.power(weaksol_mu0mmmmh[43], 2))
+        # print("m_Z^2(mu_0-4h): " + str(mz_mu0mmmmh))
+        print('4/4')
+
+        # Construct derivative array
         deriv_array = np.array([(1 / hm0)
                                 * ((mz_m0mmmmh / 280)
                                    - ((4 / 105) * mz_m0mmmh)
@@ -9325,152 +10271,13227 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
                                    + ((4 / 5) * mz_m0ph)
                                    - (mz_m0pph / 5)
                                    + ((4 / 105) * mz_m0ppph)
-                                   - (mz_m0pppph / 280)), 0, 0, 0])
-        sens_params = np.sort(np.array([(np.abs((np.sqrt(inputGUT_BCs[25])
-                                                 / np.power(91.2, 2))#/ mymzsq)
-                                                * deriv_array[0]), 'c_m_0'),
-                                        (np.abs((M1GUT / mymzsq)
-                                                * deriv_array[1]), 'c_m_1/2'),
-                                        (np.abs(((atGUT / ytGUT) / mymzsq)
-                                                * deriv_array[2]), 'c_A_0'),
-                                        (np.abs((muGUT / mymzsq)
-                                                * deriv_array[3]), 'c_mu')],
+                                   - (mz_m0pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_mhfmmmmh / 280)
+                                   - ((4 / 105) * mz_mhfmmmh)
+                                   + (mz_mhfmmh / 5)
+                                   - ((4 / 5) * mz_mhfmh)
+                                   + ((4 / 5) * mz_mhfph)
+                                   - (mz_mhfpph / 5)
+                                   + ((4 / 105) * mz_mhfppph)
+                                   - (mz_mhfpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_A0mmmmh / 280)
+                                   - ((4 / 105) * mz_A0mmmh)
+                                   + (mz_A0mmh / 5)
+                                   - ((4 / 5) * mz_A0mh)
+                                   + ((4 / 5) * mz_A0ph)
+                                   - (mz_A0pph / 5)
+                                   + ((4 / 105) * mz_A0ppph)
+                                   - (mz_A0pppph / 280)),
+                                (1 / hmu0)
+                                * ((mz_mu0mmmmh / 280)
+                                   - ((4 / 105) * mz_mu0mmmh)
+                                   + (mz_mu0mmh / 5)
+                                   - ((4 / 5) * mz_mu0mh)
+                                   + ((4 / 5) * mz_mu0ph)
+                                   - (mz_mu0pph / 5)
+                                   + ((4 / 105) * mz_mu0ppph)
+                                   - (mz_mu0pppph / 280))])
+        sens_params = np.sort(np.array([(np.abs((mym0
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[0]),
+                                         'Delta_BG(m_0)'),
+                                        (np.abs((mymhf
+                                                 / mymzsq)
+                                                * deriv_array[1]),
+                                         'Delta_BG(m_1/2)'),
+                                        (np.abs((myA0
+                                                 / mymzsq)
+                                                * deriv_array[2]),
+                                         'Delta_BG(A_0)'),
+                                        (np.abs((mymu0
+                                                 / mymzsq)
+                                                * deriv_array[3]),
+                                         'Delta_BG(mu)')],
                                        dtype=[('BGContrib', float),
                                               ('BGlabel', 'U40')]),
                               order='BGContrib')
+        #print(sens_params)
     elif (modselno == 2):
-        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0'),
-                                        (np.abs((M1GUT / mymzsq)
-                                                * deriv_calc), 'c_m_1/2'),
-                                        (np.abs(((atGUT / ytGUT) / mymzsq)
-                                                * deriv_calc), 'c_A_0'),
-                                        (np.abs((muGUT / mymzsq)
-                                                * deriv_calc), 'c_mu'),
-                                        (np.abs((mHusqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHu^2')],
+        print("Computing sensitivity coefficient derivatives...")
+        mym0 = inputGUT_BCs[27]
+        hm0 = 1e-6
+        mymhf = inputGUT_BCs[3]
+        hmhf = 1e-6
+        myA0 = inputGUT_BCs[16] / inputGUT_BCs[7]
+        hA0 = 1e-6
+        mymu0 = inputGUT_BCs[6]
+        hmu0 = 1e-6
+        mymHusqGUT = inputGUT_BCs[25]
+        hmHusq = 1e-6
+        mymHdsqGUT = inputGUT_BCs[26]
+        hmHdsq = 1e-6
+        ##### Set up solutions for m_0 derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        # Deviate m0 by small amount and square soft scalar masses for BCs
+        testBCs[27] = np.power(testBCs[27] + hm0, 2)
+        testBCs[28] = np.power(testBCs[28] + hm0, 2)
+        testBCs[29] = np.power(testBCs[29] + hm0, 2)
+        testBCs[30] = np.power(testBCs[30] + hm0, 2)
+        testBCs[31] = np.power(testBCs[31] + hm0, 2)
+        testBCs[32] = np.power(testBCs[32] + hm0, 2)
+        testBCs[33] = np.power(testBCs[33] + hm0, 2)
+        testBCs[34] = np.power(testBCs[34] + hm0, 2)
+        testBCs[35] = np.power(testBCs[35] + hm0, 2)
+        testBCs[36] = np.power(testBCs[36] + hm0, 2)
+        testBCs[37] = np.power(testBCs[37] + hm0, 2)
+        testBCs[38] = np.power(testBCs[38] + hm0, 2)
+        testBCs[39] = np.power(testBCs[39] + hm0, 2)
+        testBCs[40] = np.power(testBCs[40] + hm0, 2)
+        testBCs[41] = np.power(testBCs[41] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0ph = mz_tree_calc(weaksol_m0ph[26],
+                               weaksol_m0ph[25],
+                               np.power(weaksol_m0ph[6], 2),
+                               np.power(weaksol_m0ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (2 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0pph = mz_tree_calc(weaksol_m0pph[26],
+                                weaksol_m0pph[25],
+                                np.power(weaksol_m0pph[6], 2),
+                                np.power(weaksol_m0pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (3 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0ppph = mz_tree_calc(weaksol_m0ppph[26],
+                                 weaksol_m0ppph[25],
+                                 np.power(weaksol_m0ppph[6], 2),
+                                 np.power(weaksol_m0ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] + (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (4 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (4 * hm0), 2)
+
+        weaksol_m0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0pppph = mz_tree_calc(weaksol_m0pppph[26],
+                                  weaksol_m0pppph[25],
+                                  np.power(weaksol_m0pppph[6], 2),
+                                  np.power(weaksol_m0pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0 by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - hm0, 2)
+        testBCs[28] = np.power(testBCs[28] - hm0, 2)
+        testBCs[29] = np.power(testBCs[29] - hm0, 2)
+        testBCs[30] = np.power(testBCs[30] - hm0, 2)
+        testBCs[31] = np.power(testBCs[31] - hm0, 2)
+        testBCs[32] = np.power(testBCs[32] - hm0, 2)
+        testBCs[33] = np.power(testBCs[33] - hm0, 2)
+        testBCs[34] = np.power(testBCs[34] - hm0, 2)
+        testBCs[35] = np.power(testBCs[35] - hm0, 2)
+        testBCs[36] = np.power(testBCs[36] - hm0, 2)
+        testBCs[37] = np.power(testBCs[37] - hm0, 2)
+        testBCs[38] = np.power(testBCs[38] - hm0, 2)
+        testBCs[39] = np.power(testBCs[39] - hm0, 2)
+        testBCs[40] = np.power(testBCs[40] - hm0, 2)
+        testBCs[41] = np.power(testBCs[41] - hm0, 2)
+        
+        weaksol_m0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mh = mz_tree_calc(weaksol_m0mh[26],
+                               weaksol_m0mh[25],
+                               np.power(weaksol_m0mh[6], 2),
+                               np.power(weaksol_m0mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (2 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (2 * hm0), 2)
+        
+        weaksol_m0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmh = mz_tree_calc(weaksol_m0mmh[26],
+                                weaksol_m0mmh[25],
+                                np.power(weaksol_m0mmh[6], 2),
+                                np.power(weaksol_m0mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (3 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (3 * hm0), 2)
+        
+        weaksol_m0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmmh = mz_tree_calc(weaksol_m0mmmh[26],
+                                 weaksol_m0mmmh[25],
+                                 np.power(weaksol_m0mmmh[6], 2),
+                                 np.power(weaksol_m0mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (4 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (4 * hm0), 2)
+        
+        weaksol_m0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmmmh = mz_tree_calc(weaksol_m0mmmmh[26],
+                                  weaksol_m0mmmmh[25],
+                                  np.power(weaksol_m0mmmmh[6], 2),
+                                  np.power(weaksol_m0mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('1/5')
+
+        ##### Set up solutions for mHu,d^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHu^2 by small amount right
+        testBCs[25] = testBCs[25] + hmHusq
+        testBCs[26] = testBCs[26] + hmHusq
+
+        weaksol_mHusqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqph = mz_tree_calc(weaksol_mHusqph[26],
+                                  weaksol_mHusqph[25],
+                                  np.power(weaksol_mHusqph[6], 2),
+                                  np.power(weaksol_mHusqph[43], 2))
+        # print("m_Z^2(mHu^2+h): " + str(mz_mHusqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq
+        testBCs[26] = testBCs[26] + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpph = mz_tree_calc(weaksol_mHusqpph[26],
+                                   weaksol_mHusqpph[25],
+                                   np.power(weaksol_mHusqpph[6], 2),
+                                   np.power(weaksol_mHusqpph[43], 2))
+        # print("m_Z^2(mHu^2+2h): " + str(mz_mHusqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq
+        testBCs[26] = testBCs[26] + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqppph = mz_tree_calc(weaksol_mHusqppph[26],
+                                    weaksol_mHusqppph[25],
+                                    np.power(weaksol_mHusqppph[6], 2),
+                                    np.power(weaksol_mHusqppph[43], 2))
+        # print("m_Z^2(mHu^2+3h): " + str(mz_mHusqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq + hmHusq
+        testBCs[26] = testBCs[26] + hmHusq + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpppph = mz_tree_calc(weaksol_mHusqpppph[26],
+                                     weaksol_mHusqpppph[25],
+                                     np.power(weaksol_mHusqpppph[6], 2),
+                                     np.power(weaksol_mHusqpppph[43], 2))
+        # print("m_Z^2(mHu^2+4h): " + str(mz_mHusqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHu^2 by small amount left
+        testBCs[25] = testBCs[25] - hmHusq
+        testBCs[26] = testBCs[26] - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmh = mz_tree_calc(weaksol_mHusqmh[26],
+                                  weaksol_mHusqmh[25],
+                                  np.power(weaksol_mHusqmh[6], 2),
+                                  np.power(weaksol_mHusqmh[43], 2))
+        # print("m_Z^2(mHu^2-h): " + str(mz_mHusqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq
+        testBCs[26] = testBCs[26] - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmh = mz_tree_calc(weaksol_mHusqmmh[26],
+                                 weaksol_mHusqmmh[25],
+                                 np.power(weaksol_mHusqmmh[6], 2),
+                                 np.power(weaksol_mHusqmmh[43], 2))
+        # print("m_Z^2(mHu^2-2h): " + str(mz_mHusqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq
+        testBCs[26] = testBCs[26] - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmh = mz_tree_calc(weaksol_mHusqmmmh[26],
+                                    weaksol_mHusqmmmh[25],
+                                    np.power(weaksol_mHusqmmmh[6], 2),
+                                    np.power(weaksol_mHusqmmmh[43], 2))
+        # print("m_Z^2(mHu^2-3h): " + str(mz_mHusqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq - hmHusq
+        testBCs[26] = testBCs[26] - hmHusq - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmmh = mz_tree_calc(weaksol_mHusqmmmmh[26],
+                                     weaksol_mHusqmmmmh[25],
+                                     np.power(weaksol_mHusqmmmmh[6], 2),
+                                     np.power(weaksol_mHusqmmmmh[43], 2))
+        # print("m_Z^2(mHu^2-4h): " + str(mz_mHusqmmmmh))
+        print('2/5')
+
+        ##### Set up solutions for m_1/2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        # Deviate m_1/2 by small amount right
+        testBCs[3] = testBCs[3] + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf
+        testBCs[5] = testBCs[5] + hmhf
+        #print(testBCs)
+
+        weaksol_mhfph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfph = mz_tree_calc(weaksol_mhfph[26],
+                                weaksol_mhfph[25],
+                                np.power(weaksol_mhfph[6], 2),
+                                np.power(weaksol_mhfph[43], 2))
+        # print("m_Z^2(m_1/2+h): " + str(mz_mhfph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        testBCs[3] = testBCs[3] + hmhf + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpph = mz_tree_calc(weaksol_mhfpph[26],
+                                 weaksol_mhfpph[25],
+                                 np.power(weaksol_mhfpph[6], 2),
+                                 np.power(weaksol_mhfpph[43], 2))
+        # print("m_Z^2(m_1/2+2h): " + str(mz_mhfpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfppph = mz_tree_calc(weaksol_mhfppph[26],
+                                  weaksol_mhfppph[25],
+                                  np.power(weaksol_mhfppph[6], 2),
+                                  np.power(weaksol_mhfppph[43], 2))
+        # print("m_Z^2(m_1/2+3h): " + str(mz_mhfppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpppph = mz_tree_calc(weaksol_mhfpppph[26],
+                                   weaksol_mhfpppph[25],
+                                   np.power(weaksol_mhfpppph[6], 2),
+                                   np.power(weaksol_mhfpppph[43], 2))
+        # print("m_Z^2(m_1/2+4h): " + str(mz_mhfpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m_1/2 by small amount left
+        testBCs[3] = testBCs[3] - hmhf
+        testBCs[4] = testBCs[4] - hmhf
+        testBCs[5] = testBCs[5] - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmh = mz_tree_calc(weaksol_mhfmh[26],
+                                weaksol_mhfmh[25],
+                                np.power(weaksol_mhfmh[6], 2),
+                                np.power(weaksol_mhfmh[43], 2))
+        # print("m_Z^2(m_1/2-h): " + str(mz_mhfmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmh = mz_tree_calc(weaksol_mhfmmh[26],
+                                 weaksol_mhfmmh[25],
+                                 np.power(weaksol_mhfmmh[6], 2),
+                                 np.power(weaksol_mhfmmh[43], 2))
+        # print("m_Z^2(m_1/2-2h): " + str(mz_mhfmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmh = mz_tree_calc(weaksol_mhfmmmh[26],
+                                  weaksol_mhfmmmh[25],
+                                  np.power(weaksol_mhfmmmh[6], 2),
+                                  np.power(weaksol_mhfmmmh[43], 2))
+        # print("m_Z^2(m_1/2-3h): " + str(mz_mhfmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmmh = mz_tree_calc(weaksol_mhfmmmmh[26],
+                                   weaksol_mhfmmmmh[25],
+                                   np.power(weaksol_mhfmmmmh[6], 2),
+                                   np.power(weaksol_mhfmmmmh[43], 2))
+        # print("m_Z^2(m_1/2-4h): " + str(mz_mhfmmmmh))
+        print('3/5')
+
+        ##### Set up solutions for A_0 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ph = mz_tree_calc(weaksol_A0ph[26],
+                               weaksol_A0ph[25],
+                               np.power(weaksol_A0ph[6], 2),
+                               np.power(weaksol_A0ph[43], 2))
+        # print("m_Z^2(A_0+h): " + str(mz_A0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pph = mz_tree_calc(weaksol_A0pph[26],
+                                weaksol_A0pph[25],
+                                np.power(weaksol_A0pph[6], 2),
+                                np.power(weaksol_A0pph[43], 2))
+        # print("m_Z^2(A_0+2h): " + str(mz_A0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ppph = mz_tree_calc(weaksol_A0ppph[26],
+                                 weaksol_A0ppph[25],
+                                 np.power(weaksol_A0ppph[6], 2),
+                                 np.power(weaksol_A0ppph[43], 2))
+        # print("m_Z^2(A_0+3h): " + str(mz_A0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pppph = mz_tree_calc(weaksol_A0pppph[26],
+                                  weaksol_A0pppph[25],
+                                  np.power(weaksol_A0pppph[6], 2),
+                                  np.power(weaksol_A0pppph[43], 2))
+        # print("m_Z^2(A_0+4h): " + str(mz_A0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mh = mz_tree_calc(weaksol_A0mh[26],
+                               weaksol_A0mh[25],
+                               np.power(weaksol_A0mh[6], 2),
+                               np.power(weaksol_A0mh[43], 2))
+        # print("m_Z^2(A_0-h): " + str(mz_A0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmh = mz_tree_calc(weaksol_A0mmh[26],
+                                weaksol_A0mmh[25],
+                                np.power(weaksol_A0mmh[6], 2),
+                                np.power(weaksol_A0mmh[43], 2))
+        # print("m_Z^2(A_0-2h): " + str(mz_A0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmh = mz_tree_calc(weaksol_A0mmmh[26],
+                                 weaksol_A0mmmh[25],
+                                 np.power(weaksol_A0mmmh[6], 2),
+                                 np.power(weaksol_A0mmmh[43], 2))
+        # print("m_Z^2(A_0-3h): " + str(mz_A0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmmh = mz_tree_calc(weaksol_A0mmmmh[26],
+                                  weaksol_A0mmmmh[25],
+                                  np.power(weaksol_A0mmmmh[6], 2),
+                                  np.power(weaksol_A0mmmmh[43], 2))
+        # print("m_Z^2(A_0-4h): " + str(mz_A0mmmmh))
+        print('4/5')
+
+        ##### Set up solutions for mu derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mu_0 by small amount right
+        testBCs[6] = testBCs[6] + hmu0
+
+        weaksol_mu0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ph = mz_tree_calc(weaksol_mu0ph[26],
+                                weaksol_mu0ph[25],
+                                np.power(weaksol_mu0ph[6], 2),
+                                np.power(weaksol_mu0ph[43], 2))
+        # print("m_Z^2(mu_0+h): " + str(mz_mu0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pph = mz_tree_calc(weaksol_mu0pph[26],
+                                 weaksol_mu0pph[25],
+                                 np.power(weaksol_mu0pph[6], 2),
+                                 np.power(weaksol_mu0pph[43], 2))
+        # print("m_Z^2(mu_0+2h): " + str(mz_mu0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ppph = mz_tree_calc(weaksol_mu0ppph[26],
+                                  weaksol_mu0ppph[25],
+                                  np.power(weaksol_mu0ppph[6], 2),
+                                  np.power(weaksol_mu0ppph[43], 2))
+        # print("m_Z^2(mu_0+3h): " + str(mz_mu0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pppph = mz_tree_calc(weaksol_mu0pppph[26],
+                                   weaksol_mu0pppph[25],
+                                   np.power(weaksol_mu0pppph[6], 2),
+                                   np.power(weaksol_mu0pppph[43], 2))
+        # print("m_Z^2(mu_0+4h): " + str(mz_mu0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mu_0 by small amount left
+        testBCs[6] = testBCs[6] - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mh = mz_tree_calc(weaksol_mu0mh[26],
+                                weaksol_mu0mh[25],
+                                np.power(weaksol_mu0mh[6], 2),
+                                np.power(weaksol_mu0mh[43], 2))
+        # print("m_Z^2(mu_0-h): " + str(mz_mu0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmh = mz_tree_calc(weaksol_mu0mmh[26],
+                                 weaksol_mu0mmh[25],
+                                 np.power(weaksol_mu0mmh[6], 2),
+                                 np.power(weaksol_mu0mmh[43], 2))
+        # print("m_Z^2(mu_0-2h): " + str(mz_mu0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmh = mz_tree_calc(weaksol_mu0mmmh[26],
+                                  weaksol_mu0mmmh[25],
+                                  np.power(weaksol_mu0mmmh[6], 2),
+                                  np.power(weaksol_mu0mmmh[43], 2))
+        # print("m_Z^2(mu_0-3h): " + str(mz_mu0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmmh = mz_tree_calc(weaksol_mu0mmmmh[26],
+                                   weaksol_mu0mmmmh[25],
+                                   np.power(weaksol_mu0mmmmh[6], 2),
+                                   np.power(weaksol_mu0mmmmh[43], 2))
+        # print("m_Z^2(mu_0-4h): " + str(mz_mu0mmmmh))
+        print('5/5')
+
+        # Construct derivative array
+        deriv_array = np.array([(1 / hm0)
+                                * ((mz_m0mmmmh / 280)
+                                   - ((4 / 105) * mz_m0mmmh)
+                                   + (mz_m0mmh / 5)
+                                   - ((4 / 5) * mz_m0mh)
+                                   + ((4 / 5) * mz_m0ph)
+                                   - (mz_m0pph / 5)
+                                   + ((4 / 105) * mz_m0ppph)
+                                   - (mz_m0pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_mhfmmmmh / 280)
+                                   - ((4 / 105) * mz_mhfmmmh)
+                                   + (mz_mhfmmh / 5)
+                                   - ((4 / 5) * mz_mhfmh)
+                                   + ((4 / 5) * mz_mhfph)
+                                   - (mz_mhfpph / 5)
+                                   + ((4 / 105) * mz_mhfppph)
+                                   - (mz_mhfpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_A0mmmmh / 280)
+                                   - ((4 / 105) * mz_A0mmmh)
+                                   + (mz_A0mmh / 5)
+                                   - ((4 / 5) * mz_A0mh)
+                                   + ((4 / 5) * mz_A0ph)
+                                   - (mz_A0pph / 5)
+                                   + ((4 / 105) * mz_A0ppph)
+                                   - (mz_A0pppph / 280)),
+                                (1 / hmu0)
+                                * ((mz_mu0mmmmh / 280)
+                                   - ((4 / 105) * mz_mu0mmmh)
+                                   + (mz_mu0mmh / 5)
+                                   - ((4 / 5) * mz_mu0mh)
+                                   + ((4 / 5) * mz_mu0ph)
+                                   - (mz_mu0pph / 5)
+                                   + ((4 / 105) * mz_mu0ppph)
+                                   - (mz_mu0pppph / 280)),
+                                (1 / hmHusq)
+                                * ((mz_mHusqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHusqmmmh)
+                                   + (mz_mHusqmmh / 5)
+                                   - ((4 / 5) * mz_mHusqmh)
+                                   + ((4 / 5) * mz_mHusqph)
+                                   - (mz_mHusqpph / 5)
+                                   + ((4 / 105) * mz_mHusqppph)
+                                   - (mz_mHusqpppph / 280))])
+        sens_params = np.sort(np.array([(np.abs((mym0
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[0]),
+                                         'Delta_BG(m_0)'),
+                                        (np.abs((mymhf
+                                                 / mymzsq)
+                                                * deriv_array[1]),
+                                         'Delta_BG(m_1/2)'),
+                                        (np.abs((myA0
+                                                 / mymzsq)
+                                                * deriv_array[2]),
+                                         'Delta_BG(A_0)'),
+                                        (np.abs((mymu0
+                                                 / mymzsq)
+                                                * deriv_array[3]),
+                                         'Delta_BG(mu)'),
+                                        (np.abs((mymHusqGUT / mymzsq)
+                                                * deriv_array[4]),
+                                         'Delta_BG(mHu,d^2)')],
                                        dtype=[('BGContrib', float),
                                               ('BGlabel', 'U40')]),
                               order='BGContrib')
     elif (modselno == 3):
-        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0'),
-                                        (np.abs((M1GUT / mymzsq)
-                                                * deriv_calc), 'c_m_1/2'),
-                                        (np.abs(((atGUT / ytGUT) / mymzsq)
-                                                * deriv_calc), 'c_A_0'),
-                                        (np.abs((muGUT / mymzsq)
-                                                * deriv_calc), 'c_mu'),
-                                        (np.abs((mHusqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHu^2'),
-                                        (np.abs((mHdsqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHd^2')],
+        print("Computing sensitivity coefficient derivatives...")
+        mym0 = inputGUT_BCs[27]
+        hm0 = 1e-6
+        mymhf = inputGUT_BCs[3]
+        hmhf = 1e-6
+        myA0 = inputGUT_BCs[16] / inputGUT_BCs[7]
+        hA0 = 1e-6
+        mymu0 = inputGUT_BCs[6]
+        hmu0 = 1e-6
+        mymHusqGUT = inputGUT_BCs[25]
+        hmHusq = 1e-6
+        mymHdsqGUT = inputGUT_BCs[26]
+        hmHdsq = 1e-6
+        ##### Set up solutions for m_0 derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        # Deviate m0 by small amount and square soft scalar masses for BCs
+        testBCs[27] = np.power(testBCs[27] + hm0, 2)
+        testBCs[28] = np.power(testBCs[28] + hm0, 2)
+        testBCs[29] = np.power(testBCs[29] + hm0, 2)
+        testBCs[30] = np.power(testBCs[30] + hm0, 2)
+        testBCs[31] = np.power(testBCs[31] + hm0, 2)
+        testBCs[32] = np.power(testBCs[32] + hm0, 2)
+        testBCs[33] = np.power(testBCs[33] + hm0, 2)
+        testBCs[34] = np.power(testBCs[34] + hm0, 2)
+        testBCs[35] = np.power(testBCs[35] + hm0, 2)
+        testBCs[36] = np.power(testBCs[36] + hm0, 2)
+        testBCs[37] = np.power(testBCs[37] + hm0, 2)
+        testBCs[38] = np.power(testBCs[38] + hm0, 2)
+        testBCs[39] = np.power(testBCs[39] + hm0, 2)
+        testBCs[40] = np.power(testBCs[40] + hm0, 2)
+        testBCs[41] = np.power(testBCs[41] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0ph = mz_tree_calc(weaksol_m0ph[26],
+                               weaksol_m0ph[25],
+                               np.power(weaksol_m0ph[6], 2),
+                               np.power(weaksol_m0ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (2 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0pph = mz_tree_calc(weaksol_m0pph[26],
+                                weaksol_m0pph[25],
+                                np.power(weaksol_m0pph[6], 2),
+                                np.power(weaksol_m0pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (3 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0ppph = mz_tree_calc(weaksol_m0ppph[26],
+                                 weaksol_m0ppph[25],
+                                 np.power(weaksol_m0ppph[6], 2),
+                                 np.power(weaksol_m0ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] + (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (4 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] + (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (4 * hm0), 2)
+
+        weaksol_m0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0pppph = mz_tree_calc(weaksol_m0pppph[26],
+                                  weaksol_m0pppph[25],
+                                  np.power(weaksol_m0pppph[6], 2),
+                                  np.power(weaksol_m0pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0 by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - hm0, 2)
+        testBCs[28] = np.power(testBCs[28] - hm0, 2)
+        testBCs[29] = np.power(testBCs[29] - hm0, 2)
+        testBCs[30] = np.power(testBCs[30] - hm0, 2)
+        testBCs[31] = np.power(testBCs[31] - hm0, 2)
+        testBCs[32] = np.power(testBCs[32] - hm0, 2)
+        testBCs[33] = np.power(testBCs[33] - hm0, 2)
+        testBCs[34] = np.power(testBCs[34] - hm0, 2)
+        testBCs[35] = np.power(testBCs[35] - hm0, 2)
+        testBCs[36] = np.power(testBCs[36] - hm0, 2)
+        testBCs[37] = np.power(testBCs[37] - hm0, 2)
+        testBCs[38] = np.power(testBCs[38] - hm0, 2)
+        testBCs[39] = np.power(testBCs[39] - hm0, 2)
+        testBCs[40] = np.power(testBCs[40] - hm0, 2)
+        testBCs[41] = np.power(testBCs[41] - hm0, 2)
+        
+        weaksol_m0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mh = mz_tree_calc(weaksol_m0mh[26],
+                               weaksol_m0mh[25],
+                               np.power(weaksol_m0mh[6], 2),
+                               np.power(weaksol_m0mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (2 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (2 * hm0), 2)
+        
+        weaksol_m0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmh = mz_tree_calc(weaksol_m0mmh[26],
+                                weaksol_m0mmh[25],
+                                np.power(weaksol_m0mmh[6], 2),
+                                np.power(weaksol_m0mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (3 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (3 * hm0), 2)
+        
+        weaksol_m0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmmh = mz_tree_calc(weaksol_m0mmmh[26],
+                                 weaksol_m0mmmh[25],
+                                 np.power(weaksol_m0mmmh[6], 2),
+                                 np.power(weaksol_m0mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27] - (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (4 * hm0), 2)
+        testBCs[29] = np.power(testBCs[29] - (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (4 * hm0), 2)
+        
+        weaksol_m0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m0mmmmh = mz_tree_calc(weaksol_m0mmmmh[26],
+                                  weaksol_m0mmmmh[25],
+                                  np.power(weaksol_m0mmmmh[6], 2),
+                                  np.power(weaksol_m0mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('1/6')
+
+        ##### Set up solutions for mHu,d^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHu^2 by small amount right
+        testBCs[25] = testBCs[25] + hmHusq
+
+        weaksol_mHusqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqph = mz_tree_calc(weaksol_mHusqph[26],
+                                  weaksol_mHusqph[25],
+                                  np.power(weaksol_mHusqph[6], 2),
+                                  np.power(weaksol_mHusqph[43], 2))
+        # print("m_Z^2(mHu^2+h): " + str(mz_mHusqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpph = mz_tree_calc(weaksol_mHusqpph[26],
+                                   weaksol_mHusqpph[25],
+                                   np.power(weaksol_mHusqpph[6], 2),
+                                   np.power(weaksol_mHusqpph[43], 2))
+        # print("m_Z^2(mHu^2+2h): " + str(mz_mHusqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqppph = mz_tree_calc(weaksol_mHusqppph[26],
+                                    weaksol_mHusqppph[25],
+                                    np.power(weaksol_mHusqppph[6], 2),
+                                    np.power(weaksol_mHusqppph[43], 2))
+        # print("m_Z^2(mHu^2+3h): " + str(mz_mHusqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpppph = mz_tree_calc(weaksol_mHusqpppph[26],
+                                     weaksol_mHusqpppph[25],
+                                     np.power(weaksol_mHusqpppph[6], 2),
+                                     np.power(weaksol_mHusqpppph[43], 2))
+        # print("m_Z^2(mHu^2+4h): " + str(mz_mHusqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHu^2 by small amount left
+        testBCs[25] = testBCs[25] - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmh = mz_tree_calc(weaksol_mHusqmh[26],
+                                  weaksol_mHusqmh[25],
+                                  np.power(weaksol_mHusqmh[6], 2),
+                                  np.power(weaksol_mHusqmh[43], 2))
+        # print("m_Z^2(mHu^2-h): " + str(mz_mHusqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmh = mz_tree_calc(weaksol_mHusqmmh[26],
+                                   weaksol_mHusqmmh[25],
+                                   np.power(weaksol_mHusqmmh[6], 2),
+                                   np.power(weaksol_mHusqmmh[43], 2))
+        # print("m_Z^2(mHu^2-2h): " + str(mz_mHusqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmh = mz_tree_calc(weaksol_mHusqmmmh[26],
+                                    weaksol_mHusqmmmh[25],
+                                    np.power(weaksol_mHusqmmmh[6], 2),
+                                    np.power(weaksol_mHusqmmmh[43], 2))
+        # print("m_Z^2(mHu^2-3h): " + str(mz_mHusqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmmh = mz_tree_calc(weaksol_mHusqmmmmh[26],
+                                     weaksol_mHusqmmmmh[25],
+                                     np.power(weaksol_mHusqmmmmh[6], 2),
+                                     np.power(weaksol_mHusqmmmmh[43], 2))
+        # print("m_Z^2(mHu^2-4h): " + str(mz_mHusqmmmmh))
+        print('2/6')
+
+        ##### Set up solutions for mHd^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHd^2 by small amount right
+        testBCs[26] = testBCs[26] + hmHdsq
+
+        weaksol_mHdsqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqph = mz_tree_calc(weaksol_mHdsqph[26],
+                                  weaksol_mHdsqph[25],
+                                  np.power(weaksol_mHdsqph[6], 2),
+                                  np.power(weaksol_mHdsqph[43], 2))
+        # print("m_Z^2(mHd^2+h): " + str(mz_mHdsqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpph = mz_tree_calc(weaksol_mHdsqpph[26],
+                                   weaksol_mHdsqpph[25],
+                                   np.power(weaksol_mHdsqpph[6], 2),
+                                   np.power(weaksol_mHdsqpph[43], 2))
+        # print("m_Z^2(mHd^2+2h): " + str(mz_mHdsqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqppph = mz_tree_calc(weaksol_mHdsqppph[26],
+                                    weaksol_mHdsqppph[25],
+                                    np.power(weaksol_mHdsqppph[6], 2),
+                                    np.power(weaksol_mHdsqppph[43], 2))
+        # print("m_Z^2(mHd^2+3h): " + str(mz_mHdsqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpppph = mz_tree_calc(weaksol_mHdsqpppph[26],
+                                     weaksol_mHdsqpppph[25],
+                                     np.power(weaksol_mHdsqpppph[6], 2),
+                                     np.power(weaksol_mHdsqpppph[43], 2))
+        # print("m_Z^2(mHd^2+4h): " + str(mz_mHdsqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHd^2 by small amount left
+        testBCs[26] = testBCs[26] - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmh = mz_tree_calc(weaksol_mHdsqmh[26],
+                                  weaksol_mHdsqmh[25],
+                                  np.power(weaksol_mHdsqmh[6], 2),
+                                  np.power(weaksol_mHdsqmh[43], 2))
+        # print("m_Z^2(mHd^2-h): " + str(mz_mHdsqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmh = mz_tree_calc(weaksol_mHdsqmmh[26],
+                                   weaksol_mHdsqmmh[25],
+                                   np.power(weaksol_mHdsqmmh[6], 2),
+                                   np.power(weaksol_mHdsqmmh[43], 2))
+        # print("m_Z^2(mHd^2-2h): " + str(mz_mHdsqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmh = mz_tree_calc(weaksol_mHdsqmmmh[26],
+                                    weaksol_mHdsqmmmh[25],
+                                    np.power(weaksol_mHdsqmmmh[6], 2),
+                                    np.power(weaksol_mHdsqmmmh[43], 2))
+        # print("m_Z^2(mHd^2-3h): " + str(mz_mHdsqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmmh = mz_tree_calc(weaksol_mHdsqmmmmh[26],
+                                     weaksol_mHdsqmmmmh[25],
+                                     np.power(weaksol_mHdsqmmmmh[6], 2),
+                                     np.power(weaksol_mHdsqmmmmh[43], 2))
+        # print("m_Z^2(mHd^2-4h): " + str(mz_mHdsqmmmmh))
+        print('3/6')
+
+        ##### Set up solutions for m_1/2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        # Deviate m_1/2 by small amount right
+        testBCs[3] = testBCs[3] + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf
+        testBCs[5] = testBCs[5] + hmhf
+        #print(testBCs)
+
+        weaksol_mhfph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfph = mz_tree_calc(weaksol_mhfph[26],
+                                weaksol_mhfph[25],
+                                np.power(weaksol_mhfph[6], 2),
+                                np.power(weaksol_mhfph[43], 2))
+        # print("m_Z^2(m_1/2+h): " + str(mz_mhfph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        testBCs[3] = testBCs[3] + hmhf + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpph = mz_tree_calc(weaksol_mhfpph[26],
+                                 weaksol_mhfpph[25],
+                                 np.power(weaksol_mhfpph[6], 2),
+                                 np.power(weaksol_mhfpph[43], 2))
+        # print("m_Z^2(m_1/2+2h): " + str(mz_mhfpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfppph = mz_tree_calc(weaksol_mhfppph[26],
+                                  weaksol_mhfppph[25],
+                                  np.power(weaksol_mhfppph[6], 2),
+                                  np.power(weaksol_mhfppph[43], 2))
+        # print("m_Z^2(m_1/2+3h): " + str(mz_mhfppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpppph = mz_tree_calc(weaksol_mhfpppph[26],
+                                   weaksol_mhfpppph[25],
+                                   np.power(weaksol_mhfpppph[6], 2),
+                                   np.power(weaksol_mhfpppph[43], 2))
+        # print("m_Z^2(m_1/2+4h): " + str(mz_mhfpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m_1/2 by small amount left
+        testBCs[3] = testBCs[3] - hmhf
+        testBCs[4] = testBCs[4] - hmhf
+        testBCs[5] = testBCs[5] - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmh = mz_tree_calc(weaksol_mhfmh[26],
+                                weaksol_mhfmh[25],
+                                np.power(weaksol_mhfmh[6], 2),
+                                np.power(weaksol_mhfmh[43], 2))
+        # print("m_Z^2(m_1/2-h): " + str(mz_mhfmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmh = mz_tree_calc(weaksol_mhfmmh[26],
+                                 weaksol_mhfmmh[25],
+                                 np.power(weaksol_mhfmmh[6], 2),
+                                 np.power(weaksol_mhfmmh[43], 2))
+        # print("m_Z^2(m_1/2-2h): " + str(mz_mhfmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmh = mz_tree_calc(weaksol_mhfmmmh[26],
+                                  weaksol_mhfmmmh[25],
+                                  np.power(weaksol_mhfmmmh[6], 2),
+                                  np.power(weaksol_mhfmmmh[43], 2))
+        # print("m_Z^2(m_1/2-3h): " + str(mz_mhfmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmmh = mz_tree_calc(weaksol_mhfmmmmh[26],
+                                   weaksol_mhfmmmmh[25],
+                                   np.power(weaksol_mhfmmmmh[6], 2),
+                                   np.power(weaksol_mhfmmmmh[43], 2))
+        # print("m_Z^2(m_1/2-4h): " + str(mz_mhfmmmmh))
+        print('4/6')
+
+        ##### Set up solutions for A_0 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ph = mz_tree_calc(weaksol_A0ph[26],
+                               weaksol_A0ph[25],
+                               np.power(weaksol_A0ph[6], 2),
+                               np.power(weaksol_A0ph[43], 2))
+        # print("m_Z^2(A_0+h): " + str(mz_A0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pph = mz_tree_calc(weaksol_A0pph[26],
+                                weaksol_A0pph[25],
+                                np.power(weaksol_A0pph[6], 2),
+                                np.power(weaksol_A0pph[43], 2))
+        # print("m_Z^2(A_0+2h): " + str(mz_A0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ppph = mz_tree_calc(weaksol_A0ppph[26],
+                                 weaksol_A0ppph[25],
+                                 np.power(weaksol_A0ppph[6], 2),
+                                 np.power(weaksol_A0ppph[43], 2))
+        # print("m_Z^2(A_0+3h): " + str(mz_A0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pppph = mz_tree_calc(weaksol_A0pppph[26],
+                                  weaksol_A0pppph[25],
+                                  np.power(weaksol_A0pppph[6], 2),
+                                  np.power(weaksol_A0pppph[43], 2))
+        # print("m_Z^2(A_0+4h): " + str(mz_A0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mh = mz_tree_calc(weaksol_A0mh[26],
+                               weaksol_A0mh[25],
+                               np.power(weaksol_A0mh[6], 2),
+                               np.power(weaksol_A0mh[43], 2))
+        # print("m_Z^2(A_0-h): " + str(mz_A0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmh = mz_tree_calc(weaksol_A0mmh[26],
+                                weaksol_A0mmh[25],
+                                np.power(weaksol_A0mmh[6], 2),
+                                np.power(weaksol_A0mmh[43], 2))
+        # print("m_Z^2(A_0-2h): " + str(mz_A0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmh = mz_tree_calc(weaksol_A0mmmh[26],
+                                 weaksol_A0mmmh[25],
+                                 np.power(weaksol_A0mmmh[6], 2),
+                                 np.power(weaksol_A0mmmh[43], 2))
+        # print("m_Z^2(A_0-3h): " + str(mz_A0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmmh = mz_tree_calc(weaksol_A0mmmmh[26],
+                                  weaksol_A0mmmmh[25],
+                                  np.power(weaksol_A0mmmmh[6], 2),
+                                  np.power(weaksol_A0mmmmh[43], 2))
+        # print("m_Z^2(A_0-4h): " + str(mz_A0mmmmh))
+        print('5/6')
+
+        ##### Set up solutions for mu derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mu_0 by small amount right
+        testBCs[6] = testBCs[6] + hmu0
+
+        weaksol_mu0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ph = mz_tree_calc(weaksol_mu0ph[26],
+                                weaksol_mu0ph[25],
+                                np.power(weaksol_mu0ph[6], 2),
+                                np.power(weaksol_mu0ph[43], 2))
+        # print("m_Z^2(mu_0+h): " + str(mz_mu0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pph = mz_tree_calc(weaksol_mu0pph[26],
+                                 weaksol_mu0pph[25],
+                                 np.power(weaksol_mu0pph[6], 2),
+                                 np.power(weaksol_mu0pph[43], 2))
+        # print("m_Z^2(mu_0+2h): " + str(mz_mu0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ppph = mz_tree_calc(weaksol_mu0ppph[26],
+                                  weaksol_mu0ppph[25],
+                                  np.power(weaksol_mu0ppph[6], 2),
+                                  np.power(weaksol_mu0ppph[43], 2))
+        # print("m_Z^2(mu_0+3h): " + str(mz_mu0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pppph = mz_tree_calc(weaksol_mu0pppph[26],
+                                   weaksol_mu0pppph[25],
+                                   np.power(weaksol_mu0pppph[6], 2),
+                                   np.power(weaksol_mu0pppph[43], 2))
+        # print("m_Z^2(mu_0+4h): " + str(mz_mu0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mu_0 by small amount left
+        testBCs[6] = testBCs[6] - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mh = mz_tree_calc(weaksol_mu0mh[26],
+                                weaksol_mu0mh[25],
+                                np.power(weaksol_mu0mh[6], 2),
+                                np.power(weaksol_mu0mh[43], 2))
+        # print("m_Z^2(mu_0-h): " + str(mz_mu0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmh = mz_tree_calc(weaksol_mu0mmh[26],
+                                 weaksol_mu0mmh[25],
+                                 np.power(weaksol_mu0mmh[6], 2),
+                                 np.power(weaksol_mu0mmh[43], 2))
+        # print("m_Z^2(mu_0-2h): " + str(mz_mu0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmh = mz_tree_calc(weaksol_mu0mmmh[26],
+                                  weaksol_mu0mmmh[25],
+                                  np.power(weaksol_mu0mmmh[6], 2),
+                                  np.power(weaksol_mu0mmmh[43], 2))
+        # print("m_Z^2(mu_0-3h): " + str(mz_mu0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmmh = mz_tree_calc(weaksol_mu0mmmmh[26],
+                                   weaksol_mu0mmmmh[25],
+                                   np.power(weaksol_mu0mmmmh[6], 2),
+                                   np.power(weaksol_mu0mmmmh[43], 2))
+        # print("m_Z^2(mu_0-4h): " + str(mz_mu0mmmmh))
+        print('6/6')
+
+        # Construct derivative array
+        deriv_array = np.array([(1 / hm0)
+                                * ((mz_m0mmmmh / 280)
+                                   - ((4 / 105) * mz_m0mmmh)
+                                   + (mz_m0mmh / 5)
+                                   - ((4 / 5) * mz_m0mh)
+                                   + ((4 / 5) * mz_m0ph)
+                                   - (mz_m0pph / 5)
+                                   + ((4 / 105) * mz_m0ppph)
+                                   - (mz_m0pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_mhfmmmmh / 280)
+                                   - ((4 / 105) * mz_mhfmmmh)
+                                   + (mz_mhfmmh / 5)
+                                   - ((4 / 5) * mz_mhfmh)
+                                   + ((4 / 5) * mz_mhfph)
+                                   - (mz_mhfpph / 5)
+                                   + ((4 / 105) * mz_mhfppph)
+                                   - (mz_mhfpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_A0mmmmh / 280)
+                                   - ((4 / 105) * mz_A0mmmh)
+                                   + (mz_A0mmh / 5)
+                                   - ((4 / 5) * mz_A0mh)
+                                   + ((4 / 5) * mz_A0ph)
+                                   - (mz_A0pph / 5)
+                                   + ((4 / 105) * mz_A0ppph)
+                                   - (mz_A0pppph / 280)),
+                                (1 / hmu0)
+                                * ((mz_mu0mmmmh / 280)
+                                   - ((4 / 105) * mz_mu0mmmh)
+                                   + (mz_mu0mmh / 5)
+                                   - ((4 / 5) * mz_mu0mh)
+                                   + ((4 / 5) * mz_mu0ph)
+                                   - (mz_mu0pph / 5)
+                                   + ((4 / 105) * mz_mu0ppph)
+                                   - (mz_mu0pppph / 280)),
+                                (1 / hmHusq)
+                                * ((mz_mHusqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHusqmmmh)
+                                   + (mz_mHusqmmh / 5)
+                                   - ((4 / 5) * mz_mHusqmh)
+                                   + ((4 / 5) * mz_mHusqph)
+                                   - (mz_mHusqpph / 5)
+                                   + ((4 / 105) * mz_mHusqppph)
+                                   - (mz_mHusqpppph / 280)),
+                                (1 / hmHdsq)
+                                * ((mz_mHdsqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHdsqmmmh)
+                                   + (mz_mHdsqmmh / 5)
+                                   - ((4 / 5) * mz_mHdsqmh)
+                                   + ((4 / 5) * mz_mHdsqph)
+                                   - (mz_mHdsqpph / 5)
+                                   + ((4 / 105) * mz_mHdsqppph)
+                                   - (mz_mHdsqpppph / 280))])
+        sens_params = np.sort(np.array([(np.abs((mym0
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[0]),
+                                         'Delta_BG(m_0)'),
+                                        (np.abs((mymhf
+                                                 / mymzsq)
+                                                * deriv_array[1]),
+                                         'Delta_BG(m_1/2)'),
+                                        (np.abs((myA0
+                                                 / mymzsq)
+                                                * deriv_array[2]),
+                                         'Delta_BG(A_0)'),
+                                        (np.abs((mymu0
+                                                 / mymzsq)
+                                                * deriv_array[3]),
+                                         'Delta_BG(mu)'),
+                                        (np.abs((mymHusqGUT / mymzsq)
+                                                * deriv_array[4]),
+                                         'Delta_BG(mHu^2)'),
+                                        (np.abs((mymHdsqGUT / mymzsq)
+                                                * deriv_array[5]),
+                                         'Delta_BG(mHd^2)')],
                                        dtype=[('BGContrib', float),
                                               ('BGlabel', 'U40')]),
                               order='BGContrib')
     elif (modselno == 4):
-        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0(3)'),
-                                        (np.abs((np.sqrt(mQ2sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0(1,2)'),
-                                        (np.abs((M1GUT / mymzsq)
-                                                * deriv_calc), 'c_m_1/2'),
-                                        (np.abs(((atGUT / ytGUT) / mymzsq)
-                                                * deriv_calc), 'c_A_0'),
-                                        (np.abs((muGUT / mymzsq)
-                                                * deriv_calc), 'c_mu'),
-                                        (np.abs((mHusqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHu^2'),
-                                        (np.abs((mHdsqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHd^2')],
+        print("Computing sensitivity coefficient derivatives...")
+        mym012 = inputGUT_BCs[27]
+        mym03 = inputGUT_BCs[29]
+        hm0 = 1e-6
+        mymhf = inputGUT_BCs[3]
+        hmhf = 1e-6
+        myA0 = inputGUT_BCs[16] / inputGUT_BCs[7]
+        hA0 = 1e-6
+        mymu0 = inputGUT_BCs[6]
+        hmu0 = 1e-6
+        mymHusqGUT = inputGUT_BCs[25]
+        hmHusq = 1e-6
+        mymHdsqGUT = inputGUT_BCs[26]
+        hmHdsq = 1e-6
+        ##### Set up solutions for m_0(1,2) derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m0(1,2) by small amount and square soft scalar masses for BCs
+        testBCs[27] = np.power(testBCs[27] + hm0, 2)
+        testBCs[28] = np.power(testBCs[28] + hm0, 2)
+        testBCs[30] = np.power(testBCs[30] + hm0, 2)
+        testBCs[31] = np.power(testBCs[31] + hm0, 2)
+        testBCs[33] = np.power(testBCs[33] + hm0, 2)
+        testBCs[34] = np.power(testBCs[34] + hm0, 2)
+        testBCs[36] = np.power(testBCs[36] + hm0, 2)
+        testBCs[37] = np.power(testBCs[37] + hm0, 2)
+        testBCs[39] = np.power(testBCs[39] + hm0, 2)
+        testBCs[40] = np.power(testBCs[40] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m012ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012ph = mz_tree_calc(weaksol_m012ph[26],
+                                 weaksol_m012ph[25],
+                                 np.power(weaksol_m012ph[6], 2),
+                                 np.power(weaksol_m012ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m012pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012pph = mz_tree_calc(weaksol_m012pph[26],
+                                  weaksol_m012pph[25],
+                                  np.power(weaksol_m012pph[6], 2),
+                                  np.power(weaksol_m012pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m012ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012ppph = mz_tree_calc(weaksol_m012ppph[26],
+                                   weaksol_m012ppph[25],
+                                   np.power(weaksol_m012ppph[6], 2),
+                                   np.power(weaksol_m012ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] + (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] + (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (4 * hm0), 2)
+
+        weaksol_m012pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012pppph = mz_tree_calc(weaksol_m012pppph[26],
+                                    weaksol_m012pppph[25],
+                                    np.power(weaksol_m012pppph[6], 2),
+                                    np.power(weaksol_m012pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0(1,2) by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - hm0, 2)
+        testBCs[28] = np.power(testBCs[28] - hm0, 2)
+        testBCs[30] = np.power(testBCs[30] - hm0, 2)
+        testBCs[31] = np.power(testBCs[31] - hm0, 2)
+        testBCs[33] = np.power(testBCs[33] - hm0, 2)
+        testBCs[34] = np.power(testBCs[34] - hm0, 2)
+        testBCs[36] = np.power(testBCs[36] - hm0, 2)
+        testBCs[37] = np.power(testBCs[37] - hm0, 2)
+        testBCs[39] = np.power(testBCs[39] - hm0, 2)
+        testBCs[40] = np.power(testBCs[40] - hm0, 2)
+        
+        weaksol_m012mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012mh = mz_tree_calc(weaksol_m012mh[26],
+                                 weaksol_m012mh[25],
+                                 np.power(weaksol_m012mh[6], 2),
+                                 np.power(weaksol_m012mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (2 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (2 * hm0), 2)
+        
+        weaksol_m012mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012mmh = mz_tree_calc(weaksol_m012mmh[26],
+                                  weaksol_m012mmh[25],
+                                  np.power(weaksol_m012mmh[6], 2),
+                                  np.power(weaksol_m012mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (3 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (3 * hm0), 2)
+        
+        weaksol_m012mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012mmmh = mz_tree_calc(weaksol_m012mmmh[26],
+                                   weaksol_m012mmmh[25],
+                                   np.power(weaksol_m012mmmh[6], 2),
+                                   np.power(weaksol_m012mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (4 * hm0), 2)
+        testBCs[28] = np.power(testBCs[28] - (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (4 * hm0), 2)
+        
+        weaksol_m012mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m012mmmmh = mz_tree_calc(weaksol_m012mmmmh[26],
+                                    weaksol_m012mmmmh[25],
+                                    np.power(weaksol_m012mmmmh[6], 2),
+                                    np.power(weaksol_m012mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('1/7')
+
+        ##### Set up solutions for mHu^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHu^2 by small amount right
+        testBCs[25] = testBCs[25] + hmHusq
+
+        weaksol_mHusqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqph = mz_tree_calc(weaksol_mHusqph[26],
+                                  weaksol_mHusqph[25],
+                                  np.power(weaksol_mHusqph[6], 2),
+                                  np.power(weaksol_mHusqph[43], 2))
+        # print("m_Z^2(mHu^2+h): " + str(mz_mHusqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpph = mz_tree_calc(weaksol_mHusqpph[26],
+                                   weaksol_mHusqpph[25],
+                                   np.power(weaksol_mHusqpph[6], 2),
+                                   np.power(weaksol_mHusqpph[43], 2))
+        # print("m_Z^2(mHu^2+2h): " + str(mz_mHusqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqppph = mz_tree_calc(weaksol_mHusqppph[26],
+                                    weaksol_mHusqppph[25],
+                                    np.power(weaksol_mHusqppph[6], 2),
+                                    np.power(weaksol_mHusqppph[43], 2))
+        # print("m_Z^2(mHu^2+3h): " + str(mz_mHusqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpppph = mz_tree_calc(weaksol_mHusqpppph[26],
+                                     weaksol_mHusqpppph[25],
+                                     np.power(weaksol_mHusqpppph[6], 2),
+                                     np.power(weaksol_mHusqpppph[43], 2))
+        # print("m_Z^2(mHu^2+4h): " + str(mz_mHusqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHu^2 by small amount left
+        testBCs[25] = testBCs[25] - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmh = mz_tree_calc(weaksol_mHusqmh[26],
+                                  weaksol_mHusqmh[25],
+                                  np.power(weaksol_mHusqmh[6], 2),
+                                  np.power(weaksol_mHusqmh[43], 2))
+        # print("m_Z^2(mHu^2-h): " + str(mz_mHusqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmh = mz_tree_calc(weaksol_mHusqmmh[26],
+                                   weaksol_mHusqmmh[25],
+                                   np.power(weaksol_mHusqmmh[6], 2),
+                                   np.power(weaksol_mHusqmmh[43], 2))
+        # print("m_Z^2(mHu^2-2h): " + str(mz_mHusqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmh = mz_tree_calc(weaksol_mHusqmmmh[26],
+                                    weaksol_mHusqmmmh[25],
+                                    np.power(weaksol_mHusqmmmh[6], 2),
+                                    np.power(weaksol_mHusqmmmh[43], 2))
+        # print("m_Z^2(mHu^2-3h): " + str(mz_mHusqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmmh = mz_tree_calc(weaksol_mHusqmmmmh[26],
+                                     weaksol_mHusqmmmmh[25],
+                                     np.power(weaksol_mHusqmmmmh[6], 2),
+                                     np.power(weaksol_mHusqmmmmh[43], 2))
+        # print("m_Z^2(mHu^2-4h): " + str(mz_mHusqmmmmh))
+        print('2/7')
+
+        ##### Set up solutions for mHd^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHd^2 by small amount right
+        testBCs[26] = testBCs[26] + hmHdsq
+
+        weaksol_mHdsqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqph = mz_tree_calc(weaksol_mHdsqph[26],
+                                  weaksol_mHdsqph[25],
+                                  np.power(weaksol_mHdsqph[6], 2),
+                                  np.power(weaksol_mHdsqph[43], 2))
+        # print("m_Z^2(mHd^2+h): " + str(mz_mHdsqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpph = mz_tree_calc(weaksol_mHdsqpph[26],
+                                   weaksol_mHdsqpph[25],
+                                   np.power(weaksol_mHdsqpph[6], 2),
+                                   np.power(weaksol_mHdsqpph[43], 2))
+        # print("m_Z^2(mHd^2+2h): " + str(mz_mHdsqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqppph = mz_tree_calc(weaksol_mHdsqppph[26],
+                                    weaksol_mHdsqppph[25],
+                                    np.power(weaksol_mHdsqppph[6], 2),
+                                    np.power(weaksol_mHdsqppph[43], 2))
+        # print("m_Z^2(mHd^2+3h): " + str(mz_mHdsqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpppph = mz_tree_calc(weaksol_mHdsqpppph[26],
+                                     weaksol_mHdsqpppph[25],
+                                     np.power(weaksol_mHdsqpppph[6], 2),
+                                     np.power(weaksol_mHdsqpppph[43], 2))
+        # print("m_Z^2(mHd^2+4h): " + str(mz_mHdsqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHd^2 by small amount left
+        testBCs[26] = testBCs[26] - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmh = mz_tree_calc(weaksol_mHdsqmh[26],
+                                  weaksol_mHdsqmh[25],
+                                  np.power(weaksol_mHdsqmh[6], 2),
+                                  np.power(weaksol_mHdsqmh[43], 2))
+        # print("m_Z^2(mHd^2-h): " + str(mz_mHdsqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmh = mz_tree_calc(weaksol_mHdsqmmh[26],
+                                   weaksol_mHdsqmmh[25],
+                                   np.power(weaksol_mHdsqmmh[6], 2),
+                                   np.power(weaksol_mHdsqmmh[43], 2))
+        # print("m_Z^2(mHd^2-2h): " + str(mz_mHdsqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmh = mz_tree_calc(weaksol_mHdsqmmmh[26],
+                                    weaksol_mHdsqmmmh[25],
+                                    np.power(weaksol_mHdsqmmmh[6], 2),
+                                    np.power(weaksol_mHdsqmmmh[43], 2))
+        # print("m_Z^2(mHd^2-3h): " + str(mz_mHdsqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmmh = mz_tree_calc(weaksol_mHdsqmmmmh[26],
+                                     weaksol_mHdsqmmmmh[25],
+                                     np.power(weaksol_mHdsqmmmmh[6], 2),
+                                     np.power(weaksol_mHdsqmmmmh[43], 2))
+        # print("m_Z^2(mHd^2-4h): " + str(mz_mHdsqmmmmh))
+        print('3/7')
+
+        ##### Set up solutions for m_1/2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        # Deviate m_1/2 by small amount right
+        testBCs[3] = testBCs[3] + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf
+        testBCs[5] = testBCs[5] + hmhf
+        #print(testBCs)
+
+        weaksol_mhfph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfph = mz_tree_calc(weaksol_mhfph[26],
+                                weaksol_mhfph[25],
+                                np.power(weaksol_mhfph[6], 2),
+                                np.power(weaksol_mhfph[43], 2))
+        # print("m_Z^2(m_1/2+h): " + str(mz_mhfph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        testBCs[3] = testBCs[3] + hmhf + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpph = mz_tree_calc(weaksol_mhfpph[26],
+                                 weaksol_mhfpph[25],
+                                 np.power(weaksol_mhfpph[6], 2),
+                                 np.power(weaksol_mhfpph[43], 2))
+        # print("m_Z^2(m_1/2+2h): " + str(mz_mhfpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfppph = mz_tree_calc(weaksol_mhfppph[26],
+                                  weaksol_mhfppph[25],
+                                  np.power(weaksol_mhfppph[6], 2),
+                                  np.power(weaksol_mhfppph[43], 2))
+        # print("m_Z^2(m_1/2+3h): " + str(mz_mhfppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpppph = mz_tree_calc(weaksol_mhfpppph[26],
+                                   weaksol_mhfpppph[25],
+                                   np.power(weaksol_mhfpppph[6], 2),
+                                   np.power(weaksol_mhfpppph[43], 2))
+        # print("m_Z^2(m_1/2+4h): " + str(mz_mhfpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m_1/2 by small amount left
+        testBCs[3] = testBCs[3] - hmhf
+        testBCs[4] = testBCs[4] - hmhf
+        testBCs[5] = testBCs[5] - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmh = mz_tree_calc(weaksol_mhfmh[26],
+                                weaksol_mhfmh[25],
+                                np.power(weaksol_mhfmh[6], 2),
+                                np.power(weaksol_mhfmh[43], 2))
+        # print("m_Z^2(m_1/2-h): " + str(mz_mhfmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmh = mz_tree_calc(weaksol_mhfmmh[26],
+                                 weaksol_mhfmmh[25],
+                                 np.power(weaksol_mhfmmh[6], 2),
+                                 np.power(weaksol_mhfmmh[43], 2))
+        # print("m_Z^2(m_1/2-2h): " + str(mz_mhfmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmh = mz_tree_calc(weaksol_mhfmmmh[26],
+                                  weaksol_mhfmmmh[25],
+                                  np.power(weaksol_mhfmmmh[6], 2),
+                                  np.power(weaksol_mhfmmmh[43], 2))
+        # print("m_Z^2(m_1/2-3h): " + str(mz_mhfmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmmh = mz_tree_calc(weaksol_mhfmmmmh[26],
+                                   weaksol_mhfmmmmh[25],
+                                   np.power(weaksol_mhfmmmmh[6], 2),
+                                   np.power(weaksol_mhfmmmmh[43], 2))
+        # print("m_Z^2(m_1/2-4h): " + str(mz_mhfmmmmh))
+        print('4/7')
+
+        ##### Set up solutions for A_0 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ph = mz_tree_calc(weaksol_A0ph[26],
+                               weaksol_A0ph[25],
+                               np.power(weaksol_A0ph[6], 2),
+                               np.power(weaksol_A0ph[43], 2))
+        # print("m_Z^2(A_0+h): " + str(mz_A0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pph = mz_tree_calc(weaksol_A0pph[26],
+                                weaksol_A0pph[25],
+                                np.power(weaksol_A0pph[6], 2),
+                                np.power(weaksol_A0pph[43], 2))
+        # print("m_Z^2(A_0+2h): " + str(mz_A0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ppph = mz_tree_calc(weaksol_A0ppph[26],
+                                 weaksol_A0ppph[25],
+                                 np.power(weaksol_A0ppph[6], 2),
+                                 np.power(weaksol_A0ppph[43], 2))
+        # print("m_Z^2(A_0+3h): " + str(mz_A0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pppph = mz_tree_calc(weaksol_A0pppph[26],
+                                  weaksol_A0pppph[25],
+                                  np.power(weaksol_A0pppph[6], 2),
+                                  np.power(weaksol_A0pppph[43], 2))
+        # print("m_Z^2(A_0+4h): " + str(mz_A0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mh = mz_tree_calc(weaksol_A0mh[26],
+                               weaksol_A0mh[25],
+                               np.power(weaksol_A0mh[6], 2),
+                               np.power(weaksol_A0mh[43], 2))
+        # print("m_Z^2(A_0-h): " + str(mz_A0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmh = mz_tree_calc(weaksol_A0mmh[26],
+                                weaksol_A0mmh[25],
+                                np.power(weaksol_A0mmh[6], 2),
+                                np.power(weaksol_A0mmh[43], 2))
+        # print("m_Z^2(A_0-2h): " + str(mz_A0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmh = mz_tree_calc(weaksol_A0mmmh[26],
+                                 weaksol_A0mmmh[25],
+                                 np.power(weaksol_A0mmmh[6], 2),
+                                 np.power(weaksol_A0mmmh[43], 2))
+        # print("m_Z^2(A_0-3h): " + str(mz_A0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmmh = mz_tree_calc(weaksol_A0mmmmh[26],
+                                  weaksol_A0mmmmh[25],
+                                  np.power(weaksol_A0mmmmh[6], 2),
+                                  np.power(weaksol_A0mmmmh[43], 2))
+        # print("m_Z^2(A_0-4h): " + str(mz_A0mmmmh))
+        print('5/7')
+
+        ##### Set up solutions for mu derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mu_0 by small amount right
+        testBCs[6] = testBCs[6] + hmu0
+
+        weaksol_mu0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ph = mz_tree_calc(weaksol_mu0ph[26],
+                                weaksol_mu0ph[25],
+                                np.power(weaksol_mu0ph[6], 2),
+                                np.power(weaksol_mu0ph[43], 2))
+        # print("m_Z^2(mu_0+h): " + str(mz_mu0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pph = mz_tree_calc(weaksol_mu0pph[26],
+                                 weaksol_mu0pph[25],
+                                 np.power(weaksol_mu0pph[6], 2),
+                                 np.power(weaksol_mu0pph[43], 2))
+        # print("m_Z^2(mu_0+2h): " + str(mz_mu0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ppph = mz_tree_calc(weaksol_mu0ppph[26],
+                                  weaksol_mu0ppph[25],
+                                  np.power(weaksol_mu0ppph[6], 2),
+                                  np.power(weaksol_mu0ppph[43], 2))
+        # print("m_Z^2(mu_0+3h): " + str(mz_mu0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pppph = mz_tree_calc(weaksol_mu0pppph[26],
+                                   weaksol_mu0pppph[25],
+                                   np.power(weaksol_mu0pppph[6], 2),
+                                   np.power(weaksol_mu0pppph[43], 2))
+        # print("m_Z^2(mu_0+4h): " + str(mz_mu0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mu_0 by small amount left
+        testBCs[6] = testBCs[6] - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mh = mz_tree_calc(weaksol_mu0mh[26],
+                                weaksol_mu0mh[25],
+                                np.power(weaksol_mu0mh[6], 2),
+                                np.power(weaksol_mu0mh[43], 2))
+        # print("m_Z^2(mu_0-h): " + str(mz_mu0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmh = mz_tree_calc(weaksol_mu0mmh[26],
+                                 weaksol_mu0mmh[25],
+                                 np.power(weaksol_mu0mmh[6], 2),
+                                 np.power(weaksol_mu0mmh[43], 2))
+        # print("m_Z^2(mu_0-2h): " + str(mz_mu0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmh = mz_tree_calc(weaksol_mu0mmmh[26],
+                                  weaksol_mu0mmmh[25],
+                                  np.power(weaksol_mu0mmmh[6], 2),
+                                  np.power(weaksol_mu0mmmh[43], 2))
+        # print("m_Z^2(mu_0-3h): " + str(mz_mu0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmmh = mz_tree_calc(weaksol_mu0mmmmh[26],
+                                   weaksol_mu0mmmmh[25],
+                                   np.power(weaksol_mu0mmmmh[6], 2),
+                                   np.power(weaksol_mu0mmmmh[43], 2))
+        # print("m_Z^2(mu_0-4h): " + str(mz_mu0mmmmh))
+        print('6/7')
+
+        ##### Set up solutions for m_0(3) derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        #print(testBCs)
+        # Deviate m0(3) by small amount and square soft scalar masses for BCs
+        testBCs[29] = np.power(testBCs[29] + hm0, 2)
+        testBCs[32] = np.power(testBCs[32] + hm0, 2)
+        testBCs[35] = np.power(testBCs[35] + hm0, 2)
+        testBCs[38] = np.power(testBCs[38] + hm0, 2)
+        testBCs[41] = np.power(testBCs[41] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m03ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03ph = mz_tree_calc(weaksol_m03ph[26],
+                                weaksol_m03ph[25],
+                                np.power(weaksol_m03ph[6], 2),
+                                np.power(weaksol_m03ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] + (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m03pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03pph = mz_tree_calc(weaksol_m03pph[26],
+                                 weaksol_m03pph[25],
+                                 np.power(weaksol_m03pph[6], 2),
+                                 np.power(weaksol_m03pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] + (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m03ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03ppph = mz_tree_calc(weaksol_m03ppph[26],
+                                  weaksol_m03ppph[25],
+                                  np.power(weaksol_m03ppph[6], 2),
+                                  np.power(weaksol_m03ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] + (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (4 * hm0), 2)
+
+        weaksol_m03pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03pppph = mz_tree_calc(weaksol_m03pppph[26],
+                                   weaksol_m03pppph[25],
+                                   np.power(weaksol_m03pppph[6], 2),
+                                   np.power(weaksol_m03pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0(3) by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - hm0, 2)
+        testBCs[32] = np.power(testBCs[32] - hm0, 2)
+        testBCs[35] = np.power(testBCs[35] - hm0, 2)
+        testBCs[38] = np.power(testBCs[38] - hm0, 2)
+        testBCs[41] = np.power(testBCs[41] - hm0, 2)
+        
+        weaksol_m03mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mh = mz_tree_calc(weaksol_m03mh[26],
+                                weaksol_m03mh[25],
+                                np.power(weaksol_m03mh[6], 2),
+                                np.power(weaksol_m03mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (2 * hm0), 2)
+        
+        weaksol_m03mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mmh = mz_tree_calc(weaksol_m03mmh[26],
+                                 weaksol_m03mmh[25],
+                                 np.power(weaksol_m03mmh[6], 2),
+                                 np.power(weaksol_m03mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (3 * hm0), 2)
+        
+        weaksol_m03mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mmmh = mz_tree_calc(weaksol_m03mmmh[26],
+                                  weaksol_m03mmmh[25],
+                                  np.power(weaksol_m03mmmh[6], 2),
+                                  np.power(weaksol_m03mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (4 * hm0), 2)
+        
+        weaksol_m03mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mmmmh = mz_tree_calc(weaksol_m03mmmmh[26],
+                                   weaksol_m03mmmmh[25],
+                                   np.power(weaksol_m03mmmmh[6], 2),
+                                   np.power(weaksol_m03mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('7/7')
+        # Construct derivative array
+        deriv_array = np.array([(1 / hm0)
+                                * ((mz_m012mmmmh / 280)
+                                   - ((4 / 105) * mz_m012mmmh)
+                                   + (mz_m012mmh / 5)
+                                   - ((4 / 5) * mz_m012mh)
+                                   + ((4 / 5) * mz_m012ph)
+                                   - (mz_m012pph / 5)
+                                   + ((4 / 105) * mz_m012ppph)
+                                   - (mz_m012pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_mhfmmmmh / 280)
+                                   - ((4 / 105) * mz_mhfmmmh)
+                                   + (mz_mhfmmh / 5)
+                                   - ((4 / 5) * mz_mhfmh)
+                                   + ((4 / 5) * mz_mhfph)
+                                   - (mz_mhfpph / 5)
+                                   + ((4 / 105) * mz_mhfppph)
+                                   - (mz_mhfpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_A0mmmmh / 280)
+                                   - ((4 / 105) * mz_A0mmmh)
+                                   + (mz_A0mmh / 5)
+                                   - ((4 / 5) * mz_A0mh)
+                                   + ((4 / 5) * mz_A0ph)
+                                   - (mz_A0pph / 5)
+                                   + ((4 / 105) * mz_A0ppph)
+                                   - (mz_A0pppph / 280)),
+                                (1 / hmu0)
+                                * ((mz_mu0mmmmh / 280)
+                                   - ((4 / 105) * mz_mu0mmmh)
+                                   + (mz_mu0mmh / 5)
+                                   - ((4 / 5) * mz_mu0mh)
+                                   + ((4 / 5) * mz_mu0ph)
+                                   - (mz_mu0pph / 5)
+                                   + ((4 / 105) * mz_mu0ppph)
+                                   - (mz_mu0pppph / 280)),
+                                (1 / hmHusq)
+                                * ((mz_mHusqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHusqmmmh)
+                                   + (mz_mHusqmmh / 5)
+                                   - ((4 / 5) * mz_mHusqmh)
+                                   + ((4 / 5) * mz_mHusqph)
+                                   - (mz_mHusqpph / 5)
+                                   + ((4 / 105) * mz_mHusqppph)
+                                   - (mz_mHusqpppph / 280)),
+                                (1 / hmHdsq)
+                                * ((mz_mHdsqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHdsqmmmh)
+                                   + (mz_mHdsqmmh / 5)
+                                   - ((4 / 5) * mz_mHdsqmh)
+                                   + ((4 / 5) * mz_mHdsqph)
+                                   - (mz_mHdsqpph / 5)
+                                   + ((4 / 105) * mz_mHdsqppph)
+                                   - (mz_mHdsqpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_m03mmmmh / 280)
+                                   - ((4 / 105) * mz_m03mmmh)
+                                   + (mz_m03mmh / 5)
+                                   - ((4 / 5) * mz_m03mh)
+                                   + ((4 / 5) * mz_m03ph)
+                                   - (mz_m03pph / 5)
+                                   + ((4 / 105) * mz_m03ppph)
+                                   - (mz_m03pppph / 280))])
+        sens_params = np.sort(np.array([(np.abs((mym012
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[0]),
+                                         'Delta_BG(m_0(1,2))'),
+                                        (np.abs((mymhf
+                                                 / mymzsq)
+                                                * deriv_array[1]),
+                                         'Delta_BG(m_1/2)'),
+                                        (np.abs((myA0
+                                                 / mymzsq)
+                                                * deriv_array[2]),
+                                         'Delta_BG(A_0)'),
+                                        (np.abs((mymu0
+                                                 / mymzsq)
+                                                * deriv_array[3]),
+                                         'Delta_BG(mu)'),
+                                        (np.abs((mymHusqGUT / mymzsq)
+                                                * deriv_array[4]),
+                                         'Delta_BG(mHu^2)'),
+                                        (np.abs((mymHdsqGUT / mymzsq)
+                                                * deriv_array[5]),
+                                         'Delta_BG(mHd^2)'),
+                                        (np.abs((mym03
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[6]),
+                                         'Delta_BG(m_0(3))')],
                                        dtype=[('BGContrib', float),
                                               ('BGlabel', 'U40')]),
                               order='BGContrib')
     elif (modselno == 5):
-        sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0(3)'),
-                                        (np.abs((np.sqrt(mQ2sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0(2)'),
-                                        (np.abs((np.sqrt(mQ1sqGUT) / mymzsq)
-                                                * deriv_calc), 'c_m_0(1)'),
-                                        (np.abs((M1GUT / mymzsq)
-                                                * deriv_calc), 'c_m_1/2'),
-                                        (np.abs(((atGUT / ytGUT) / mymzsq)
-                                                * deriv_calc), 'c_A_0'),
-                                        (np.abs((muGUT / mymzsq)
-                                                * deriv_calc), 'c_mu'),
-                                        (np.abs((mHusqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHu^2'),
-                                        (np.abs((mHdsqGUT / mymzsq)
-                                                * deriv_calc), 'c_mHd^2')],
+        print("Computing sensitivity coefficient derivatives...")
+        mym01 = inputGUT_BCs[27]
+        mym02 = inputGUT_BCs[28]
+        mym03 = inputGUT_BCs[29]
+        hm0 = 1e-6
+        mymhf = inputGUT_BCs[3]
+        hmhf = 1e-6
+        myA0 = inputGUT_BCs[16] / inputGUT_BCs[7]
+        hA0 = 1e-6
+        mymu0 = inputGUT_BCs[6]
+        hmu0 = 1e-6
+        mymHusqGUT = inputGUT_BCs[25]
+        hmHusq = 1e-6
+        mymHdsqGUT = inputGUT_BCs[26]
+        hmHdsq = 1e-6
+        ##### Set up solutions for m_0(1) derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m0(1) by small amount and square soft scalar masses for BCs
+        testBCs[27] = np.power(testBCs[27] + hm0, 2)
+        testBCs[30] = np.power(testBCs[30] + hm0, 2)
+        testBCs[33] = np.power(testBCs[33] + hm0, 2)
+        testBCs[36] = np.power(testBCs[36] + hm0, 2)
+        testBCs[39] = np.power(testBCs[39] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m01ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01ph = mz_tree_calc(weaksol_m01ph[26],
+                                weaksol_m01ph[25],
+                                np.power(weaksol_m01ph[6], 2),
+                                np.power(weaksol_m01ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m01pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01pph = mz_tree_calc(weaksol_m01pph[26],
+                                 weaksol_m01pph[25],
+                                 np.power(weaksol_m01pph[6], 2),
+                                 np.power(weaksol_m01pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m01ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01ppph = mz_tree_calc(weaksol_m01ppph[26],
+                                  weaksol_m01ppph[25],
+                                  np.power(weaksol_m01ppph[6], 2),
+                                  np.power(weaksol_m01ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] + (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] + (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] + (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] + (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] + (4 * hm0), 2)
+
+        weaksol_m01pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01pppph = mz_tree_calc(weaksol_m01pppph[26],
+                                   weaksol_m01pppph[25],
+                                   np.power(weaksol_m01pppph[6], 2),
+                                   np.power(weaksol_m01pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0(1) by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - hm0, 2)
+        testBCs[30] = np.power(testBCs[30] - hm0, 2)
+        testBCs[33] = np.power(testBCs[33] - hm0, 2)
+        testBCs[36] = np.power(testBCs[36] - hm0, 2)
+        testBCs[39] = np.power(testBCs[39] - hm0, 2)
+        
+        weaksol_m01mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01mh = mz_tree_calc(weaksol_m01mh[26],
+                                weaksol_m01mh[25],
+                                np.power(weaksol_m01mh[6], 2),
+                                np.power(weaksol_m01mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (2 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (2 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (2 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (2 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (2 * hm0), 2)
+        
+        weaksol_m01mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01mmh = mz_tree_calc(weaksol_m01mmh[26],
+                                 weaksol_m01mmh[25],
+                                 np.power(weaksol_m01mmh[6], 2),
+                                 np.power(weaksol_m01mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (3 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (3 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (3 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (3 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (3 * hm0), 2)
+        
+        weaksol_m01mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01mmmh = mz_tree_calc(weaksol_m01mmmh[26],
+                                  weaksol_m01mmmh[25],
+                                  np.power(weaksol_m01mmmh[6], 2),
+                                  np.power(weaksol_m01mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (4 * hm0), 2)
+        testBCs[30] = np.power(testBCs[30] - (4 * hm0), 2)
+        testBCs[33] = np.power(testBCs[33] - (4 * hm0), 2)
+        testBCs[36] = np.power(testBCs[36] - (4 * hm0), 2)
+        testBCs[39] = np.power(testBCs[39] - (4 * hm0), 2)
+        
+        weaksol_m01mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m01mmmmh = mz_tree_calc(weaksol_m01mmmmh[26],
+                                   weaksol_m01mmmmh[25],
+                                   np.power(weaksol_m01mmmmh[6], 2),
+                                   np.power(weaksol_m01mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('1/8')
+
+        ##### Set up solutions for mHu^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHu^2 by small amount right
+        testBCs[25] = testBCs[25] + hmHusq
+
+        weaksol_mHusqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqph = mz_tree_calc(weaksol_mHusqph[26],
+                                  weaksol_mHusqph[25],
+                                  np.power(weaksol_mHusqph[6], 2),
+                                  np.power(weaksol_mHusqph[43], 2))
+        # print("m_Z^2(mHu^2+h): " + str(mz_mHusqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpph = mz_tree_calc(weaksol_mHusqpph[26],
+                                   weaksol_mHusqpph[25],
+                                   np.power(weaksol_mHusqpph[6], 2),
+                                   np.power(weaksol_mHusqpph[43], 2))
+        # print("m_Z^2(mHu^2+2h): " + str(mz_mHusqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqppph = mz_tree_calc(weaksol_mHusqppph[26],
+                                    weaksol_mHusqppph[25],
+                                    np.power(weaksol_mHusqppph[6], 2),
+                                    np.power(weaksol_mHusqppph[43], 2))
+        # print("m_Z^2(mHu^2+3h): " + str(mz_mHusqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpppph = mz_tree_calc(weaksol_mHusqpppph[26],
+                                     weaksol_mHusqpppph[25],
+                                     np.power(weaksol_mHusqpppph[6], 2),
+                                     np.power(weaksol_mHusqpppph[43], 2))
+        # print("m_Z^2(mHu^2+4h): " + str(mz_mHusqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHu^2 by small amount left
+        testBCs[25] = testBCs[25] - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmh = mz_tree_calc(weaksol_mHusqmh[26],
+                                  weaksol_mHusqmh[25],
+                                  np.power(weaksol_mHusqmh[6], 2),
+                                  np.power(weaksol_mHusqmh[43], 2))
+        # print("m_Z^2(mHu^2-h): " + str(mz_mHusqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmh = mz_tree_calc(weaksol_mHusqmmh[26],
+                                   weaksol_mHusqmmh[25],
+                                   np.power(weaksol_mHusqmmh[6], 2),
+                                   np.power(weaksol_mHusqmmh[43], 2))
+        # print("m_Z^2(mHu^2-2h): " + str(mz_mHusqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmh = mz_tree_calc(weaksol_mHusqmmmh[26],
+                                    weaksol_mHusqmmmh[25],
+                                    np.power(weaksol_mHusqmmmh[6], 2),
+                                    np.power(weaksol_mHusqmmmh[43], 2))
+        # print("m_Z^2(mHu^2-3h): " + str(mz_mHusqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmmh = mz_tree_calc(weaksol_mHusqmmmmh[26],
+                                     weaksol_mHusqmmmmh[25],
+                                     np.power(weaksol_mHusqmmmmh[6], 2),
+                                     np.power(weaksol_mHusqmmmmh[43], 2))
+        # print("m_Z^2(mHu^2-4h): " + str(mz_mHusqmmmmh))
+        print('2/8')
+
+        ##### Set up solutions for mHd^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHd^2 by small amount right
+        testBCs[26] = testBCs[26] + hmHdsq
+
+        weaksol_mHdsqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqph = mz_tree_calc(weaksol_mHdsqph[26],
+                                  weaksol_mHdsqph[25],
+                                  np.power(weaksol_mHdsqph[6], 2),
+                                  np.power(weaksol_mHdsqph[43], 2))
+        # print("m_Z^2(mHd^2+h): " + str(mz_mHdsqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpph = mz_tree_calc(weaksol_mHdsqpph[26],
+                                   weaksol_mHdsqpph[25],
+                                   np.power(weaksol_mHdsqpph[6], 2),
+                                   np.power(weaksol_mHdsqpph[43], 2))
+        # print("m_Z^2(mHd^2+2h): " + str(mz_mHdsqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqppph = mz_tree_calc(weaksol_mHdsqppph[26],
+                                    weaksol_mHdsqppph[25],
+                                    np.power(weaksol_mHdsqppph[6], 2),
+                                    np.power(weaksol_mHdsqppph[43], 2))
+        # print("m_Z^2(mHd^2+3h): " + str(mz_mHdsqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpppph = mz_tree_calc(weaksol_mHdsqpppph[26],
+                                     weaksol_mHdsqpppph[25],
+                                     np.power(weaksol_mHdsqpppph[6], 2),
+                                     np.power(weaksol_mHdsqpppph[43], 2))
+        # print("m_Z^2(mHd^2+4h): " + str(mz_mHdsqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHd^2 by small amount left
+        testBCs[26] = testBCs[26] - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmh = mz_tree_calc(weaksol_mHdsqmh[26],
+                                  weaksol_mHdsqmh[25],
+                                  np.power(weaksol_mHdsqmh[6], 2),
+                                  np.power(weaksol_mHdsqmh[43], 2))
+        # print("m_Z^2(mHd^2-h): " + str(mz_mHdsqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmh = mz_tree_calc(weaksol_mHdsqmmh[26],
+                                   weaksol_mHdsqmmh[25],
+                                   np.power(weaksol_mHdsqmmh[6], 2),
+                                   np.power(weaksol_mHdsqmmh[43], 2))
+        # print("m_Z^2(mHd^2-2h): " + str(mz_mHdsqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmh = mz_tree_calc(weaksol_mHdsqmmmh[26],
+                                    weaksol_mHdsqmmmh[25],
+                                    np.power(weaksol_mHdsqmmmh[6], 2),
+                                    np.power(weaksol_mHdsqmmmh[43], 2))
+        # print("m_Z^2(mHd^2-3h): " + str(mz_mHdsqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmmh = mz_tree_calc(weaksol_mHdsqmmmmh[26],
+                                     weaksol_mHdsqmmmmh[25],
+                                     np.power(weaksol_mHdsqmmmmh[6], 2),
+                                     np.power(weaksol_mHdsqmmmmh[43], 2))
+        # print("m_Z^2(mHd^2-4h): " + str(mz_mHdsqmmmmh))
+        print('3/8')
+
+        ##### Set up solutions for m_1/2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        # Deviate m_1/2 by small amount right
+        testBCs[3] = testBCs[3] + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf
+        testBCs[5] = testBCs[5] + hmhf
+        #print(testBCs)
+
+        weaksol_mhfph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfph = mz_tree_calc(weaksol_mhfph[26],
+                                weaksol_mhfph[25],
+                                np.power(weaksol_mhfph[6], 2),
+                                np.power(weaksol_mhfph[43], 2))
+        # print("m_Z^2(m_1/2+h): " + str(mz_mhfph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[3])
+        testBCs[3] = testBCs[3] + hmhf + hmhf
+        # print(testBCs[3])
+        testBCs[4] = testBCs[4] + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpph = mz_tree_calc(weaksol_mhfpph[26],
+                                 weaksol_mhfpph[25],
+                                 np.power(weaksol_mhfpph[6], 2),
+                                 np.power(weaksol_mhfpph[43], 2))
+        # print("m_Z^2(m_1/2+2h): " + str(mz_mhfpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfppph = mz_tree_calc(weaksol_mhfppph[26],
+                                  weaksol_mhfppph[25],
+                                  np.power(weaksol_mhfppph[6], 2),
+                                  np.power(weaksol_mhfppph[43], 2))
+        # print("m_Z^2(m_1/2+3h): " + str(mz_mhfppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + hmhf + hmhf + hmhf + hmhf
+        testBCs[4] = testBCs[4] + hmhf + hmhf + hmhf + hmhf
+        testBCs[5] = testBCs[5] + hmhf + hmhf + hmhf + hmhf
+        #print(testBCs)
+
+        weaksol_mhfpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfpppph = mz_tree_calc(weaksol_mhfpppph[26],
+                                   weaksol_mhfpppph[25],
+                                   np.power(weaksol_mhfpppph[6], 2),
+                                   np.power(weaksol_mhfpppph[43], 2))
+        # print("m_Z^2(m_1/2+4h): " + str(mz_mhfpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m_1/2 by small amount left
+        testBCs[3] = testBCs[3] - hmhf
+        testBCs[4] = testBCs[4] - hmhf
+        testBCs[5] = testBCs[5] - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmh = mz_tree_calc(weaksol_mhfmh[26],
+                                weaksol_mhfmh[25],
+                                np.power(weaksol_mhfmh[6], 2),
+                                np.power(weaksol_mhfmh[43], 2))
+        # print("m_Z^2(m_1/2-h): " + str(mz_mhfmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmh = mz_tree_calc(weaksol_mhfmmh[26],
+                                 weaksol_mhfmmh[25],
+                                 np.power(weaksol_mhfmmh[6], 2),
+                                 np.power(weaksol_mhfmmh[43], 2))
+        # print("m_Z^2(m_1/2-2h): " + str(mz_mhfmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmh = mz_tree_calc(weaksol_mhfmmmh[26],
+                                  weaksol_mhfmmmh[25],
+                                  np.power(weaksol_mhfmmmh[6], 2),
+                                  np.power(weaksol_mhfmmmh[43], 2))
+        # print("m_Z^2(m_1/2-3h): " + str(mz_mhfmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - hmhf - hmhf - hmhf - hmhf
+        testBCs[4] = testBCs[4] - hmhf - hmhf - hmhf - hmhf
+        testBCs[5] = testBCs[5] - hmhf - hmhf - hmhf - hmhf
+        #print(testBCs)
+
+        weaksol_mhfmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mhfmmmmh = mz_tree_calc(weaksol_mhfmmmmh[26],
+                                   weaksol_mhfmmmmh[25],
+                                   np.power(weaksol_mhfmmmmh[6], 2),
+                                   np.power(weaksol_mhfmmmmh[43], 2))
+        # print("m_Z^2(m_1/2-4h): " + str(mz_mhfmmmmh))
+        print('4/8')
+
+        ##### Set up solutions for A_0 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ph = mz_tree_calc(weaksol_A0ph[26],
+                               weaksol_A0ph[25],
+                               np.power(weaksol_A0ph[6], 2),
+                               np.power(weaksol_A0ph[43], 2))
+        # print("m_Z^2(A_0+h): " + str(mz_A0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pph = mz_tree_calc(weaksol_A0pph[26],
+                                weaksol_A0pph[25],
+                                np.power(weaksol_A0pph[6], 2),
+                                np.power(weaksol_A0pph[43], 2))
+        # print("m_Z^2(A_0+2h): " + str(mz_A0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0ppph = mz_tree_calc(weaksol_A0ppph[26],
+                                 weaksol_A0ppph[25],
+                                 np.power(weaksol_A0ppph[6], 2),
+                                 np.power(weaksol_A0ppph[43], 2))
+        # print("m_Z^2(A_0+3h): " + str(mz_A0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0 + hA0 + hA0 + hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0pppph = mz_tree_calc(weaksol_A0pppph[26],
+                                  weaksol_A0pppph[25],
+                                  np.power(weaksol_A0pppph[6], 2),
+                                  np.power(weaksol_A0pppph[43], 2))
+        # print("m_Z^2(A_0+4h): " + str(mz_A0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mh = mz_tree_calc(weaksol_A0mh[26],
+                               weaksol_A0mh[25],
+                               np.power(weaksol_A0mh[6], 2),
+                               np.power(weaksol_A0mh[43], 2))
+        # print("m_Z^2(A_0-h): " + str(mz_A0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmh = mz_tree_calc(weaksol_A0mmh[26],
+                                weaksol_A0mmh[25],
+                                np.power(weaksol_A0mmh[6], 2),
+                                np.power(weaksol_A0mmh[43], 2))
+        # print("m_Z^2(A_0-2h): " + str(mz_A0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmh = mz_tree_calc(weaksol_A0mmmh[26],
+                                 weaksol_A0mmmh[25],
+                                 np.power(weaksol_A0mmmh[6], 2),
+                                 np.power(weaksol_A0mmmh[43], 2))
+        # print("m_Z^2(A_0-3h): " + str(mz_A0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate A_0 by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[7]
+        # print(testBCs[16] / testBCs[7])
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[8]
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[9]
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[10]
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[11]
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[12]
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[13]
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[14]
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0 - hA0 - hA0 - hA0)\
+            * testBCs[15]
+        #print(testBCs)
+
+        weaksol_A0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_A0mmmmh = mz_tree_calc(weaksol_A0mmmmh[26],
+                                  weaksol_A0mmmmh[25],
+                                  np.power(weaksol_A0mmmmh[6], 2),
+                                  np.power(weaksol_A0mmmmh[43], 2))
+        # print("m_Z^2(A_0-4h): " + str(mz_A0mmmmh))
+        print('5/8')
+
+        ##### Set up solutions for mu derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mu_0 by small amount right
+        testBCs[6] = testBCs[6] + hmu0
+
+        weaksol_mu0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ph = mz_tree_calc(weaksol_mu0ph[26],
+                                weaksol_mu0ph[25],
+                                np.power(weaksol_mu0ph[6], 2),
+                                np.power(weaksol_mu0ph[43], 2))
+        # print("m_Z^2(mu_0+h): " + str(mz_mu0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pph = mz_tree_calc(weaksol_mu0pph[26],
+                                 weaksol_mu0pph[25],
+                                 np.power(weaksol_mu0pph[6], 2),
+                                 np.power(weaksol_mu0pph[43], 2))
+        # print("m_Z^2(mu_0+2h): " + str(mz_mu0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ppph = mz_tree_calc(weaksol_mu0ppph[26],
+                                  weaksol_mu0ppph[25],
+                                  np.power(weaksol_mu0ppph[6], 2),
+                                  np.power(weaksol_mu0ppph[43], 2))
+        # print("m_Z^2(mu_0+3h): " + str(mz_mu0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pppph = mz_tree_calc(weaksol_mu0pppph[26],
+                                   weaksol_mu0pppph[25],
+                                   np.power(weaksol_mu0pppph[6], 2),
+                                   np.power(weaksol_mu0pppph[43], 2))
+        # print("m_Z^2(mu_0+4h): " + str(mz_mu0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mu_0 by small amount left
+        testBCs[6] = testBCs[6] - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mh = mz_tree_calc(weaksol_mu0mh[26],
+                                weaksol_mu0mh[25],
+                                np.power(weaksol_mu0mh[6], 2),
+                                np.power(weaksol_mu0mh[43], 2))
+        # print("m_Z^2(mu_0-h): " + str(mz_mu0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmh = mz_tree_calc(weaksol_mu0mmh[26],
+                                 weaksol_mu0mmh[25],
+                                 np.power(weaksol_mu0mmh[6], 2),
+                                 np.power(weaksol_mu0mmh[43], 2))
+        # print("m_Z^2(mu_0-2h): " + str(mz_mu0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmh = mz_tree_calc(weaksol_mu0mmmh[26],
+                                  weaksol_mu0mmmh[25],
+                                  np.power(weaksol_mu0mmmh[6], 2),
+                                  np.power(weaksol_mu0mmmh[43], 2))
+        # print("m_Z^2(mu_0-3h): " + str(mz_mu0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmmh = mz_tree_calc(weaksol_mu0mmmmh[26],
+                                   weaksol_mu0mmmmh[25],
+                                   np.power(weaksol_mu0mmmmh[6], 2),
+                                   np.power(weaksol_mu0mmmmh[43], 2))
+        # print("m_Z^2(mu_0-4h): " + str(mz_mu0mmmmh))
+        print('6/8')
+
+        ##### Set up solutions for m_0(3) derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        #print(testBCs)
+        # Deviate m0(3) by small amount and square soft scalar masses for BCs
+        testBCs[29] = np.power(testBCs[29] + hm0, 2)
+        testBCs[32] = np.power(testBCs[32] + hm0, 2)
+        testBCs[35] = np.power(testBCs[35] + hm0, 2)
+        testBCs[38] = np.power(testBCs[38] + hm0, 2)
+        testBCs[41] = np.power(testBCs[41] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m03ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03ph = mz_tree_calc(weaksol_m03ph[26],
+                                weaksol_m03ph[25],
+                                np.power(weaksol_m03ph[6], 2),
+                                np.power(weaksol_m03ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] + (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m03pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03pph = mz_tree_calc(weaksol_m03pph[26],
+                                 weaksol_m03pph[25],
+                                 np.power(weaksol_m03pph[6], 2),
+                                 np.power(weaksol_m03pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] + (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m03ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03ppph = mz_tree_calc(weaksol_m03ppph[26],
+                                  weaksol_m03ppph[25],
+                                  np.power(weaksol_m03ppph[6], 2),
+                                  np.power(weaksol_m03ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] + (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] + (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] + (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] + (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] + (4 * hm0), 2)
+
+        weaksol_m03pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03pppph = mz_tree_calc(weaksol_m03pppph[26],
+                                   weaksol_m03pppph[25],
+                                   np.power(weaksol_m03pppph[6], 2),
+                                   np.power(weaksol_m03pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0(3) by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - hm0, 2)
+        testBCs[32] = np.power(testBCs[32] - hm0, 2)
+        testBCs[35] = np.power(testBCs[35] - hm0, 2)
+        testBCs[38] = np.power(testBCs[38] - hm0, 2)
+        testBCs[41] = np.power(testBCs[41] - hm0, 2)
+        
+        weaksol_m03mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mh = mz_tree_calc(weaksol_m03mh[26],
+                                weaksol_m03mh[25],
+                                np.power(weaksol_m03mh[6], 2),
+                                np.power(weaksol_m03mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - (2 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (2 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (2 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (2 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (2 * hm0), 2)
+        
+        weaksol_m03mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mmh = mz_tree_calc(weaksol_m03mmh[26],
+                                 weaksol_m03mmh[25],
+                                 np.power(weaksol_m03mmh[6], 2),
+                                 np.power(weaksol_m03mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - (3 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (3 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (3 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (3 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (3 * hm0), 2)
+        
+        weaksol_m03mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mmmh = mz_tree_calc(weaksol_m03mmmh[26],
+                                  weaksol_m03mmmh[25],
+                                  np.power(weaksol_m03mmmh[6], 2),
+                                  np.power(weaksol_m03mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[29] = np.power(testBCs[29] - (4 * hm0), 2)
+        testBCs[32] = np.power(testBCs[32] - (4 * hm0), 2)
+        testBCs[35] = np.power(testBCs[35] - (4 * hm0), 2)
+        testBCs[38] = np.power(testBCs[38] - (4 * hm0), 2)
+        testBCs[41] = np.power(testBCs[41] - (4 * hm0), 2)
+        
+        weaksol_m03mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m03mmmmh = mz_tree_calc(weaksol_m03mmmmh[26],
+                                   weaksol_m03mmmmh[25],
+                                   np.power(weaksol_m03mmmmh[6], 2),
+                                   np.power(weaksol_m03mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('7/8')
+
+        ##### Set up solutions for m_0(2) derivative #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate m0(2) by small amount and square soft scalar masses for BCs
+        testBCs[28] = np.power(testBCs[28] + hm0, 2)
+        testBCs[31] = np.power(testBCs[31] + hm0, 2)
+        testBCs[34] = np.power(testBCs[34] + hm0, 2)
+        testBCs[37] = np.power(testBCs[37] + hm0, 2)
+        testBCs[40] = np.power(testBCs[40] + hm0, 2)
+        #print(testBCs)
+
+        weaksol_m02ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02ph = mz_tree_calc(weaksol_m02ph[26],
+                                weaksol_m02ph[25],
+                                np.power(weaksol_m02ph[6], 2),
+                                np.power(weaksol_m02ph[43], 2))
+        # print("m_Z^2(m_0+h): " + str(mz_m0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[28] = np.power(testBCs[28] + (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (2 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m02pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02pph = mz_tree_calc(weaksol_m02pph[26],
+                                 weaksol_m02pph[25],
+                                 np.power(weaksol_m02pph[6], 2),
+                                 np.power(weaksol_m02pph[43], 2))
+        # print("m_Z^2(m_0+2h): " + str(mz_m0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[28] = np.power(testBCs[28] + (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (3 * hm0), 2)
+        #print(testBCs)
+
+        weaksol_m02ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02ppph = mz_tree_calc(weaksol_m02ppph[26],
+                                  weaksol_m02ppph[25],
+                                  np.power(weaksol_m02ppph[6], 2),
+                                  np.power(weaksol_m02ppph[43], 2))
+        # print("m_Z^2(m_0+3h): " + str(mz_m0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] + (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] + (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] + (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] + (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] + (4 * hm0), 2)
+
+        weaksol_m02pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02pppph = mz_tree_calc(weaksol_m02pppph[26],
+                                   weaksol_m02pppph[25],
+                                   np.power(weaksol_m02pppph[6], 2),
+                                   np.power(weaksol_m02pppph[43], 2))
+        # print("m_Z^2(m_0+4h): " + str(mz_m0pppph))
+
+        # Deviate m0(2) by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] - hm0, 2)
+        testBCs[31] = np.power(testBCs[31] - hm0, 2)
+        testBCs[34] = np.power(testBCs[34] - hm0, 2)
+        testBCs[37] = np.power(testBCs[37] - hm0, 2)
+        testBCs[40] = np.power(testBCs[40] - hm0, 2)
+        
+        weaksol_m02mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02mh = mz_tree_calc(weaksol_m02mh[26],
+                                weaksol_m02mh[25],
+                                np.power(weaksol_m02mh[6], 2),
+                                np.power(weaksol_m02mh[43], 2))
+        # print("m_Z^2(m_0-h): " + str(mz_m0mh))
+        
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] - (2 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (2 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (2 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (2 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (2 * hm0), 2)
+        
+        weaksol_m02mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02mmh = mz_tree_calc(weaksol_m02mmh[26],
+                                 weaksol_m02mmh[25],
+                                 np.power(weaksol_m02mmh[6], 2),
+                                 np.power(weaksol_m02mmh[43], 2))
+        # print("m_Z^2(m_0-2h): " + str(mz_m0mmh))
+        
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] - (3 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (3 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (3 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (3 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (3 * hm0), 2)
+        
+        weaksol_m02mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02mmmh = mz_tree_calc(weaksol_m02mmmh[26],
+                                  weaksol_m02mmmh[25],
+                                  np.power(weaksol_m02mmmh[6], 2),
+                                  np.power(weaksol_m02mmmh[43], 2))
+        # print("m_Z^2(m_0-3h): " + str(mz_m0mmmh))
+        
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] - (4 * hm0), 2)
+        testBCs[31] = np.power(testBCs[31] - (4 * hm0), 2)
+        testBCs[34] = np.power(testBCs[34] - (4 * hm0), 2)
+        testBCs[37] = np.power(testBCs[37] - (4 * hm0), 2)
+        testBCs[40] = np.power(testBCs[40] - (4 * hm0), 2)
+        
+        weaksol_m02mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_m02mmmmh = mz_tree_calc(weaksol_m02mmmmh[26],
+                                   weaksol_m02mmmmh[25],
+                                   np.power(weaksol_m02mmmmh[6], 2),
+                                   np.power(weaksol_m02mmmmh[43], 2))
+        # print("m_Z^2(m_0-4h): " + str(mz_m0mmmmh))
+        print('8/8')
+        # Construct derivative array
+        deriv_array = np.array([(1 / hm0)
+                                * ((mz_m01mmmmh / 280)
+                                   - ((4 / 105) * mz_m01mmmh)
+                                   + (mz_m01mmh / 5)
+                                   - ((4 / 5) * mz_m01mh)
+                                   + ((4 / 5) * mz_m01ph)
+                                   - (mz_m01pph / 5)
+                                   + ((4 / 105) * mz_m01ppph)
+                                   - (mz_m01pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_mhfmmmmh / 280)
+                                   - ((4 / 105) * mz_mhfmmmh)
+                                   + (mz_mhfmmh / 5)
+                                   - ((4 / 5) * mz_mhfmh)
+                                   + ((4 / 5) * mz_mhfph)
+                                   - (mz_mhfpph / 5)
+                                   + ((4 / 105) * mz_mhfppph)
+                                   - (mz_mhfpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_A0mmmmh / 280)
+                                   - ((4 / 105) * mz_A0mmmh)
+                                   + (mz_A0mmh / 5)
+                                   - ((4 / 5) * mz_A0mh)
+                                   + ((4 / 5) * mz_A0ph)
+                                   - (mz_A0pph / 5)
+                                   + ((4 / 105) * mz_A0ppph)
+                                   - (mz_A0pppph / 280)),
+                                (1 / hmu0)
+                                * ((mz_mu0mmmmh / 280)
+                                   - ((4 / 105) * mz_mu0mmmh)
+                                   + (mz_mu0mmh / 5)
+                                   - ((4 / 5) * mz_mu0mh)
+                                   + ((4 / 5) * mz_mu0ph)
+                                   - (mz_mu0pph / 5)
+                                   + ((4 / 105) * mz_mu0ppph)
+                                   - (mz_mu0pppph / 280)),
+                                (1 / hmHusq)
+                                * ((mz_mHusqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHusqmmmh)
+                                   + (mz_mHusqmmh / 5)
+                                   - ((4 / 5) * mz_mHusqmh)
+                                   + ((4 / 5) * mz_mHusqph)
+                                   - (mz_mHusqpph / 5)
+                                   + ((4 / 105) * mz_mHusqppph)
+                                   - (mz_mHusqpppph / 280)),
+                                (1 / hmHdsq)
+                                * ((mz_mHdsqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHdsqmmmh)
+                                   + (mz_mHdsqmmh / 5)
+                                   - ((4 / 5) * mz_mHdsqmh)
+                                   + ((4 / 5) * mz_mHdsqph)
+                                   - (mz_mHdsqpph / 5)
+                                   + ((4 / 105) * mz_mHdsqppph)
+                                   - (mz_mHdsqpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_m02mmmmh / 280)
+                                   - ((4 / 105) * mz_m02mmmh)
+                                   + (mz_m02mmh / 5)
+                                   - ((4 / 5) * mz_m02mh)
+                                   + ((4 / 5) * mz_m02ph)
+                                   - (mz_m02pph / 5)
+                                   + ((4 / 105) * mz_m02ppph)
+                                   - (mz_m02pppph / 280)),
+                                (1 / hm0)
+                                * ((mz_m03mmmmh / 280)
+                                   - ((4 / 105) * mz_m03mmmh)
+                                   + (mz_m03mmh / 5)
+                                   - ((4 / 5) * mz_m03mh)
+                                   + ((4 / 5) * mz_m03ph)
+                                   - (mz_m03pph / 5)
+                                   + ((4 / 105) * mz_m03ppph)
+                                   - (mz_m03pppph / 280))])
+        sens_params = np.sort(np.array([(np.abs((mym01
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[0]),
+                                         'Delta_BG(m_0(1))'),
+                                        (np.abs((mymhf
+                                                 / mymzsq)
+                                                * deriv_array[1]),
+                                         'Delta_BG(m_1/2)'),
+                                        (np.abs((myA0
+                                                 / mymzsq)
+                                                * deriv_array[2]),
+                                         'Delta_BG(A_0)'),
+                                        (np.abs((mymu0
+                                                 / mymzsq)
+                                                * deriv_array[3]),
+                                         'Delta_BG(mu)'),
+                                        (np.abs((mymHusqGUT / mymzsq)
+                                                * deriv_array[4]),
+                                         'Delta_BG(mHu^2)'),
+                                        (np.abs((mymHdsqGUT / mymzsq)
+                                                * deriv_array[5]),
+                                         'Delta_BG(mHd^2)'),
+                                        (np.abs((mym02
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[6]),
+                                         'Delta_BG(m_0(2))'),
+                                        (np.abs((mym03
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[7]),
+                                         'Delta_BG(m_0(3))')],
                                        dtype=[('BGContrib', float),
                                               ('BGlabel', 'U40')]),
                               order='BGContrib')
     elif (modselno == 6):
-       sens_params = np.sort(np.array([(np.abs((np.sqrt(mQ3sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_Q3'),
-                                       (np.abs((np.sqrt(mQ2sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_Q2'),
-                                       (np.abs((np.sqrt(mQ1sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_Q1'),
-                                       (np.abs((np.sqrt(mU3sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_U3'),
-                                       (np.abs((np.sqrt(mU2sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_U2'),
-                                       (np.abs((np.sqrt(mU1sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_U1'),
-                                       (np.abs((np.sqrt(mD3sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_D3'),
-                                       (np.abs((np.sqrt(mD2sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_D2'),
-                                       (np.abs((np.sqrt(mD1sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_D1'),
-                                       (np.abs((np.sqrt(mL3sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_L3'),
-                                       (np.abs((np.sqrt(mL2sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_L2'),
-                                       (np.abs((np.sqrt(mL1sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_L1'),
-                                       (np.abs((np.sqrt(mE3sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_E3'),
-                                       (np.abs((np.sqrt(mE2sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_E2'),
-                                       (np.abs((np.sqrt(mE1sqGUT) / mymzsq)
-                                               * deriv_calc), 'c_m_E1'),
-                                       (np.abs((M1GUT / mymzsq)
-                                               * deriv_calc), 'c_M_1'),
-                                       (np.abs((M2GUT / mymzsq)
-                                               * deriv_calc), 'c_M_2'),
-                                       (np.abs((M3GUT / mymzsq)
-                                               * deriv_calc), 'c_M_3'),
-                                       (np.abs(((atGUT / ytGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_t'),
-                                       (np.abs(((acGUT / ycGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_c'),
-                                       (np.abs(((auGUT / yuGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_u'),
-                                       (np.abs(((abGUT / ybGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_b'),
-                                       (np.abs(((asGUT / ysGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_s'),
-                                       (np.abs(((adGUT / ydGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_d'),
-                                       (np.abs(((atauGUT / ytauGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_tau'),
-                                       (np.abs(((amuGUT / ymuGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_mu'),
-                                       (np.abs(((aeGUT / yeGUT) / mymzsq)
-                                               * deriv_calc), 'c_A_e'),
-                                       (np.abs((muGUT / mymzsq)
-                                               * deriv_calc), 'c_mu'),
-                                       (np.abs((mHusqGUT / mymzsq)
-                                               * deriv_calc), 'c_mHu^2'),
-                                       (np.abs((mHdsqGUT / mymzsq)
-                                               * deriv_calc), 'c_mHd^2')],
-                                      dtype=[('BGContrib', float),
-                                             ('BGlabel', 'U40')]),
-                             order='BGContrib')
-    return sens_params
+        print("Computing sensitivity coefficient derivatives...")
+        mymqL1 = inputGUT_BCs[27]
+        mymqL2 = inputGUT_BCs[28]
+        mymqL3 = inputGUT_BCs[29]
+        mymtR = inputGUT_BCs[35]
+        mymcR = inputGUT_BCs[34]
+        mymuR = inputGUT_BCs[33]
+        mymbR = inputGUT_BCs[38]
+        mymsR = inputGUT_BCs[37]
+        mymdR = inputGUT_BCs[36]
+        mymtauL = inputGUT_BCs[32]
+        mymmuL = inputGUT_BCs[31]
+        mymeL = inputGUT_BCs[30]
+        mymtauR = inputGUT_BCs[41]
+        mymmuR = inputGUT_BCs[40]
+        mymeR = inputGUT_BCs[39]
+        hm0 = 1e-6
+        myM1 = inputGUT_BCs[3]
+        myM2 = inputGUT_BCs[4]
+        myM3 = inputGUT_BCs[5]
+        hmhf = 1e-6
+        myAt = inputGUT_BCs[16] / inputGUT_BCs[7]
+        myAc = inputGUT_BCs[17] / inputGUT_BCs[8]
+        myAu = inputGUT_BCs[18] / inputGUT_BCs[9]
+        myAb = inputGUT_BCs[19] / inputGUT_BCs[10]
+        myAs = inputGUT_BCs[20] / inputGUT_BCs[11]
+        myAd = inputGUT_BCs[21] / inputGUT_BCs[12]
+        myAtau = inputGUT_BCs[22] / inputGUT_BCs[13]
+        myAmu = inputGUT_BCs[23] / inputGUT_BCs[14]
+        myAe = inputGUT_BCs[24] / inputGUT_BCs[15]
+        hA0 = 1e-6
+        mymu0 = inputGUT_BCs[6]
+        hmu0 = 1e-6
+        mymHusqGUT = inputGUT_BCs[25]
+        hmHusq = 1e-6
+        mymHdsqGUT = inputGUT_BCs[26]
+        hmHdsq = 1e-6
+        ##### Set up solutions for 1st gen derivatives #####
+        # Boundary conditions first
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate 1st gen masses by small amount and square soft scalar masses for BCs
+        testBCs[27] = np.power(testBCs[27] + hm0, 2)
+        weaksol_mqL1ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1ph = mz_tree_calc(weaksol_mqL1ph[26],
+                                 weaksol_mqL1ph[25],
+                                 np.power(weaksol_mqL1ph[6], 2),
+                                 np.power(weaksol_mqL1ph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] + hm0, 2)
+        weaksol_meLph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLph = mz_tree_calc(weaksol_meLph[26],
+                                weaksol_meLph[25],
+                                np.power(weaksol_meLph[6], 2),
+                                np.power(weaksol_meLph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] + hm0, 2)
+        weaksol_muRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRph = mz_tree_calc(weaksol_muRph[26],
+                                weaksol_muRph[25],
+                                np.power(weaksol_muRph[6], 2),
+                                np.power(weaksol_muRph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] + hm0, 2)
+        weaksol_mdRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRph = mz_tree_calc(weaksol_mdRph[26],
+                                weaksol_mdRph[25],
+                                np.power(weaksol_mdRph[6], 2),
+                                np.power(weaksol_mdRph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] + hm0, 2)
+        weaksol_meRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRph = mz_tree_calc(weaksol_meRph[26],
+                                weaksol_meRph[25],
+                                np.power(weaksol_meRph[6], 2),
+                                np.power(weaksol_meRph[43], 2))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (2 * hm0), 2)
+        weaksol_mqL1pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1pph = mz_tree_calc(weaksol_mqL1pph[26],
+                                  weaksol_mqL1pph[25],
+                                  np.power(weaksol_mqL1pph[6], 2),
+                                  np.power(weaksol_mqL1pph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] + (2 * hm0), 2)
+        weaksol_meLpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLpph = mz_tree_calc(weaksol_meLpph[26],
+                                 weaksol_meLpph[25],
+                                 np.power(weaksol_meLpph[6], 2),
+                                 np.power(weaksol_meLpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] + (2 * hm0), 2)
+        weaksol_muRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRpph = mz_tree_calc(weaksol_muRpph[26],
+                                 weaksol_muRpph[25],
+                                 np.power(weaksol_muRpph[6], 2),
+                                 np.power(weaksol_muRpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] + (2 * hm0), 2)
+        weaksol_mdRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRpph = mz_tree_calc(weaksol_mdRpph[26],
+                                 weaksol_mdRpph[25],
+                                 np.power(weaksol_mdRpph[6], 2),
+                                 np.power(weaksol_mdRpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] + (2 * hm0), 2)
+        weaksol_meRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRpph = mz_tree_calc(weaksol_meRpph[26],
+                                 weaksol_meRpph[25],
+                                 np.power(weaksol_meRpph[6], 2),
+                                 np.power(weaksol_meRpph[43], 2))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] + (3 * hm0), 2)
+        weaksol_mqL1ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1ppph = mz_tree_calc(weaksol_mqL1ppph[26],
+                                   weaksol_mqL1ppph[25],
+                                   np.power(weaksol_mqL1ppph[6], 2),
+                                   np.power(weaksol_mqL1ppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] + (3 * hm0), 2)
+        weaksol_meLppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLppph = mz_tree_calc(weaksol_meLppph[26],
+                                 weaksol_meLppph[25],
+                                 np.power(weaksol_meLppph[6], 2),
+                                 np.power(weaksol_meLppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] + (3 * hm0), 2)
+        weaksol_muRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRppph = mz_tree_calc(weaksol_muRppph[26],
+                                  weaksol_muRppph[25],
+                                  np.power(weaksol_muRppph[6], 2),
+                                  np.power(weaksol_muRppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] + (3 * hm0), 2)
+        weaksol_mdRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRppph = mz_tree_calc(weaksol_mdRppph[26],
+                                  weaksol_mdRppph[25],
+                                  np.power(weaksol_mdRppph[6], 2),
+                                  np.power(weaksol_mdRppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] + (3 * hm0), 2)
+        weaksol_meRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRppph = mz_tree_calc(weaksol_meRppph[26],
+                                  weaksol_meRppph[25],
+                                  np.power(weaksol_meRppph[6], 2),
+                                  np.power(weaksol_meRppph[43], 2))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] + (4 * hm0), 2)
+        weaksol_mqL1pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1pppph = mz_tree_calc(weaksol_mqL1pppph[26],
+                                    weaksol_mqL1pppph[25],
+                                    np.power(weaksol_mqL1pppph[6], 2),
+                                    np.power(weaksol_mqL1pppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] + (4 * hm0), 2)
+        weaksol_meLpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLpppph = mz_tree_calc(weaksol_meLpppph[26],
+                                   weaksol_meLpppph[25],
+                                   np.power(weaksol_meLpppph[6], 2),
+                                   np.power(weaksol_meLpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] + (4 * hm0), 2)
+        weaksol_muRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRpppph = mz_tree_calc(weaksol_muRpppph[26],
+                                   weaksol_muRpppph[25],
+                                   np.power(weaksol_muRpppph[6], 2),
+                                   np.power(weaksol_muRpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] + (4 * hm0), 2)
+        weaksol_mdRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRpppph = mz_tree_calc(weaksol_mdRpppph[26],
+                                   weaksol_mdRpppph[25],
+                                   np.power(weaksol_mdRpppph[6], 2),
+                                   np.power(weaksol_mdRpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] + (4 * hm0), 2)
+        weaksol_meRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRpppph = mz_tree_calc(weaksol_meRpppph[26],
+                                   weaksol_meRpppph[25],
+                                   np.power(weaksol_meRpppph[6], 2),
+                                   np.power(weaksol_meRpppph[43], 2))
+
+        # Deviate 1st gen masses by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - hm0, 2)
+        weaksol_mqL1mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1mh = mz_tree_calc(weaksol_mqL1mh[26],
+                                 weaksol_mqL1mh[25],
+                                 np.power(weaksol_mqL1mh[6], 2),
+                                 np.power(weaksol_mqL1mh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] - hm0, 2)
+        weaksol_meLmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLmh = mz_tree_calc(weaksol_meLmh[26],
+                                weaksol_meLmh[25],
+                                np.power(weaksol_meLmh[6], 2),
+                                np.power(weaksol_meLmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] - hm0, 2)
+        weaksol_muRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRmh = mz_tree_calc(weaksol_muRmh[26],
+                                weaksol_muRmh[25],
+                                np.power(weaksol_muRmh[6], 2),
+                                np.power(weaksol_muRmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] - hm0, 2)
+        weaksol_mdRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRmh = mz_tree_calc(weaksol_mdRmh[26],
+                                weaksol_mdRmh[25],
+                                np.power(weaksol_mdRmh[6], 2),
+                                np.power(weaksol_mdRmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] - hm0, 2)
+        weaksol_meRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRmh = mz_tree_calc(weaksol_meRmh[26],
+                                weaksol_meRmh[25],
+                                np.power(weaksol_meRmh[6], 2),
+                                np.power(weaksol_meRmh[43], 2))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] - (2 * hm0), 2)
+        weaksol_mqL1mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1mmh = mz_tree_calc(weaksol_mqL1mmh[26],
+                                  weaksol_mqL1mmh[25],
+                                  np.power(weaksol_mqL1mmh[6], 2),
+                                  np.power(weaksol_mqL1mmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] - (2 * hm0), 2)
+        weaksol_meLmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLmmh = mz_tree_calc(weaksol_meLmmh[26],
+                                 weaksol_meLmmh[25],
+                                 np.power(weaksol_meLmmh[6], 2),
+                                 np.power(weaksol_meLmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] - (2 * hm0), 2)
+        weaksol_muRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRmmh = mz_tree_calc(weaksol_muRmmh[26],
+                                 weaksol_muRmmh[25],
+                                 np.power(weaksol_muRmmh[6], 2),
+                                 np.power(weaksol_muRmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] - (2 * hm0), 2)
+        weaksol_mdRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRmmh = mz_tree_calc(weaksol_mdRmmh[26],
+                                 weaksol_mdRmmh[25],
+                                 np.power(weaksol_mdRmmh[6], 2),
+                                 np.power(weaksol_mdRmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] - (2 * hm0), 2)
+        weaksol_meRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRmmh = mz_tree_calc(weaksol_meRmmh[26],
+                                 weaksol_meRmmh[25],
+                                 np.power(weaksol_meRmmh[6], 2),
+                                 np.power(weaksol_meRmmh[43], 2))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[27] = np.power(testBCs[27] - (3 * hm0), 2)
+        weaksol_mqL1mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1mmmh = mz_tree_calc(weaksol_mqL1mmmh[26],
+                                   weaksol_mqL1mmmh[25],
+                                   np.power(weaksol_mqL1mmmh[6], 2),
+                                   np.power(weaksol_mqL1mmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] - (3 * hm0), 2)
+        weaksol_meLmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLmmmh = mz_tree_calc(weaksol_meLmmmh[26],
+                                 weaksol_meLmmmh[25],
+                                 np.power(weaksol_meLmmmh[6], 2),
+                                 np.power(weaksol_meLmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] - (3 * hm0), 2)
+        weaksol_muRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRmmmh = mz_tree_calc(weaksol_muRmmmh[26],
+                                  weaksol_muRmmmh[25],
+                                  np.power(weaksol_muRmmmh[6], 2),
+                                  np.power(weaksol_muRmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] - (3 * hm0), 2)
+        weaksol_mdRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRmmmh = mz_tree_calc(weaksol_mdRmmmh[26],
+                                  weaksol_mdRmmmh[25],
+                                  np.power(weaksol_mdRmmmh[6], 2),
+                                  np.power(weaksol_mdRmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] - (3 * hm0), 2)
+        weaksol_meRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRmmmh = mz_tree_calc(weaksol_meRmmmh[26],
+                                  weaksol_meRmmmh[25],
+                                  np.power(weaksol_meRmmmh[6], 2),
+                                  np.power(weaksol_meRmmmh[43], 2))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[27] = np.power(testBCs[27] - (4 * hm0), 2)
+        weaksol_mqL1mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL1mmmmh = mz_tree_calc(weaksol_mqL1mmmmh[26],
+                                    weaksol_mqL1mmmmh[25],
+                                    np.power(weaksol_mqL1mmmmh[6], 2),
+                                    np.power(weaksol_mqL1mmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[30] = np.power(testBCs[30] - (4 * hm0), 2)
+        weaksol_meLmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meLmmmmh = mz_tree_calc(weaksol_meLmmmmh[26],
+                                   weaksol_meLmmmmh[25],
+                                   np.power(weaksol_meLmmmmh[6], 2),
+                                   np.power(weaksol_meLmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[33] = np.power(testBCs[33] - (4 * hm0), 2)
+        weaksol_muRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_muRmmmmh = mz_tree_calc(weaksol_muRmmmmh[26],
+                                   weaksol_muRmmmmh[25],
+                                   np.power(weaksol_muRmmmmh[6], 2),
+                                   np.power(weaksol_muRmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[36] = np.power(testBCs[36] - (4 * hm0), 2)
+        weaksol_mdRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mdRmmmmh = mz_tree_calc(weaksol_mdRmmmmh[26],
+                                   weaksol_mdRmmmmh[25],
+                                   np.power(weaksol_mdRmmmmh[6], 2),
+                                   np.power(weaksol_mdRmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[39] = np.power(testBCs[39] - (4 * hm0), 2)
+        weaksol_meRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_meRmmmmh = mz_tree_calc(weaksol_meRmmmmh[26],
+                                   weaksol_meRmmmmh[25],
+                                   np.power(weaksol_meRmmmmh[6], 2),
+                                   np.power(weaksol_meRmmmmh[43], 2))
+
+        print('5/30')
+
+        # Deviate 2nd gen masses by small amount and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] + hm0, 2)
+        weaksol_mqL2ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2ph = mz_tree_calc(weaksol_mqL2ph[26],
+                                 weaksol_mqL2ph[25],
+                                 np.power(weaksol_mqL2ph[6], 2),
+                                 np.power(weaksol_mqL2ph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] + hm0, 2)
+        weaksol_mmuLph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLph = mz_tree_calc(weaksol_mmuLph[26],
+                                 weaksol_mmuLph[25],
+                                 np.power(weaksol_mmuLph[6], 2),
+                                 np.power(weaksol_mmuLph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] + hm0, 2)
+        weaksol_mcRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRph = mz_tree_calc(weaksol_mcRph[26],
+                                weaksol_mcRph[25],
+                                np.power(weaksol_mcRph[6], 2),
+                                np.power(weaksol_mcRph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] + hm0, 2)
+        weaksol_msRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRph = mz_tree_calc(weaksol_msRph[26],
+                                weaksol_msRph[25],
+                                np.power(weaksol_msRph[6], 2),
+                                np.power(weaksol_msRph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] + hm0, 2)
+        weaksol_mmuRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRph = mz_tree_calc(weaksol_mmuRph[26],
+                                 weaksol_mmuRph[25],
+                                 np.power(weaksol_mmuRph[6], 2),
+                                 np.power(weaksol_mmuRph[43], 2))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[28] = np.power(testBCs[28] + (2 * hm0), 2)
+        weaksol_mqL2pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2pph = mz_tree_calc(weaksol_mqL2pph[26],
+                                  weaksol_mqL2pph[25],
+                                  np.power(weaksol_mqL2pph[6], 2),
+                                  np.power(weaksol_mqL2pph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] + (2 * hm0), 2)
+        weaksol_mmuLpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLpph = mz_tree_calc(weaksol_mmuLpph[26],
+                                  weaksol_mmuLpph[25],
+                                  np.power(weaksol_mmuLpph[6], 2),
+                                  np.power(weaksol_mmuLpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] + (2 * hm0), 2)
+        weaksol_mcRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRpph = mz_tree_calc(weaksol_mcRpph[26],
+                                 weaksol_mcRpph[25],
+                                 np.power(weaksol_mcRpph[6], 2),
+                                 np.power(weaksol_mcRpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] + (2 * hm0), 2)
+        weaksol_msRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRpph = mz_tree_calc(weaksol_msRpph[26],
+                                 weaksol_msRpph[25],
+                                 np.power(weaksol_msRpph[6], 2),
+                                 np.power(weaksol_msRpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] + (2 * hm0), 2)
+        weaksol_mmuRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRpph = mz_tree_calc(weaksol_mmuRpph[26],
+                                  weaksol_mmuRpph[25],
+                                  np.power(weaksol_mmuRpph[6], 2),
+                                  np.power(weaksol_mmuRpph[43], 2))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[28] = np.power(testBCs[28] + (3 * hm0), 2)
+        weaksol_mqL2ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2ppph = mz_tree_calc(weaksol_mqL2ppph[26],
+                                   weaksol_mqL2ppph[25],
+                                   np.power(weaksol_mqL2ppph[6], 2),
+                                   np.power(weaksol_mqL2ppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] + (3 * hm0), 2)
+        weaksol_mmuLppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLppph = mz_tree_calc(weaksol_mmuLppph[26],
+                                   weaksol_mmuLppph[25],
+                                   np.power(weaksol_mmuLppph[6], 2),
+                                   np.power(weaksol_mmuLppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] + (3 * hm0), 2)
+        weaksol_mcRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRppph = mz_tree_calc(weaksol_mcRppph[26],
+                                  weaksol_mcRppph[25],
+                                  np.power(weaksol_mcRppph[6], 2),
+                                  np.power(weaksol_mcRppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] + (3 * hm0), 2)
+        weaksol_msRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRppph = mz_tree_calc(weaksol_msRppph[26],
+                                  weaksol_msRppph[25],
+                                  np.power(weaksol_msRppph[6], 2),
+                                  np.power(weaksol_msRppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] + (3 * hm0), 2)
+        weaksol_mmuRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRppph = mz_tree_calc(weaksol_mmuRppph[26],
+                                   weaksol_mmuRppph[25],
+                                   np.power(weaksol_mmuRppph[6], 2),
+                                   np.power(weaksol_mmuRppph[43], 2))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] + (4 * hm0), 2)
+        weaksol_mqL2pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2pppph = mz_tree_calc(weaksol_mqL2pppph[26],
+                                    weaksol_mqL2pppph[25],
+                                    np.power(weaksol_mqL2pppph[6], 2),
+                                    np.power(weaksol_mqL2pppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] + (4 * hm0), 2)
+        weaksol_mmuLpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLpppph = mz_tree_calc(weaksol_mmuLpppph[26],
+                                    weaksol_mmuLpppph[25],
+                                    np.power(weaksol_mmuLpppph[6], 2),
+                                    np.power(weaksol_mmuLpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] + (4 * hm0), 2)
+        weaksol_mcRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRpppph = mz_tree_calc(weaksol_mcRpppph[26],
+                                   weaksol_mcRpppph[25],
+                                   np.power(weaksol_mcRpppph[6], 2),
+                                   np.power(weaksol_mcRpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] + (4 * hm0), 2)
+        weaksol_msRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRpppph = mz_tree_calc(weaksol_msRpppph[26],
+                                   weaksol_msRpppph[25],
+                                   np.power(weaksol_msRpppph[6], 2),
+                                   np.power(weaksol_msRpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] + (4 * hm0), 2)
+        weaksol_mmuRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRpppph = mz_tree_calc(weaksol_mmuRpppph[26],
+                                    weaksol_mmuRpppph[25],
+                                    np.power(weaksol_mmuRpppph[6], 2),
+                                    np.power(weaksol_mmuRpppph[43], 2))
+
+        # Deviate 2nd gen masses by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] - hm0, 2)
+        weaksol_mqL2mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2mh = mz_tree_calc(weaksol_mqL2mh[26],
+                                 weaksol_mqL2mh[25],
+                                 np.power(weaksol_mqL2mh[6], 2),
+                                 np.power(weaksol_mqL2mh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] - hm0, 2)
+        weaksol_mmuLmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLmh = mz_tree_calc(weaksol_mmuLmh[26],
+                                 weaksol_mmuLmh[25],
+                                 np.power(weaksol_mmuLmh[6], 2),
+                                 np.power(weaksol_mmuLmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] - hm0, 2)
+        weaksol_mcRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRmh = mz_tree_calc(weaksol_mcRmh[26],
+                                weaksol_mcRmh[25],
+                                np.power(weaksol_mcRmh[6], 2),
+                                np.power(weaksol_mcRmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] - hm0, 2)
+        weaksol_msRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRmh = mz_tree_calc(weaksol_msRmh[26],
+                                weaksol_msRmh[25],
+                                np.power(weaksol_msRmh[6], 2),
+                                np.power(weaksol_msRmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] - hm0, 2)
+        weaksol_mmuRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRmh = mz_tree_calc(weaksol_mmuRmh[26],
+                                 weaksol_mmuRmh[25],
+                                 np.power(weaksol_mmuRmh[6], 2),
+                                 np.power(weaksol_mmuRmh[43], 2))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[28] = np.power(testBCs[28] - (2 * hm0), 2)
+        weaksol_mqL2mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2mmh = mz_tree_calc(weaksol_mqL2mmh[26],
+                                  weaksol_mqL2mmh[25],
+                                  np.power(weaksol_mqL2mmh[6], 2),
+                                  np.power(weaksol_mqL2mmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] - (2 * hm0), 2)
+        weaksol_mmuLmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLmmh = mz_tree_calc(weaksol_mmuLmmh[26],
+                                  weaksol_mmuLmmh[25],
+                                  np.power(weaksol_mmuLmmh[6], 2),
+                                  np.power(weaksol_mmuLmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] - (2 * hm0), 2)
+        weaksol_mcRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRmmh = mz_tree_calc(weaksol_mcRmmh[26],
+                                 weaksol_mcRmmh[25],
+                                 np.power(weaksol_mcRmmh[6], 2),
+                                 np.power(weaksol_mcRmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] - (2 * hm0), 2)
+        weaksol_msRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRmmh = mz_tree_calc(weaksol_msRmmh[26],
+                                 weaksol_msRmmh[25],
+                                 np.power(weaksol_msRmmh[6], 2),
+                                 np.power(weaksol_msRmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] - (2 * hm0), 2)
+        weaksol_mmuRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRmmh = mz_tree_calc(weaksol_mmuRmmh[26],
+                                  weaksol_mmuRmmh[25],
+                                  np.power(weaksol_mmuRmmh[6], 2),
+                                  np.power(weaksol_mmuRmmh[43], 2))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[28] = np.power(testBCs[28] - (3 * hm0), 2)
+        weaksol_mqL2mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2mmmh = mz_tree_calc(weaksol_mqL2mmmh[26],
+                                   weaksol_mqL2mmmh[25],
+                                   np.power(weaksol_mqL2mmmh[6], 2),
+                                   np.power(weaksol_mqL2mmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] - (3 * hm0), 2)
+        weaksol_mmuLmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLmmmh = mz_tree_calc(weaksol_mmuLmmmh[26],
+                                   weaksol_mmuLmmmh[25],
+                                   np.power(weaksol_mmuLmmmh[6], 2),
+                                   np.power(weaksol_mmuLmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] - (3 * hm0), 2)
+        weaksol_mcRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRmmmh = mz_tree_calc(weaksol_mcRmmmh[26],
+                                  weaksol_mcRmmmh[25],
+                                  np.power(weaksol_mcRmmmh[6], 2),
+                                  np.power(weaksol_mcRmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] - (3 * hm0), 2)
+        weaksol_msRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRmmmh = mz_tree_calc(weaksol_msRmmmh[26],
+                                  weaksol_msRmmmh[25],
+                                  np.power(weaksol_msRmmmh[6], 2),
+                                  np.power(weaksol_msRmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] - (3 * hm0), 2)
+        weaksol_mmuRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRmmmh = mz_tree_calc(weaksol_mmuRmmmh[26],
+                                   weaksol_mmuRmmmh[25],
+                                   np.power(weaksol_mmuRmmmh[6], 2),
+                                   np.power(weaksol_mmuRmmmh[43], 2))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[28] = np.power(testBCs[28] - (4 * hm0), 2)
+        weaksol_mqL2mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL2mmmmh = mz_tree_calc(weaksol_mqL2mmmmh[26],
+                                    weaksol_mqL2mmmmh[25],
+                                    np.power(weaksol_mqL2mmmmh[6], 2),
+                                    np.power(weaksol_mqL2mmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[31] = np.power(testBCs[31] - (4 * hm0), 2)
+        weaksol_mmuLmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuLmmmmh = mz_tree_calc(weaksol_mmuLmmmmh[26],
+                                    weaksol_mmuLmmmmh[25],
+                                    np.power(weaksol_mmuLmmmmh[6], 2),
+                                    np.power(weaksol_mmuLmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[34] = np.power(testBCs[34] - (4 * hm0), 2)
+        weaksol_mcRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mcRmmmmh = mz_tree_calc(weaksol_mcRmmmmh[26],
+                                   weaksol_mcRmmmmh[25],
+                                   np.power(weaksol_mcRmmmmh[6], 2),
+                                   np.power(weaksol_mcRmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[37] = np.power(testBCs[37] - (4 * hm0), 2)
+        weaksol_msRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_msRmmmmh = mz_tree_calc(weaksol_msRmmmmh[26],
+                                   weaksol_msRmmmmh[25],
+                                   np.power(weaksol_msRmmmmh[6], 2),
+                                   np.power(weaksol_msRmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[40] = np.power(testBCs[40] - (4 * hm0), 2)
+        weaksol_mmuRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mmuRmmmmh = mz_tree_calc(weaksol_mmuRmmmmh[26],
+                                    weaksol_mmuRmmmmh[25],
+                                    np.power(weaksol_mmuRmmmmh[6], 2),
+                                    np.power(weaksol_mmuRmmmmh[43], 2))
+
+        print('10/30')
+
+        # Deviate 3rd gen masses by small amount and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[29] = np.power(testBCs[29] + hm0, 2)
+        weaksol_mqL3ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3ph = mz_tree_calc(weaksol_mqL3ph[26],
+                                 weaksol_mqL3ph[25],
+                                 np.power(weaksol_mqL3ph[6], 2),
+                                 np.power(weaksol_mqL3ph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] + hm0, 2)
+        weaksol_mtauLph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLph = mz_tree_calc(weaksol_mtauLph[26],
+                                  weaksol_mtauLph[25],
+                                  np.power(weaksol_mtauLph[6], 2),
+                                  np.power(weaksol_mtauLph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] + hm0, 2)
+        weaksol_mtRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRph = mz_tree_calc(weaksol_mtRph[26],
+                                weaksol_mtRph[25],
+                                np.power(weaksol_mtRph[6], 2),
+                                np.power(weaksol_mtRph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] + hm0, 2)
+        weaksol_mbRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRph = mz_tree_calc(weaksol_mbRph[26],
+                                weaksol_mbRph[25],
+                                np.power(weaksol_mbRph[6], 2),
+                                np.power(weaksol_mbRph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] + hm0, 2)
+        weaksol_mtauRph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRph = mz_tree_calc(weaksol_mtauRph[26],
+                                  weaksol_mtauRph[25],
+                                  np.power(weaksol_mtauRph[6], 2),
+                                  np.power(weaksol_mtauRph[43], 2))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] + (2 * hm0), 2)
+        weaksol_mqL3pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3pph = mz_tree_calc(weaksol_mqL3pph[26],
+                                  weaksol_mqL3pph[25],
+                                  np.power(weaksol_mqL3pph[6], 2),
+                                  np.power(weaksol_mqL3pph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] + (2 * hm0), 2)
+        weaksol_mtauLpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLpph = mz_tree_calc(weaksol_mtauLpph[26],
+                                   weaksol_mtauLpph[25],
+                                   np.power(weaksol_mtauLpph[6], 2),
+                                   np.power(weaksol_mtauLpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] + (2 * hm0), 2)
+        weaksol_mtRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRpph = mz_tree_calc(weaksol_mtRpph[26],
+                                 weaksol_mtRpph[25],
+                                 np.power(weaksol_mtRpph[6], 2),
+                                 np.power(weaksol_mtRpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] + (2 * hm0), 2)
+        weaksol_mbRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRpph = mz_tree_calc(weaksol_mbRpph[26],
+                                 weaksol_mbRpph[25],
+                                 np.power(weaksol_mbRpph[6], 2),
+                                 np.power(weaksol_mbRpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] + (2 * hm0), 2)
+        weaksol_mtauRpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRpph = mz_tree_calc(weaksol_mtauRpph[26],
+                                   weaksol_mtauRpph[25],
+                                   np.power(weaksol_mtauRpph[6], 2),
+                                   np.power(weaksol_mtauRpph[43], 2))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] + (3 * hm0), 2)
+        weaksol_mqL3ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3ppph = mz_tree_calc(weaksol_mqL3ppph[26],
+                                   weaksol_mqL3ppph[25],
+                                   np.power(weaksol_mqL3ppph[6], 2),
+                                   np.power(weaksol_mqL3ppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] + (3 * hm0), 2)
+        weaksol_mtauLppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLppph = mz_tree_calc(weaksol_mtauLppph[26],
+                                    weaksol_mtauLppph[25],
+                                    np.power(weaksol_mtauLppph[6], 2),
+                                    np.power(weaksol_mtauLppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] + (3 * hm0), 2)
+        weaksol_mtRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRppph = mz_tree_calc(weaksol_mtRppph[26],
+                                  weaksol_mtRppph[25],
+                                  np.power(weaksol_mtRppph[6], 2),
+                                  np.power(weaksol_mtRppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] + (3 * hm0), 2)
+        weaksol_mbRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRppph = mz_tree_calc(weaksol_mbRppph[26],
+                                  weaksol_mbRppph[25],
+                                  np.power(weaksol_mbRppph[6], 2),
+                                  np.power(weaksol_mbRppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] + (3 * hm0), 2)
+        weaksol_mtauRppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRppph = mz_tree_calc(weaksol_mtauRppph[26],
+                                    weaksol_mtauRppph[25],
+                                    np.power(weaksol_mtauRppph[6], 2),
+                                    np.power(weaksol_mtauRppph[43], 2))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[29] = np.power(testBCs[29] + (4 * hm0), 2)
+        weaksol_mqL3pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3pppph = mz_tree_calc(weaksol_mqL3pppph[26],
+                                    weaksol_mqL3pppph[25],
+                                    np.power(weaksol_mqL3pppph[6], 2),
+                                    np.power(weaksol_mqL3pppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] + (4 * hm0), 2)
+        weaksol_mtauLpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLpppph = mz_tree_calc(weaksol_mtauLpppph[26],
+                                     weaksol_mtauLpppph[25],
+                                     np.power(weaksol_mtauLpppph[6], 2),
+                                     np.power(weaksol_mtauLpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] + (4 * hm0), 2)
+        weaksol_mtRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRpppph = mz_tree_calc(weaksol_mtRpppph[26],
+                                   weaksol_mtRpppph[25],
+                                   np.power(weaksol_mtRpppph[6], 2),
+                                   np.power(weaksol_mtRpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] + (4 * hm0), 2)
+        weaksol_mbRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRpppph = mz_tree_calc(weaksol_mbRpppph[26],
+                                   weaksol_mbRpppph[25],
+                                   np.power(weaksol_mbRpppph[6], 2),
+                                   np.power(weaksol_mbRpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] + (4 * hm0), 2)
+        weaksol_mtauRpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRpppph = mz_tree_calc(weaksol_mtauRpppph[26],
+                                     weaksol_mtauRpppph[25],
+                                     np.power(weaksol_mtauRpppph[6], 2),
+                                     np.power(weaksol_mtauRpppph[43], 2))
+
+        # Deviate 3rd gen masses by small amount LEFT and square soft scalar masses for BCs
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[29] = np.power(testBCs[29] - hm0, 2)
+        weaksol_mqL3mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3mh = mz_tree_calc(weaksol_mqL3mh[26],
+                                 weaksol_mqL3mh[25],
+                                 np.power(weaksol_mqL3mh[6], 2),
+                                 np.power(weaksol_mqL2mh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] - hm0, 2)
+        weaksol_mtauLmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLmh = mz_tree_calc(weaksol_mtauLmh[26],
+                                  weaksol_mtauLmh[25],
+                                  np.power(weaksol_mtauLmh[6], 2),
+                                  np.power(weaksol_mtauLmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] - hm0, 2)
+        weaksol_mtRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRmh = mz_tree_calc(weaksol_mtRmh[26],
+                                weaksol_mtRmh[25],
+                                np.power(weaksol_mtRmh[6], 2),
+                                np.power(weaksol_mtRmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] - hm0, 2)
+        weaksol_mbRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRmh = mz_tree_calc(weaksol_mbRmh[26],
+                                weaksol_mbRmh[25],
+                                np.power(weaksol_mbRmh[6], 2),
+                                np.power(weaksol_mbRmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] - hm0, 2)
+        weaksol_mtauRmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRmh = mz_tree_calc(weaksol_mtauRmh[26],
+                                  weaksol_mtauRmh[25],
+                                  np.power(weaksol_mtauRmh[6], 2),
+                                  np.power(weaksol_mtauRmh[43], 2))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] - (2 * hm0), 2)
+        weaksol_mqL3mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3mmh = mz_tree_calc(weaksol_mqL3mmh[26],
+                                  weaksol_mqL3mmh[25],
+                                  np.power(weaksol_mqL3mmh[6], 2),
+                                  np.power(weaksol_mqL3mmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] - (2 * hm0), 2)
+        weaksol_mtauLmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLmmh = mz_tree_calc(weaksol_mtauLmmh[26],
+                                   weaksol_mtauLmmh[25],
+                                   np.power(weaksol_mtauLmmh[6], 2),
+                                   np.power(weaksol_mtauLmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] - (2 * hm0), 2)
+        weaksol_mtRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRmmh = mz_tree_calc(weaksol_mtRmmh[26],
+                                 weaksol_mtRmmh[25],
+                                 np.power(weaksol_mtRmmh[6], 2),
+                                 np.power(weaksol_mtRmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] - (2 * hm0), 2)
+        weaksol_mbRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRmmh = mz_tree_calc(weaksol_mbRmmh[26],
+                                 weaksol_mbRmmh[25],
+                                 np.power(weaksol_mbRmmh[6], 2),
+                                 np.power(weaksol_mbRmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] - (2 * hm0), 2)
+        weaksol_mtauRmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRmmh = mz_tree_calc(weaksol_mtauRmmh[26],
+                                   weaksol_mtauRmmh[25],
+                                   np.power(weaksol_mtauRmmh[6], 2),
+                                   np.power(weaksol_mtauRmmh[43], 2))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[29] = np.power(testBCs[29] - (3 * hm0), 2)
+        weaksol_mqL3mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3mmmh = mz_tree_calc(weaksol_mqL3mmmh[26],
+                                   weaksol_mqL3mmmh[25],
+                                   np.power(weaksol_mqL3mmmh[6], 2),
+                                   np.power(weaksol_mqL3mmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] - (3 * hm0), 2)
+        weaksol_mtauLmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLmmmh = mz_tree_calc(weaksol_mtauLmmmh[26],
+                                    weaksol_mtauLmmmh[25],
+                                    np.power(weaksol_mtauLmmmh[6], 2),
+                                    np.power(weaksol_mtauLmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] - (3 * hm0), 2)
+        weaksol_mtRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRmmmh = mz_tree_calc(weaksol_mtRmmmh[26],
+                                  weaksol_mtRmmmh[25],
+                                  np.power(weaksol_mtRmmmh[6], 2),
+                                  np.power(weaksol_mtRmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] - (3 * hm0), 2)
+        weaksol_mbRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRmmmh = mz_tree_calc(weaksol_mbRmmmh[26],
+                                  weaksol_mbRmmmh[25],
+                                  np.power(weaksol_mbRmmmh[6], 2),
+                                  np.power(weaksol_mbRmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] - (3 * hm0), 2)
+        weaksol_mtauRmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRmmmh = mz_tree_calc(weaksol_mtauRmmmh[26],
+                                    weaksol_mtauRmmmh[25],
+                                    np.power(weaksol_mtauRmmmh[6], 2),
+                                    np.power(weaksol_mtauRmmmh[43], 2))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[29] = np.power(testBCs[29] - (4 * hm0), 2)
+        weaksol_mqL3mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mqL3mmmmh = mz_tree_calc(weaksol_mqL3mmmmh[26],
+                                    weaksol_mqL3mmmmh[25],
+                                    np.power(weaksol_mqL3mmmmh[6], 2),
+                                    np.power(weaksol_mqL3mmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[32] = np.power(testBCs[32] - (4 * hm0), 2)
+        weaksol_mtauLmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauLmmmmh = mz_tree_calc(weaksol_mtauLmmmmh[26],
+                                     weaksol_mtauLmmmmh[25],
+                                     np.power(weaksol_mtauLmmmmh[6], 2),
+                                     np.power(weaksol_mtauLmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[35] = np.power(testBCs[35] - (4 * hm0), 2)
+        weaksol_mtRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtRmmmmh = mz_tree_calc(weaksol_mtRmmmmh[26],
+                                   weaksol_mtRmmmmh[25],
+                                   np.power(weaksol_mtRmmmmh[6], 2),
+                                   np.power(weaksol_mtRmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[38] = np.power(testBCs[38] - (4 * hm0), 2)
+        weaksol_mbRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mbRmmmmh = mz_tree_calc(weaksol_mbRmmmmh[26],
+                                   weaksol_mbRmmmmh[25],
+                                   np.power(weaksol_mbRmmmmh[6], 2),
+                                   np.power(weaksol_mbRmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41] - (4 * hm0), 2)
+        weaksol_mtauRmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mtauRmmmmh = mz_tree_calc(weaksol_mtauRmmmmh[26],
+                                     weaksol_mtauRmmmmh[25],
+                                     np.power(weaksol_mtauRmmmmh[6], 2),
+                                     np.power(weaksol_mtauRmmmmh[43], 2))
+
+        print('15/30')
+        ##### Set up solutions for mHu^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHu^2 by small amount right
+        testBCs[25] = testBCs[25] + hmHusq
+
+        weaksol_mHusqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqph = mz_tree_calc(weaksol_mHusqph[26],
+                                  weaksol_mHusqph[25],
+                                  np.power(weaksol_mHusqph[6], 2),
+                                  np.power(weaksol_mHusqph[43], 2))
+        # print("m_Z^2(mHu^2+h): " + str(mz_mHusqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpph = mz_tree_calc(weaksol_mHusqpph[26],
+                                   weaksol_mHusqpph[25],
+                                   np.power(weaksol_mHusqpph[6], 2),
+                                   np.power(weaksol_mHusqpph[43], 2))
+        # print("m_Z^2(mHu^2+2h): " + str(mz_mHusqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqppph = mz_tree_calc(weaksol_mHusqppph[26],
+                                    weaksol_mHusqppph[25],
+                                    np.power(weaksol_mHusqppph[6], 2),
+                                    np.power(weaksol_mHusqppph[43], 2))
+        # print("m_Z^2(mHu^2+3h): " + str(mz_mHusqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] + hmHusq + hmHusq + hmHusq + hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqpppph = mz_tree_calc(weaksol_mHusqpppph[26],
+                                     weaksol_mHusqpppph[25],
+                                     np.power(weaksol_mHusqpppph[6], 2),
+                                     np.power(weaksol_mHusqpppph[43], 2))
+        # print("m_Z^2(mHu^2+4h): " + str(mz_mHusqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHu^2 by small amount left
+        testBCs[25] = testBCs[25] - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmh = mz_tree_calc(weaksol_mHusqmh[26],
+                                  weaksol_mHusqmh[25],
+                                  np.power(weaksol_mHusqmh[6], 2),
+                                  np.power(weaksol_mHusqmh[43], 2))
+        # print("m_Z^2(mHu^2-h): " + str(mz_mHusqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmh = mz_tree_calc(weaksol_mHusqmmh[26],
+                                   weaksol_mHusqmmh[25],
+                                   np.power(weaksol_mHusqmmh[6], 2),
+                                   np.power(weaksol_mHusqmmh[43], 2))
+        # print("m_Z^2(mHu^2-2h): " + str(mz_mHusqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmh = mz_tree_calc(weaksol_mHusqmmmh[26],
+                                    weaksol_mHusqmmmh[25],
+                                    np.power(weaksol_mHusqmmmh[6], 2),
+                                    np.power(weaksol_mHusqmmmh[43], 2))
+        # print("m_Z^2(mHu^2-3h): " + str(mz_mHusqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[25] = testBCs[25] - hmHusq - hmHusq - hmHusq - hmHusq
+        #print(testBCs)
+
+        weaksol_mHusqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHusqmmmmh = mz_tree_calc(weaksol_mHusqmmmmh[26],
+                                     weaksol_mHusqmmmmh[25],
+                                     np.power(weaksol_mHusqmmmmh[6], 2),
+                                     np.power(weaksol_mHusqmmmmh[43], 2))
+        # print("m_Z^2(mHu^2-4h): " + str(mz_mHusqmmmmh))
+        print('16/30')
+
+        ##### Set up solutions for mHd^2 derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mHd^2 by small amount right
+        testBCs[26] = testBCs[26] + hmHdsq
+
+        weaksol_mHdsqph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqph = mz_tree_calc(weaksol_mHdsqph[26],
+                                  weaksol_mHdsqph[25],
+                                  np.power(weaksol_mHdsqph[6], 2),
+                                  np.power(weaksol_mHdsqph[43], 2))
+        # print("m_Z^2(mHd^2+h): " + str(mz_mHdsqph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpph = mz_tree_calc(weaksol_mHdsqpph[26],
+                                   weaksol_mHdsqpph[25],
+                                   np.power(weaksol_mHdsqpph[6], 2),
+                                   np.power(weaksol_mHdsqpph[43], 2))
+        # print("m_Z^2(mHd^2+2h): " + str(mz_mHdsqpph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqppph = mz_tree_calc(weaksol_mHdsqppph[26],
+                                    weaksol_mHdsqppph[25],
+                                    np.power(weaksol_mHdsqppph[6], 2),
+                                    np.power(weaksol_mHdsqppph[43], 2))
+        # print("m_Z^2(mHd^2+3h): " + str(mz_mHdsqppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] + hmHdsq + hmHdsq + hmHdsq + hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqpppph = mz_tree_calc(weaksol_mHdsqpppph[26],
+                                     weaksol_mHdsqpppph[25],
+                                     np.power(weaksol_mHdsqpppph[6], 2),
+                                     np.power(weaksol_mHdsqpppph[43], 2))
+        # print("m_Z^2(mHd^2+4h): " + str(mz_mHdsqpppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mHd^2 by small amount left
+        testBCs[26] = testBCs[26] - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmh = mz_tree_calc(weaksol_mHdsqmh[26],
+                                  weaksol_mHdsqmh[25],
+                                  np.power(weaksol_mHdsqmh[6], 2),
+                                  np.power(weaksol_mHdsqmh[43], 2))
+        # print("m_Z^2(mHd^2-h): " + str(mz_mHdsqmh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmh = mz_tree_calc(weaksol_mHdsqmmh[26],
+                                   weaksol_mHdsqmmh[25],
+                                   np.power(weaksol_mHdsqmmh[6], 2),
+                                   np.power(weaksol_mHdsqmmh[43], 2))
+        # print("m_Z^2(mHd^2-2h): " + str(mz_mHdsqmmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmh = mz_tree_calc(weaksol_mHdsqmmmh[26],
+                                    weaksol_mHdsqmmmh[25],
+                                    np.power(weaksol_mHdsqmmmh[6], 2),
+                                    np.power(weaksol_mHdsqmmmh[43], 2))
+        # print("m_Z^2(mHd^2-3h): " + str(mz_mHdsqmmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[26] = testBCs[26] - hmHdsq - hmHdsq - hmHdsq - hmHdsq
+        #print(testBCs)
+
+        weaksol_mHdsqmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mHdsqmmmmh = mz_tree_calc(weaksol_mHdsqmmmmh[26],
+                                     weaksol_mHdsqmmmmh[25],
+                                     np.power(weaksol_mHdsqmmmmh[6], 2),
+                                     np.power(weaksol_mHdsqmmmmh[43], 2))
+        # print("m_Z^2(mHd^2-4h): " + str(mz_mHdsqmmmmh))
+        print('17/30')
+
+        ##### Set up solutions for gaugino mass derivatives #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate gaugino masses by small amount right
+        testBCs[3] = testBCs[3] + hmhf
+        weaksol_M1ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1ph = mz_tree_calc(weaksol_M1ph[26],
+                               weaksol_M1ph[25],
+                               np.power(weaksol_M1ph[6], 2),
+                               np.power(weaksol_M1ph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] + hmhf
+        weaksol_M2ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2ph = mz_tree_calc(weaksol_M2ph[26],
+                               weaksol_M2ph[25],
+                               np.power(weaksol_M2ph[6], 2),
+                               np.power(weaksol_M2ph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] + hmhf
+        weaksol_M3ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3ph = mz_tree_calc(weaksol_M3ph[26],
+                               weaksol_M3ph[25],
+                               np.power(weaksol_M3ph[6], 2),
+                               np.power(weaksol_M3ph[43], 2))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + (2 * hmhf)
+        weaksol_M1pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1pph = mz_tree_calc(weaksol_M1pph[26],
+                                weaksol_M1pph[25],
+                                np.power(weaksol_M1pph[6], 2),
+                                np.power(weaksol_M1pph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] + (2 * hmhf)
+        weaksol_M2pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2pph = mz_tree_calc(weaksol_M2pph[26],
+                                weaksol_M2pph[25],
+                                np.power(weaksol_M2pph[6], 2),
+                                np.power(weaksol_M2pph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] + (2 * hmhf)
+        weaksol_M3pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3pph = mz_tree_calc(weaksol_M3pph[26],
+                                weaksol_M3pph[25],
+                                np.power(weaksol_M3pph[6], 2),
+                                np.power(weaksol_M3pph[43], 2))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + (3 * hmhf)
+        weaksol_M1ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1ppph = mz_tree_calc(weaksol_M1ppph[26],
+                                 weaksol_M1ppph[25],
+                                 np.power(weaksol_M1ppph[6], 2),
+                                 np.power(weaksol_M1ppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] + (3 * hmhf)
+        weaksol_M2ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2ppph = mz_tree_calc(weaksol_M2ppph[26],
+                                 weaksol_M2ppph[25],
+                                 np.power(weaksol_M2ppph[6], 2),
+                                 np.power(weaksol_M2ppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] + (3 * hmhf)
+        weaksol_M3ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3ppph = mz_tree_calc(weaksol_M3ppph[26],
+                                 weaksol_M3ppph[25],
+                                 np.power(weaksol_M3ppph[6], 2),
+                                 np.power(weaksol_M3ppph[43], 2))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] + (4 * hmhf)
+        weaksol_M1pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1pppph = mz_tree_calc(weaksol_M1pppph[26],
+                                  weaksol_M1pppph[25],
+                                  np.power(weaksol_M1pppph[6], 2),
+                                  np.power(weaksol_M1pppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] + (4 * hmhf)
+        weaksol_M2pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2pppph = mz_tree_calc(weaksol_M2pppph[26],
+                                  weaksol_M2pppph[25],
+                                  np.power(weaksol_M2pppph[6], 2),
+                                  np.power(weaksol_M2pppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] + (4 * hmhf)
+        weaksol_M3pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3pppph = mz_tree_calc(weaksol_M3pppph[26],
+                                  weaksol_M3pppph[25],
+                                  np.power(weaksol_M3pppph[6], 2),
+                                  np.power(weaksol_M3pppph[43], 2))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate gaugino masses by small amount left
+        testBCs[3] = testBCs[3] - hmhf
+        weaksol_M1mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1mh = mz_tree_calc(weaksol_M1mh[26],
+                               weaksol_M1mh[25],
+                               np.power(weaksol_M1mh[6], 2),
+                               np.power(weaksol_M1mh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] - hmhf
+        weaksol_M2mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2mh = mz_tree_calc(weaksol_M2mh[26],
+                               weaksol_M2mh[25],
+                               np.power(weaksol_M2mh[6], 2),
+                               np.power(weaksol_M2mh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] - hmhf
+        weaksol_M3mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3mh = mz_tree_calc(weaksol_M3mh[26],
+                               weaksol_M3mh[25],
+                               np.power(weaksol_M3mh[6], 2),
+                               np.power(weaksol_M3mh[43], 2))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - (2 * hmhf)
+        weaksol_M1mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1mmh = mz_tree_calc(weaksol_M1mmh[26],
+                                weaksol_M1mmh[25],
+                                np.power(weaksol_M1mmh[6], 2),
+                                np.power(weaksol_M1mmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] - (2 * hmhf)
+        weaksol_M2mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2mmh = mz_tree_calc(weaksol_M2mmh[26],
+                                weaksol_M2mmh[25],
+                                np.power(weaksol_M2mmh[6], 2),
+                                np.power(weaksol_M2mmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] - (2 * hmhf)
+        weaksol_M3mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3mmh = mz_tree_calc(weaksol_M3mmh[26],
+                                weaksol_M3mmh[25],
+                                np.power(weaksol_M3mmh[6], 2),
+                                np.power(weaksol_M3mmh[43], 2))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - (3 * hmhf)
+        weaksol_M1mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1mmmh = mz_tree_calc(weaksol_M1mmmh[26],
+                                 weaksol_M1mmmh[25],
+                                 np.power(weaksol_M1mmmh[6], 2),
+                                 np.power(weaksol_M1mmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] - (3 * hmhf)
+        weaksol_M2mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2mmmh = mz_tree_calc(weaksol_M2mmmh[26],
+                                 weaksol_M2mmmh[25],
+                                 np.power(weaksol_M2mmmh[6], 2),
+                                 np.power(weaksol_M2mmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] - (3 * hmhf)
+        weaksol_M3mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3mmmh = mz_tree_calc(weaksol_M3mmmh[26],
+                                 weaksol_M3mmmh[25],
+                                 np.power(weaksol_M3mmmh[6], 2),
+                                 np.power(weaksol_M3mmmh[43], 2))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[3] = testBCs[3] - (4 * hmhf)
+        weaksol_M1mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M1mmmmh = mz_tree_calc(weaksol_M1mmmmh[26],
+                                  weaksol_M1mmmmh[25],
+                                  np.power(weaksol_M1mmmmh[6], 2),
+                                  np.power(weaksol_M1mmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[4] = testBCs[4] - (4 * hmhf)
+        weaksol_M2mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M2mmmmh = mz_tree_calc(weaksol_M2mmmmh[26],
+                                  weaksol_M2mmmmh[25],
+                                  np.power(weaksol_M2mmmmh[6], 2),
+                                  np.power(weaksol_M2mmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[5] = testBCs[5] - (4 * hmhf)
+        weaksol_M3mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_M3mmmmh = mz_tree_calc(weaksol_M3mmmmh[26],
+                                  weaksol_M3mmmmh[25],
+                                  np.power(weaksol_M3mmmmh[6], 2),
+                                  np.power(weaksol_M3mmmmh[43], 2))
+
+        # print("m_Z^2(m_1/2-4h): " + str(mz_mhfmmmmh))
+        print('20/30')
+
+        ##### Set up solutions for soft trilinear derivatives #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # print(testBCs[16] / testBCs[7])
+        # Deviate trilinears by small amount right
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + hA0)\
+            * testBCs[7]
+        weaksol_Atph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atph = mz_tree_calc(weaksol_Atph[26],
+                               weaksol_Atph[25],
+                               np.power(weaksol_Atph[6], 2),
+                               np.power(weaksol_Atph[43], 2))
+        # print(testBCs[16] / testBCs[7])
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + hA0)\
+            * testBCs[8]
+        weaksol_Acph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acph = mz_tree_calc(weaksol_Acph[26],
+                               weaksol_Acph[25],
+                               np.power(weaksol_Acph[6], 2),
+                               np.power(weaksol_Acph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + hA0)\
+            * testBCs[9]
+        weaksol_Auph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Auph = mz_tree_calc(weaksol_Auph[26],
+                               weaksol_Auph[25],
+                               np.power(weaksol_Auph[6], 2),
+                               np.power(weaksol_Auph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + hA0)\
+            * testBCs[10]
+        weaksol_Abph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abph = mz_tree_calc(weaksol_Abph[26],
+                               weaksol_Abph[25],
+                               np.power(weaksol_Abph[6], 2),
+                               np.power(weaksol_Abph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + hA0)\
+            * testBCs[11]
+        weaksol_Asph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Asph = mz_tree_calc(weaksol_Asph[26],
+                               weaksol_Asph[25],
+                               np.power(weaksol_Asph[6], 2),
+                               np.power(weaksol_Asph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + hA0)\
+            * testBCs[12]
+        weaksol_Adph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Adph = mz_tree_calc(weaksol_Adph[26],
+                               weaksol_Adph[25],
+                               np.power(weaksol_Adph[6], 2),
+                               np.power(weaksol_Adph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + hA0)\
+            * testBCs[13]
+        weaksol_Atauph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atauph = mz_tree_calc(weaksol_Atauph[26],
+                                 weaksol_Atauph[25],
+                                 np.power(weaksol_Atauph[6], 2),
+                                 np.power(weaksol_Atauph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + hA0)\
+            * testBCs[14]
+        weaksol_Amuph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amuph = mz_tree_calc(weaksol_Amuph[26],
+                                weaksol_Amuph[25],
+                                np.power(weaksol_Amuph[6], 2),
+                                np.power(weaksol_Amuph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + hA0)\
+            * testBCs[15]
+        weaksol_Aeph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aeph = mz_tree_calc(weaksol_Aeph[26],
+                               weaksol_Aeph[25],
+                               np.power(weaksol_Aeph[6], 2),
+                               np.power(weaksol_Aeph[43], 2))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + (2 * hA0))\
+            * testBCs[7]
+        weaksol_Atpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atpph = mz_tree_calc(weaksol_Atpph[26],
+                                weaksol_Atpph[25],
+                                np.power(weaksol_Atpph[6], 2),
+                                np.power(weaksol_Atpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + (2 * hA0))\
+            * testBCs[8]
+        weaksol_Acpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acpph = mz_tree_calc(weaksol_Acpph[26],
+                                weaksol_Acpph[25],
+                                np.power(weaksol_Acpph[6], 2),
+                                np.power(weaksol_Acpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + (2 * hA0))\
+            * testBCs[9]
+        weaksol_Aupph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aupph = mz_tree_calc(weaksol_Aupph[26],
+                                weaksol_Aupph[25],
+                                np.power(weaksol_Aupph[6], 2),
+                                np.power(weaksol_Aupph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + (2 * hA0))\
+            * testBCs[10]
+        weaksol_Abpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abpph = mz_tree_calc(weaksol_Abpph[26],
+                                weaksol_Abpph[25],
+                                np.power(weaksol_Abpph[6], 2),
+                                np.power(weaksol_Abpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + (2 * hA0))\
+            * testBCs[11]
+        weaksol_Aspph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aspph = mz_tree_calc(weaksol_Aspph[26],
+                                weaksol_Aspph[25],
+                                np.power(weaksol_Aspph[6], 2),
+                                np.power(weaksol_Aspph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + (2 * hA0))\
+            * testBCs[12]
+        weaksol_Adpph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Adpph = mz_tree_calc(weaksol_Adpph[26],
+                                weaksol_Adpph[25],
+                                np.power(weaksol_Adpph[6], 2),
+                                np.power(weaksol_Adpph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + (2 * hA0))\
+            * testBCs[13]
+        weaksol_Ataupph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Ataupph = mz_tree_calc(weaksol_Ataupph[26],
+                                  weaksol_Ataupph[25],
+                                  np.power(weaksol_Ataupph[6], 2),
+                                  np.power(weaksol_Ataupph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + (2 * hA0))\
+            * testBCs[14]
+        weaksol_Amupph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amupph = mz_tree_calc(weaksol_Amupph[26],
+                                 weaksol_Amupph[25],
+                                 np.power(weaksol_Amupph[6], 2),
+                                 np.power(weaksol_Amupph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + (2 * hA0))\
+            * testBCs[15]
+        weaksol_Aepph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aepph = mz_tree_calc(weaksol_Aepph[26],
+                                weaksol_Aepph[25],
+                                np.power(weaksol_Aepph[6], 2),
+                                np.power(weaksol_Aepph[43], 2))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + (3 * hA0))\
+            * testBCs[7]
+        weaksol_Atppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atppph = mz_tree_calc(weaksol_Atppph[26],
+                                 weaksol_Atppph[25],
+                                 np.power(weaksol_Atppph[6], 2),
+                                 np.power(weaksol_Atppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + (3 * hA0))\
+            * testBCs[8]
+        weaksol_Acppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acppph = mz_tree_calc(weaksol_Acppph[26],
+                                 weaksol_Acppph[25],
+                                 np.power(weaksol_Acppph[6], 2),
+                                 np.power(weaksol_Acppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + (3 * hA0))\
+            * testBCs[9]
+        weaksol_Auppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Auppph = mz_tree_calc(weaksol_Auppph[26],
+                                 weaksol_Auppph[25],
+                                 np.power(weaksol_Auppph[6], 2),
+                                 np.power(weaksol_Auppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + (3 * hA0))\
+            * testBCs[10]
+        weaksol_Abppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abppph = mz_tree_calc(weaksol_Abppph[26],
+                                 weaksol_Abppph[25],
+                                 np.power(weaksol_Abppph[6], 2),
+                                 np.power(weaksol_Abppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + (3 * hA0))\
+            * testBCs[11]
+        weaksol_Asppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Asppph = mz_tree_calc(weaksol_Asppph[26],
+                                 weaksol_Asppph[25],
+                                 np.power(weaksol_Asppph[6], 2),
+                                 np.power(weaksol_Asppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + (3 * hA0))\
+            * testBCs[12]
+        weaksol_Adppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Adppph = mz_tree_calc(weaksol_Adppph[26],
+                                 weaksol_Adppph[25],
+                                 np.power(weaksol_Adppph[6], 2),
+                                 np.power(weaksol_Adppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + (3 * hA0))\
+            * testBCs[13]
+        weaksol_Atauppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atauppph = mz_tree_calc(weaksol_Atauppph[26],
+                                   weaksol_Atauppph[25],
+                                   np.power(weaksol_Atauppph[6], 2),
+                                   np.power(weaksol_Atauppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + (3 * hA0))\
+            * testBCs[14]
+        weaksol_Amuppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amuppph = mz_tree_calc(weaksol_Amuppph[26],
+                                  weaksol_Amuppph[25],
+                                  np.power(weaksol_Amuppph[6], 2),
+                                  np.power(weaksol_Amuppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + (3 * hA0))\
+            * testBCs[15]
+        weaksol_Aeppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aeppph = mz_tree_calc(weaksol_Aeppph[26],
+                                 weaksol_Aeppph[25],
+                                 np.power(weaksol_Aeppph[6], 2),
+                                 np.power(weaksol_Aeppph[43], 2))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[16] = ((testBCs[16] / testBCs[7]) + (4 * hA0))\
+            * testBCs[7]
+        weaksol_Atpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atpppph = mz_tree_calc(weaksol_Atpppph[26],
+                                  weaksol_Atpppph[25],
+                                  np.power(weaksol_Atpppph[6], 2),
+                                  np.power(weaksol_Atpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) + (4 * hA0))\
+            * testBCs[8]
+        weaksol_Acpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acpppph = mz_tree_calc(weaksol_Acpppph[26],
+                                  weaksol_Acpppph[25],
+                                  np.power(weaksol_Acpppph[6], 2),
+                                  np.power(weaksol_Acpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) + (4 * hA0))\
+            * testBCs[9]
+        weaksol_Aupppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aupppph = mz_tree_calc(weaksol_Aupppph[26],
+                                  weaksol_Aupppph[25],
+                                  np.power(weaksol_Aupppph[6], 2),
+                                  np.power(weaksol_Aupppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) + (4 * hA0))\
+            * testBCs[10]
+        weaksol_Abpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abpppph = mz_tree_calc(weaksol_Abpppph[26],
+                                  weaksol_Abpppph[25],
+                                  np.power(weaksol_Abpppph[6], 2),
+                                  np.power(weaksol_Abpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) + (4 * hA0))\
+            * testBCs[11]
+        weaksol_Aspppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aspppph = mz_tree_calc(weaksol_Aspppph[26],
+                                  weaksol_Aspppph[25],
+                                  np.power(weaksol_Aspppph[6], 2),
+                                  np.power(weaksol_Aspppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) + (4 * hA0))\
+            * testBCs[12]
+        weaksol_Adpppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Adpppph = mz_tree_calc(weaksol_Adpppph[26],
+                                  weaksol_Adpppph[25],
+                                  np.power(weaksol_Adpppph[6], 2),
+                                  np.power(weaksol_Adpppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) + (4 * hA0))\
+            * testBCs[13]
+        weaksol_Ataupppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Ataupppph = mz_tree_calc(weaksol_Ataupppph[26],
+                                    weaksol_Ataupppph[25],
+                                    np.power(weaksol_Ataupppph[6], 2),
+                                    np.power(weaksol_Ataupppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) + (4 * hA0))\
+            * testBCs[14]
+        weaksol_Amupppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amupppph = mz_tree_calc(weaksol_Amupppph[26],
+                                   weaksol_Amupppph[25],
+                                   np.power(weaksol_Amupppph[6], 2),
+                                   np.power(weaksol_Amupppph[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) + (4 * hA0))\
+            * testBCs[15]
+        weaksol_Aepppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aepppph = mz_tree_calc(weaksol_Aepppph[26],
+                                  weaksol_Aepppph[25],
+                                  np.power(weaksol_Aepppph[6], 2),
+                                  np.power(weaksol_Aepppph[43], 2))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate trilinears by small amount left
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - hA0)\
+            * testBCs[7]
+        weaksol_Atmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atmh = mz_tree_calc(weaksol_Atmh[26],
+                               weaksol_Atmh[25],
+                               np.power(weaksol_Atmh[6], 2),
+                               np.power(weaksol_Atmh[43], 2))
+        # print(testBCs[16] / testBCs[7])
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - hA0)\
+            * testBCs[8]
+        weaksol_Acmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acmh = mz_tree_calc(weaksol_Acmh[26],
+                               weaksol_Acmh[25],
+                               np.power(weaksol_Acmh[6], 2),
+                               np.power(weaksol_Acmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - hA0)\
+            * testBCs[9]
+        weaksol_Aumh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aumh = mz_tree_calc(weaksol_Aumh[26],
+                               weaksol_Aumh[25],
+                               np.power(weaksol_Aumh[6], 2),
+                               np.power(weaksol_Aumh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - hA0)\
+            * testBCs[10]
+        weaksol_Abmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abmh = mz_tree_calc(weaksol_Abmh[26],
+                               weaksol_Abmh[25],
+                               np.power(weaksol_Abmh[6], 2),
+                               np.power(weaksol_Abmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - hA0)\
+            * testBCs[11]
+        weaksol_Asmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Asmh = mz_tree_calc(weaksol_Asmh[26],
+                               weaksol_Asmh[25],
+                               np.power(weaksol_Asmh[6], 2),
+                               np.power(weaksol_Asmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - hA0)\
+            * testBCs[12]
+        weaksol_Admh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Admh = mz_tree_calc(weaksol_Admh[26],
+                               weaksol_Admh[25],
+                               np.power(weaksol_Admh[6], 2),
+                               np.power(weaksol_Admh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - hA0)\
+            * testBCs[13]
+        weaksol_Ataumh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Ataumh = mz_tree_calc(weaksol_Ataumh[26],
+                                 weaksol_Ataumh[25],
+                                 np.power(weaksol_Ataumh[6], 2),
+                                 np.power(weaksol_Ataumh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - hA0)\
+            * testBCs[14]
+        weaksol_Amumh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amumh = mz_tree_calc(weaksol_Amumh[26],
+                                weaksol_Amumh[25],
+                                np.power(weaksol_Amumh[6], 2),
+                                np.power(weaksol_Amumh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - hA0)\
+            * testBCs[15]
+        weaksol_Aemh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aemh = mz_tree_calc(weaksol_Aemh[26],
+                               weaksol_Aemh[25],
+                               np.power(weaksol_Aemh[6], 2),
+                               np.power(weaksol_Aemh[43], 2))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - (2 * hA0))\
+            * testBCs[7]
+        weaksol_Atmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atmmh = mz_tree_calc(weaksol_Atmmh[26],
+                                weaksol_Atmmh[25],
+                                np.power(weaksol_Atmmh[6], 2),
+                                np.power(weaksol_Atmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - (2 * hA0))\
+            * testBCs[8]
+        weaksol_Acmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acmmh = mz_tree_calc(weaksol_Acmmh[26],
+                                weaksol_Acmmh[25],
+                                np.power(weaksol_Acmmh[6], 2),
+                                np.power(weaksol_Acmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - (2 * hA0))\
+            * testBCs[9]
+        weaksol_Aummh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aummh = mz_tree_calc(weaksol_Aummh[26],
+                                weaksol_Aummh[25],
+                                np.power(weaksol_Aummh[6], 2),
+                                np.power(weaksol_Aummh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - (2 * hA0))\
+            * testBCs[10]
+        weaksol_Abmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abmmh = mz_tree_calc(weaksol_Abmmh[26],
+                                weaksol_Abmmh[25],
+                                np.power(weaksol_Abmmh[6], 2),
+                                np.power(weaksol_Abmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - (2 * hA0))\
+            * testBCs[11]
+        weaksol_Asmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Asmmh = mz_tree_calc(weaksol_Asmmh[26],
+                                weaksol_Asmmh[25],
+                                np.power(weaksol_Asmmh[6], 2),
+                                np.power(weaksol_Asmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - (2 * hA0))\
+            * testBCs[12]
+        weaksol_Admmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Admmh = mz_tree_calc(weaksol_Admmh[26],
+                                weaksol_Admmh[25],
+                                np.power(weaksol_Admmh[6], 2),
+                                np.power(weaksol_Admmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - (2 * hA0))\
+            * testBCs[13]
+        weaksol_Ataummh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Ataummh = mz_tree_calc(weaksol_Ataummh[26],
+                                  weaksol_Ataummh[25],
+                                  np.power(weaksol_Ataummh[6], 2),
+                                  np.power(weaksol_Ataummh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - (2 * hA0))\
+            * testBCs[14]
+        weaksol_Amummh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amummh = mz_tree_calc(weaksol_Amummh[26],
+                                 weaksol_Amummh[25],
+                                 np.power(weaksol_Amummh[6], 2),
+                                 np.power(weaksol_Amummh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - (2 * hA0))\
+            * testBCs[15]
+        weaksol_Aemmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aemmh = mz_tree_calc(weaksol_Aemmh[26],
+                                weaksol_Aemmh[25],
+                                np.power(weaksol_Aemmh[6], 2),
+                                np.power(weaksol_Aemmh[43], 2))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - (3 * hA0))\
+            * testBCs[7]
+        weaksol_Atmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atmmmh = mz_tree_calc(weaksol_Atmmmh[26],
+                                 weaksol_Atmmmh[25],
+                                 np.power(weaksol_Atmmmh[6], 2),
+                                 np.power(weaksol_Atmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - (3 * hA0))\
+            * testBCs[8]
+        weaksol_Acmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acmmmh = mz_tree_calc(weaksol_Acmmmh[26],
+                                 weaksol_Acmmmh[25],
+                                 np.power(weaksol_Acmmmh[6], 2),
+                                 np.power(weaksol_Acmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - (3 * hA0))\
+            * testBCs[9]
+        weaksol_Aummmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aummmh = mz_tree_calc(weaksol_Aummmh[26],
+                                 weaksol_Aummmh[25],
+                                 np.power(weaksol_Aummmh[6], 2),
+                                 np.power(weaksol_Aummmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - (3 * hA0))\
+            * testBCs[10]
+        weaksol_Abmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abmmmh = mz_tree_calc(weaksol_Abmmmh[26],
+                                 weaksol_Abmmmh[25],
+                                 np.power(weaksol_Abmmmh[6], 2),
+                                 np.power(weaksol_Abmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - (3 * hA0))\
+            * testBCs[11]
+        weaksol_Asmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Asmmmh = mz_tree_calc(weaksol_Asmmmh[26],
+                                 weaksol_Asmmmh[25],
+                                 np.power(weaksol_Asmmmh[6], 2),
+                                 np.power(weaksol_Asmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - (3 * hA0))\
+            * testBCs[12]
+        weaksol_Admmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Admmmh = mz_tree_calc(weaksol_Admmmh[26],
+                                 weaksol_Admmmh[25],
+                                 np.power(weaksol_Admmmh[6], 2),
+                                 np.power(weaksol_Admmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - (3 * hA0))\
+            * testBCs[13]
+        weaksol_Ataummmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Ataummmh = mz_tree_calc(weaksol_Ataummmh[26],
+                                   weaksol_Ataummmh[25],
+                                   np.power(weaksol_Ataummmh[6], 2),
+                                   np.power(weaksol_Ataummmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - (3 * hA0))\
+            * testBCs[14]
+        weaksol_Amummmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amummmh = mz_tree_calc(weaksol_Amummmh[26],
+                                  weaksol_Amummmh[25],
+                                  np.power(weaksol_Amummmh[6], 2),
+                                  np.power(weaksol_Amummmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - (3 * hA0))\
+            * testBCs[15]
+        weaksol_Aemmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aemmmh = mz_tree_calc(weaksol_Aemmmh[26],
+                                 weaksol_Aemmmh[25],
+                                 np.power(weaksol_Aemmmh[6], 2),
+                                 np.power(weaksol_Aemmmh[43], 2))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[16] = ((testBCs[16] / testBCs[7]) - (4 * hA0))\
+            * testBCs[7]
+        weaksol_Atmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Atmmmmh = mz_tree_calc(weaksol_Atmmmmh[26],
+                                  weaksol_Atmmmmh[25],
+                                  np.power(weaksol_Atmmmmh[6], 2),
+                                  np.power(weaksol_Atmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[17] = ((testBCs[17] / testBCs[8]) - (4 * hA0))\
+            * testBCs[8]
+        weaksol_Acmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Acmmmmh = mz_tree_calc(weaksol_Acmmmmh[26],
+                                  weaksol_Acmmmmh[25],
+                                  np.power(weaksol_Acmmmmh[6], 2),
+                                  np.power(weaksol_Acmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[18] = ((testBCs[18] / testBCs[9]) - (4 * hA0))\
+            * testBCs[9]
+        weaksol_Aummmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aummmmh = mz_tree_calc(weaksol_Aummmmh[26],
+                                  weaksol_Aummmmh[25],
+                                  np.power(weaksol_Aummmmh[6], 2),
+                                  np.power(weaksol_Aummmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[19] = ((testBCs[19] / testBCs[10]) - (4 * hA0))\
+            * testBCs[10]
+        weaksol_Abmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Abmmmmh = mz_tree_calc(weaksol_Abmmmmh[26],
+                                  weaksol_Abmmmmh[25],
+                                  np.power(weaksol_Abmmmmh[6], 2),
+                                  np.power(weaksol_Abmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[20] = ((testBCs[20] / testBCs[11]) - (4 * hA0))\
+            * testBCs[11]
+        weaksol_Asmmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Asmmmmh = mz_tree_calc(weaksol_Asmmmmh[26],
+                                  weaksol_Asmmmmh[25],
+                                  np.power(weaksol_Asmmmmh[6], 2),
+                                  np.power(weaksol_Asmmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[21] = ((testBCs[21] / testBCs[12]) - (4 * hA0))\
+            * testBCs[12]
+        weaksol_Admmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Admmmmh = mz_tree_calc(weaksol_Admmmmh[26],
+                                  weaksol_Admmmmh[25],
+                                  np.power(weaksol_Admmmmh[6], 2),
+                                  np.power(weaksol_Admmmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[22] = ((testBCs[22] / testBCs[13]) - (4 * hA0))\
+            * testBCs[13]
+        weaksol_Ataummmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Ataummmmh = mz_tree_calc(weaksol_Ataummmmh[26],
+                                    weaksol_Ataummmmh[25],
+                                    np.power(weaksol_Ataummmmh[6], 2),
+                                    np.power(weaksol_Ataummmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[23] = ((testBCs[23] / testBCs[14]) - (4 * hA0))\
+            * testBCs[14]
+        weaksol_Amummmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Amummmmh = mz_tree_calc(weaksol_Amummmmh[26],
+                                   weaksol_Amummmmh[25],
+                                   np.power(weaksol_Amummmmh[6], 2),
+                                   np.power(weaksol_Amummmmh[43], 2))
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[24] = ((testBCs[24] / testBCs[15]) - (4 * hA0))\
+            * testBCs[15]
+        weaksol_Aemmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_Aemmmmh = mz_tree_calc(weaksol_Aemmmmh[26],
+                                  weaksol_Aemmmmh[25],
+                                  np.power(weaksol_Aemmmmh[6], 2),
+                                  np.power(weaksol_Aemmmmh[43], 2))
+        print('29/30')
+
+        ##### Set up solutions for mu derivative #####
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        # Deviate mu_0 by small amount right
+        testBCs[6] = testBCs[6] + hmu0
+
+        weaksol_mu0ph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ph = mz_tree_calc(weaksol_mu0ph[26],
+                                weaksol_mu0ph[25],
+                                np.power(weaksol_mu0ph[6], 2),
+                                np.power(weaksol_mu0ph[43], 2))
+        # print("m_Z^2(mu_0+h): " + str(mz_mu0ph))
+
+        # Two deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pph = mz_tree_calc(weaksol_mu0pph[26],
+                                 weaksol_mu0pph[25],
+                                 np.power(weaksol_mu0pph[6], 2),
+                                 np.power(weaksol_mu0pph[43], 2))
+        # print("m_Z^2(mu_0+2h): " + str(mz_mu0pph))
+
+        # Three deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0ppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0ppph = mz_tree_calc(weaksol_mu0ppph[26],
+                                  weaksol_mu0ppph[25],
+                                  np.power(weaksol_mu0ppph[6], 2),
+                                  np.power(weaksol_mu0ppph[43], 2))
+        # print("m_Z^2(mu_0+3h): " + str(mz_mu0ppph))
+
+        # Four deviations to right
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] + hmu0 + hmu0 + hmu0 + hmu0
+        #print(testBCs)
+
+        weaksol_mu0pppph = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0pppph = mz_tree_calc(weaksol_mu0pppph[26],
+                                   weaksol_mu0pppph[25],
+                                   np.power(weaksol_mu0pppph[6], 2),
+                                   np.power(weaksol_mu0pppph[43], 2))
+        # print("m_Z^2(mu_0+4h): " + str(mz_mu0pppph))
+
+        # Boundary conditions first
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        # Deviate mu_0 by small amount left
+        testBCs[6] = testBCs[6] - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mh = mz_tree_calc(weaksol_mu0mh[26],
+                                weaksol_mu0mh[25],
+                                np.power(weaksol_mu0mh[6], 2),
+                                np.power(weaksol_mu0mh[43], 2))
+        # print("m_Z^2(mu_0-h): " + str(mz_mu0mh))
+
+        # Two deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmh = mz_tree_calc(weaksol_mu0mmh[26],
+                                 weaksol_mu0mmh[25],
+                                 np.power(weaksol_mu0mmh[6], 2),
+                                 np.power(weaksol_mu0mmh[43], 2))
+        # print("m_Z^2(mu_0-2h): " + str(mz_mu0mmh))
+
+        # Three deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        #print(testBCs)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmh = mz_tree_calc(weaksol_mu0mmmh[26],
+                                  weaksol_mu0mmmh[25],
+                                  np.power(weaksol_mu0mmmh[6], 2),
+                                  np.power(weaksol_mu0mmmh[43], 2))
+        # print("m_Z^2(mu_0-3h): " + str(mz_mu0mmmh))
+
+        # Four deviations to left
+        del testBCs
+        testBCs = inputGUT_BCs[:]
+        testBCs[27] = np.power(testBCs[27], 2)
+        testBCs[28] = np.power(testBCs[28], 2)
+        testBCs[29] = np.power(testBCs[29], 2)
+        testBCs[30] = np.power(testBCs[30], 2)
+        testBCs[31] = np.power(testBCs[31], 2)
+        testBCs[32] = np.power(testBCs[32], 2)
+        testBCs[33] = np.power(testBCs[33], 2)
+        testBCs[34] = np.power(testBCs[34], 2)
+        testBCs[35] = np.power(testBCs[35], 2)
+        testBCs[36] = np.power(testBCs[36], 2)
+        testBCs[37] = np.power(testBCs[37], 2)
+        testBCs[38] = np.power(testBCs[38], 2)
+        testBCs[39] = np.power(testBCs[39], 2)
+        testBCs[40] = np.power(testBCs[40], 2)
+        testBCs[41] = np.power(testBCs[41], 2)
+        testBCs[6] = testBCs[6] - hmu0 - hmu0 - hmu0 - hmu0
+        #print(testBCs)
+
+        weaksol_mu0mmmmh = GUT_to_weak_runner(testBCs, GUT_SCALE)
+        mz_mu0mmmmh = mz_tree_calc(weaksol_mu0mmmmh[26],
+                                   weaksol_mu0mmmmh[25],
+                                   np.power(weaksol_mu0mmmmh[6], 2),
+                                   np.power(weaksol_mu0mmmmh[43], 2))
+        # print("m_Z^2(mu_0-4h): " + str(mz_mu0mmmmh))
+        print('30/30')
+
+        # Construct derivative array
+        deriv_array = np.array([(1 / hm0)
+                                * ((mz_mqL3mmmmh / 280)
+                                   - ((4 / 105) * mz_mqL3mmmh)
+                                   + (mz_mqL3mmh / 5)
+                                   - ((4 / 5) * mz_mqL3mh)
+                                   + ((4 / 5) * mz_mqL3ph)
+                                   - (mz_mqL3pph / 5)
+                                   + ((4 / 105) * mz_mqL3ppph)
+                                   - (mz_mqL3pppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mqL2mmmmh / 280)
+                                   - ((4 / 105) * mz_mqL2mmmh)
+                                   + (mz_mqL2mmh / 5)
+                                   - ((4 / 5) * mz_mqL2mh)
+                                   + ((4 / 5) * mz_mqL2ph)
+                                   - (mz_mqL2pph / 5)
+                                   + ((4 / 105) * mz_mqL2ppph)
+                                   - (mz_mqL2pppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mqL1mmmmh / 280)
+                                   - ((4 / 105) * mz_mqL1mmmh)
+                                   + (mz_mqL1mmh / 5)
+                                   - ((4 / 5) * mz_mqL1mh)
+                                   + ((4 / 5) * mz_mqL1ph)
+                                   - (mz_mqL1pph / 5)
+                                   + ((4 / 105) * mz_mqL1ppph)
+                                   - (mz_mqL1pppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mtRmmmmh / 280)
+                                   - ((4 / 105) * mz_mtRmmmh)
+                                   + (mz_mtRmmh / 5)
+                                   - ((4 / 5) * mz_mtRmh)
+                                   + ((4 / 5) * mz_mtRph)
+                                   - (mz_mtRpph / 5)
+                                   + ((4 / 105) * mz_mtRppph)
+                                   - (mz_mtRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mcRmmmmh / 280)
+                                   - ((4 / 105) * mz_mcRmmmh)
+                                   + (mz_mcRmmh / 5)
+                                   - ((4 / 5) * mz_mcRmh)
+                                   + ((4 / 5) * mz_mcRph)
+                                   - (mz_mcRpph / 5)
+                                   + ((4 / 105) * mz_mcRppph)
+                                   - (mz_mcRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_muRmmmmh / 280)
+                                   - ((4 / 105) * mz_muRmmmh)
+                                   + (mz_muRmmh / 5)
+                                   - ((4 / 5) * mz_muRmh)
+                                   + ((4 / 5) * mz_muRph)
+                                   - (mz_muRpph / 5)
+                                   + ((4 / 105) * mz_muRppph)
+                                   - (mz_muRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mbRmmmmh / 280)
+                                   - ((4 / 105) * mz_mbRmmmh)
+                                   + (mz_mbRmmh / 5)
+                                   - ((4 / 5) * mz_mbRmh)
+                                   + ((4 / 5) * mz_mbRph)
+                                   - (mz_mbRpph / 5)
+                                   + ((4 / 105) * mz_mbRppph)
+                                   - (mz_mbRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_msRmmmmh / 280)
+                                   - ((4 / 105) * mz_msRmmmh)
+                                   + (mz_msRmmh / 5)
+                                   - ((4 / 5) * mz_msRmh)
+                                   + ((4 / 5) * mz_msRph)
+                                   - (mz_msRpph / 5)
+                                   + ((4 / 105) * mz_msRppph)
+                                   - (mz_msRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mdRmmmmh / 280)
+                                   - ((4 / 105) * mz_mdRmmmh)
+                                   + (mz_mdRmmh / 5)
+                                   - ((4 / 5) * mz_mdRmh)
+                                   + ((4 / 5) * mz_mdRph)
+                                   - (mz_mdRpph / 5)
+                                   + ((4 / 105) * mz_mdRppph)
+                                   - (mz_mdRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mtauLmmmmh / 280)
+                                   - ((4 / 105) * mz_mtauLmmmh)
+                                   + (mz_mtauLmmh / 5)
+                                   - ((4 / 5) * mz_mtauLmh)
+                                   + ((4 / 5) * mz_mtauLph)
+                                   - (mz_mtauLpph / 5)
+                                   + ((4 / 105) * mz_mtauLppph)
+                                   - (mz_mtauLpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mmuLmmmmh / 280)
+                                   - ((4 / 105) * mz_mmuLmmmh)
+                                   + (mz_mmuLmmh / 5)
+                                   - ((4 / 5) * mz_mmuLmh)
+                                   + ((4 / 5) * mz_mmuLph)
+                                   - (mz_mmuLpph / 5)
+                                   + ((4 / 105) * mz_mmuLppph)
+                                   - (mz_mmuLpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_meLmmmmh / 280)
+                                   - ((4 / 105) * mz_meLmmmh)
+                                   + (mz_meLmmh / 5)
+                                   - ((4 / 5) * mz_meLmh)
+                                   + ((4 / 5) * mz_meLph)
+                                   - (mz_meLpph / 5)
+                                   + ((4 / 105) * mz_meLppph)
+                                   - (mz_meLpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mtauRmmmmh / 280)
+                                   - ((4 / 105) * mz_mtauRmmmh)
+                                   + (mz_mtauRmmh / 5)
+                                   - ((4 / 5) * mz_mtauRmh)
+                                   + ((4 / 5) * mz_mtauRph)
+                                   - (mz_mtauRpph / 5)
+                                   + ((4 / 105) * mz_mtauRppph)
+                                   - (mz_mtauRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_mmuRmmmmh / 280)
+                                   - ((4 / 105) * mz_mmuRmmmh)
+                                   + (mz_mmuRmmh / 5)
+                                   - ((4 / 5) * mz_mmuRmh)
+                                   + ((4 / 5) * mz_mmuRph)
+                                   - (mz_mmuRpph / 5)
+                                   + ((4 / 105) * mz_mmuRppph)
+                                   - (mz_mmuRpppph / 280)),
+                                (1 / hm0)
+                                * ((mz_meRmmmmh / 280)
+                                   - ((4 / 105) * mz_meRmmmh)
+                                   + (mz_meRmmh / 5)
+                                   - ((4 / 5) * mz_meRmh)
+                                   + ((4 / 5) * mz_meRph)
+                                   - (mz_meRpph / 5)
+                                   + ((4 / 105) * mz_meRppph)
+                                   - (mz_meRpppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_M1mmmmh / 280)
+                                   - ((4 / 105) * mz_M1mmmh)
+                                   + (mz_M1mmh / 5)
+                                   - ((4 / 5) * mz_M1mh)
+                                   + ((4 / 5) * mz_M1ph)
+                                   - (mz_M1pph / 5)
+                                   + ((4 / 105) * mz_M1ppph)
+                                   - (mz_M1pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_M2mmmmh / 280)
+                                   - ((4 / 105) * mz_M2mmmh)
+                                   + (mz_M2mmh / 5)
+                                   - ((4 / 5) * mz_M2mh)
+                                   + ((4 / 5) * mz_M2ph)
+                                   - (mz_M2pph / 5)
+                                   + ((4 / 105) * mz_M2ppph)
+                                   - (mz_M2pppph / 280)),
+                                (1 / hmhf)
+                                * ((mz_M3mmmmh / 280)
+                                   - ((4 / 105) * mz_M3mmmh)
+                                   + (mz_M3mmh / 5)
+                                   - ((4 / 5) * mz_M3mh)
+                                   + ((4 / 5) * mz_M3ph)
+                                   - (mz_M3pph / 5)
+                                   + ((4 / 105) * mz_M3ppph)
+                                   - (mz_M3pppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Atmmmmh / 280)
+                                   - ((4 / 105) * mz_Atmmmh)
+                                   + (mz_Atmmh / 5)
+                                   - ((4 / 5) * mz_Atmh)
+                                   + ((4 / 5) * mz_Atph)
+                                   - (mz_Atpph / 5)
+                                   + ((4 / 105) * mz_Atppph)
+                                   - (mz_Atpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Acmmmmh / 280)
+                                   - ((4 / 105) * mz_Acmmmh)
+                                   + (mz_Acmmh / 5)
+                                   - ((4 / 5) * mz_Acmh)
+                                   + ((4 / 5) * mz_Acph)
+                                   - (mz_Acpph / 5)
+                                   + ((4 / 105) * mz_Acppph)
+                                   - (mz_Acpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Aummmmh / 280)
+                                   - ((4 / 105) * mz_Aummmh)
+                                   + (mz_Aummh / 5)
+                                   - ((4 / 5) * mz_Aumh)
+                                   + ((4 / 5) * mz_Auph)
+                                   - (mz_Aupph / 5)
+                                   + ((4 / 105) * mz_Auppph)
+                                   - (mz_Aupppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Abmmmmh / 280)
+                                   - ((4 / 105) * mz_Abmmmh)
+                                   + (mz_Abmmh / 5)
+                                   - ((4 / 5) * mz_Abmh)
+                                   + ((4 / 5) * mz_Abph)
+                                   - (mz_Abpph / 5)
+                                   + ((4 / 105) * mz_Abppph)
+                                   - (mz_Abpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Asmmmmh / 280)
+                                   - ((4 / 105) * mz_Asmmmh)
+                                   + (mz_Asmmh / 5)
+                                   - ((4 / 5) * mz_Asmh)
+                                   + ((4 / 5) * mz_Asph)
+                                   - (mz_Aspph / 5)
+                                   + ((4 / 105) * mz_Asppph)
+                                   - (mz_Aspppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Admmmmh / 280)
+                                   - ((4 / 105) * mz_Admmmh)
+                                   + (mz_Admmh / 5)
+                                   - ((4 / 5) * mz_Admh)
+                                   + ((4 / 5) * mz_Adph)
+                                   - (mz_Adpph / 5)
+                                   + ((4 / 105) * mz_Adppph)
+                                   - (mz_Adpppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Ataummmmh / 280)
+                                   - ((4 / 105) * mz_Ataummmh)
+                                   + (mz_Ataummh / 5)
+                                   - ((4 / 5) * mz_Ataumh)
+                                   + ((4 / 5) * mz_Atauph)
+                                   - (mz_Ataupph / 5)
+                                   + ((4 / 105) * mz_Atauppph)
+                                   - (mz_Ataupppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Amummmmh / 280)
+                                   - ((4 / 105) * mz_Amummmh)
+                                   + (mz_Amummh / 5)
+                                   - ((4 / 5) * mz_Amumh)
+                                   + ((4 / 5) * mz_Amuph)
+                                   - (mz_Amupph / 5)
+                                   + ((4 / 105) * mz_Amuppph)
+                                   - (mz_Amupppph / 280)),
+                                (1 / hA0)
+                                * ((mz_Aemmmmh / 280)
+                                   - ((4 / 105) * mz_Aemmmh)
+                                   + (mz_Aemmh / 5)
+                                   - ((4 / 5) * mz_Aemh)
+                                   + ((4 / 5) * mz_Aeph)
+                                   - (mz_Aepph / 5)
+                                   + ((4 / 105) * mz_Aeppph)
+                                   - (mz_Aepppph / 280)),
+                                (1 / hmu0)
+                                * ((mz_mu0mmmmh / 280)
+                                   - ((4 / 105) * mz_mu0mmmh)
+                                   + (mz_mu0mmh / 5)
+                                   - ((4 / 5) * mz_mu0mh)
+                                   + ((4 / 5) * mz_mu0ph)
+                                   - (mz_mu0pph / 5)
+                                   + ((4 / 105) * mz_mu0ppph)
+                                   - (mz_mu0pppph / 280)),
+                                (1 / hmHusq)
+                                * ((mz_mHusqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHusqmmmh)
+                                   + (mz_mHusqmmh / 5)
+                                   - ((4 / 5) * mz_mHusqmh)
+                                   + ((4 / 5) * mz_mHusqph)
+                                   - (mz_mHusqpph / 5)
+                                   + ((4 / 105) * mz_mHusqppph)
+                                   - (mz_mHusqpppph / 280)),
+                                (1 / hmHdsq)
+                                * ((mz_mHdsqmmmmh / 280)
+                                   - ((4 / 105) * mz_mHdsqmmmh)
+                                   + (mz_mHdsqmmh / 5)
+                                   - ((4 / 5) * mz_mHdsqmh)
+                                   + ((4 / 5) * mz_mHdsqph)
+                                   - (mz_mHdsqpph / 5)
+                                   + ((4 / 105) * mz_mHdsqppph)
+                                   - (mz_mHdsqpppph / 280))])
+        sens_params = np.sort(np.array([(np.abs((mymqL3
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[0]),
+                                         'Delta_BG(m_qL(3))'),
+                                        (np.abs((mymqL2
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[1]),
+                                         'Delta_BG(m_qL(2))'),
+                                        (np.abs((mymqL1
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[2]),
+                                         'Delta_BG(m_qL(1))'),
+                                        (np.abs((mymtR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[3]),
+                                         'Delta_BG(m_tR)'),
+                                        (np.abs((mymcR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[4]),
+                                         'Delta_BG(m_cR)'),
+                                        (np.abs((mymuR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[5]),
+                                         'Delta_BG(m_uR)'),
+                                        (np.abs((mymbR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[6]),
+                                         'Delta_BG(m_bR)'),
+                                        (np.abs((mymsR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[7]),
+                                         'Delta_BG(m_sR)'),
+                                        (np.abs((mymdR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[8]),
+                                         'Delta_BG(m_dR)'),
+                                        (np.abs((mymtauL
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[9]),
+                                         'Delta_BG(m_tauL)'),
+                                        (np.abs((mymmuL
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[10]),
+                                         'Delta_BG(m_muL)'),
+                                        (np.abs((mymeL
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[11]),
+                                         'Delta_BG(m_eL)'),
+                                        (np.abs((mymtauR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[12]),
+                                         'Delta_BG(m_tauR)'),
+                                        (np.abs((mymmuR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[13]),
+                                         'Delta_BG(m_muR)'),
+                                        (np.abs((mymeR
+                                                 / mymzsq)#/ mymzsq)
+                                                * deriv_array[14]),
+                                         'Delta_BG(m_eR)'),
+                                        (np.abs((myM1
+                                                 / mymzsq)
+                                                * deriv_array[15]),
+                                         'Delta_BG(M1)'),
+                                        (np.abs((myM2
+                                                 / mymzsq)
+                                                * deriv_array[16]),
+                                         'Delta_BG(M2)'),
+                                        (np.abs((myM3
+                                                 / mymzsq)
+                                                * deriv_array[17]),
+                                         'Delta_BG(M3)'),
+                                        (np.abs((myAt
+                                                 / mymzsq)
+                                                * deriv_array[18]),
+                                         'Delta_BG(A_t)'),
+                                        (np.abs((myAc
+                                                 / mymzsq)
+                                                * deriv_array[19]),
+                                         'Delta_BG(A_c)'),
+                                        (np.abs((myAu
+                                                 / mymzsq)
+                                                * deriv_array[20]),
+                                         'Delta_BG(A_u)'),
+                                        (np.abs((myAb
+                                                 / mymzsq)
+                                                * deriv_array[21]),
+                                         'Delta_BG(A_b)'),
+                                        (np.abs((myAs
+                                                 / mymzsq)
+                                                * deriv_array[22]),
+                                         'Delta_BG(A_s)'),
+                                        (np.abs((myAd
+                                                 / mymzsq)
+                                                * deriv_array[23]),
+                                         'Delta_BG(A_d)'),
+                                        (np.abs((myAtau
+                                                 / mymzsq)
+                                                * deriv_array[24]),
+                                         'Delta_BG(A_tau)'),
+                                        (np.abs((myAmu
+                                                 / mymzsq)
+                                                * deriv_array[25]),
+                                         'Delta_BG(A_mu)'),
+                                        (np.abs((myAe
+                                                 / mymzsq)
+                                                * deriv_array[26]),
+                                         'Delta_BG(A_e)'),
+                                        (np.abs((mymu0
+                                                 / mymzsq)
+                                                * deriv_array[27]),
+                                         'Delta_BG(mu)'),
+                                        (np.abs((mymHusqGUT / mymzsq)
+                                                * deriv_array[28]),
+                                         'Delta_BG(mHu^2)'),
+                                        (np.abs((mymHdsqGUT / mymzsq)
+                                                * deriv_array[29]),
+                                         'Delta_BG(mHd^2)')],
+                                       dtype=[('BGContrib', float),
+                                              ('BGlabel', 'U40')]),
+                              order='BGContrib')
+    return sens_params[::-1]
 
 def Delta_HS_calc(mHdsq_Lambda, delta_mHdsq, mHusq_Lambda, delta_mHusq,
                   mu_Lambdasq, delta_musq, running_mz_sq, tanb_sq, sigmauutot,
@@ -9515,12 +23536,32 @@ def Delta_HS_calc(mHdsq_Lambda, delta_mHdsq, mHusq_Lambda, delta_mHusq,
     B_Sigmauu = sigmauutot * tanb_sq / (tanb_sq - 1)
     B_muLambdasq = mu_Lambdasq
     B_deltamusq = delta_musq
-    Delta_HS = np.amax(np.array([np.abs(B_Hd), np.abs(B_deltaHd),
-                                 np.abs(B_Hu), np.abs(B_deltaHu),
-                                 np.abs(B_Sigmadd), np.abs(B_Sigmauu),
-                                 np.abs(B_muLambdasq), np.abs(B_deltamusq)]))\
-        / (running_mz_sq / 2)
-    return Delta_HS
+    Delta_HS_contribs = np.sort(np.array([(np.abs(B_Hd) / (running_mz_sq / 2),
+                                           'Delta_HS(mHd^2(GUT))'),
+                                          (np.abs(B_deltaHd)
+                                           / (running_mz_sq / 2),
+                                           'Delta_HS(delta(mHd^2)'),
+                                          (np.abs(B_Hu)/ (running_mz_sq / 2),
+                                           'Delta_HS(mHu^2(GUT))'),
+                                          (np.abs(B_deltaHu)
+                                           / (running_mz_sq / 2),
+                                           'Delta_HS(delta(mHd^2))'),
+                                          (np.abs(B_Sigmadd)
+                                           / (running_mz_sq / 2),
+                                           'Delta_HS(Sigma_d^d)'),
+                                          (np.abs(B_Sigmauu)
+                                           / (running_mz_sq / 2),
+                                           'Delta_HS(Sigma_u^u)'),
+                                          (np.abs(B_muLambdasq)
+                                           / (running_mz_sq / 2),
+                                           'Delta_HS(mu(GUT))'),
+                                          (np.abs(B_deltamusq)
+                                           / (running_mz_sq / 2),
+                                           'Delta_HS(delta(mu))')],
+                                         dtype=[('HSContrib', float),
+                                                ('HSlabel', 'U40')]),
+                                order='HSContrib')
+    return Delta_HS_contribs[::-1]
 
 def Delta_EW_calc(myQ, vHiggs_wk, mu_wk, beta_wk, yt_wk, yc_wk, yu_wk, yb_wk,
                   ys_wk, yd_wk, ytau_wk, ymu_wk, ye_wk, g1_wk, g2_wk, g3_wk,
@@ -10194,7 +24235,7 @@ if __name__ == "__main__":
                      y_dQ_GUT, y_tauQ_GUT, y_muQ_GUT, y_eQ_GUT, a_tQ_GUT,
                      a_cQ_GUT, a_uQ_GUT, a_bQ_GUT, a_sQ_GUT, a_dQ_GUT,
                      a_tauQ_GUT, a_muQ_GUT, a_eQ_GUT, mHusqQ_GUT, mHdsqQ_GUT,
-                     m_uLQ_GUT, mcLQ_GUT, m_tLQ_GUT, m_eLQ_GUT, m_muLQ_GUT,
+                     m_uLQ_GUT, m_cLQ_GUT, m_tLQ_GUT, m_eLQ_GUT, m_muLQ_GUT,
                      m_tauLQ_GUT, m_uRQ_GUT, m_cRQ_GUT, m_tRQ_GUT, m_dRQ_GUT,
                      m_sRQ_GUT, m_bRQ_GUT, m_eRQ_GUT, m_muRQ_GUT, m_tauRQ_GUT,
                      bQ_GUT, tanbQ_GUT]
@@ -10241,29 +24282,25 @@ if __name__ == "__main__":
                                    radcorrs_at_2TeV[0],
                                    radcorrs_at_2TeV[1])
         print('\nYour value for the high-scale naturalness measure, Delta_HS,'
-              + ' is: ' + str(myDelta_HS))
-        # myDelta_BG = Delta_BG_calc(modinp, RGE_sols[51], RGE_sols[71],
-        #                            RGE_sols[70], RGE_sols[48], RGE_sols[49],
-        #                            RGE_sols[50], RGE_sols[74], RGE_sols[73],
-        #                            RGE_sols[72], RGE_sols[80], RGE_sols[79],
-        #                            RGE_sols[78], RGE_sols[83], RGE_sols[82],
-        #                            RGE_sols[81], RGE_sols[77], RGE_sols[76],
-        #                            RGE_sols[75], RGE_sols[86], RGE_sols[85],
-        #                            RGE_sols[84], RGE_sols[61], RGE_sols[62],
-        #                            RGE_sols[63], RGE_sols[64], RGE_sols[65],
-        #                            RGE_sols[66], RGE_sols[67], RGE_sols[68],
-        #                            RGE_sols[69], RGE_sols[70], RGE_sols[52],
-        #                            RGE_sols[53], RGE_sols[54], RGE_sols[55],
-        #                            RGE_sols[56], RGE_sols[57], RGE_sols[58],
-        #                            RGE_sols[59], RGE_sols[60], tree_mzsq)
-        # print('\nYour value for the Barbieri-Giudice naturalness measure,'
-        #       + ' Delta_BG, is: ' + str(myDelta_BG[0][0]))
-        # print('\nThe ordered contributions to Delta_BG are as follows '
-        #       + '(decr. order): ')
-        # print('')
-        # for i in range(0, len(myDelta_BG)):
-        #     print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
-        #           + str(myDelta_BG[i][1]))
+              + ' is: ' + str(myDelta_HS[0][0]))
+        print('\nThe ordered contributions to Delta_HS are as follows '
+              + '(decr. order): ')
+        print('')
+        for i in range(0, len(myDelta_HS)):
+            print(str(i + 1) + ': ' + str(myDelta_HS[i][0]) + ', '
+                  + str(myDelta_HS[i][1]))
+        print('')
+        myDelta_BG = Delta_BG_calc(modinp, tree_mzsq, myQGUT,
+                                   Q_GUT_BCs)
+        print('\nYour value for the Barbieri-Giudice naturalness measure,'
+              + ' Delta_BG, is: ' + str(myDelta_BG[0][0]))
+        print('\nThe ordered contributions to Delta_BG are as follows '
+              + '(decr. order): ')
+        print('')
+        for i in range(0, len(myDelta_BG)):
+            print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
+                  + str(myDelta_BG[i][1]))
+        ##### Save Delta_EW results? #####
         checksavebool = True
         while checksavebool:
             checksave = input("\nWould you like to save these DEW results to a"
@@ -10331,6 +24368,143 @@ if __name__ == "__main__":
             else:
                 print("\nOutput not saved.\n")
                 checksavebool = False
+        ##### Save Delta_HS results? #####
+        checksaveboolHS = True
+        while checksaveboolHS:
+            checksave = input("\nWould you like to save these Delta_HS results"
+                              + "  to a .txt file (will be saved to the"
+                              + " directory " + str(os.getcwd())
+                              + ")? Enter Y to save the result or"
+                              + " N to continue: ")
+            timestr = time.strftime("%Y-%m-%d_%H-%M-%S")
+            if checksave.lower() in ('y', 'yes'):
+                filenamecheck = input('\nThe default file name is '
+                                      + '"current_system_time_DHS_contrib_list'
+                                      + '.txt'
+                                      + '", e.g., '
+                                      + timestr + '_DHS_contrib_list.txt.'
+                                      + ' Would you like to keep this name or'
+                                      + ' input your own file name?'
+                                      +  ' Enter Y to keep the default file'
+                                      + ' name'
+                                      + ' or N to be able to input your own: ')
+                if filenamecheck.lower() in ('y', 'yes'):
+                    print('Given the submitted SLHA file, ' + str(direc) +
+                          ', your value for the high-scale\n'
+                          + 'naturalness measure, Delta_HS, is: '
+                          + str(myDelta_HS[0][0]),
+                          file=open(timestr + "_DHS_contrib_list.txt", "w"))
+                    print('\nThe ordered contributions to Delta_HS are as'
+                          + ' follows (decr. order): ',
+                          file=open(timestr + "_DHS_contrib_list.txt", "a"))
+                    print('', file=open(timestr + "_DHS_contrib_list.txt",
+                                        "a"))
+                    for i in range(0, len(myDelta_HS)):
+                        print(str(i + 1) + ': ' + str(myDelta_HS[i][0]) + ', '
+                              + str(myDelta_HS[i][1]),
+                              file=open(timestr + "_DHS_contrib_list.txt",
+                                        "a"))
+                    print('\nThese results have been saved to the'
+                          + ' directory ' + str(os.getcwd()) + ' as ' + timestr
+                          + '_DHS_contrib_list.txt.\n')
+                    checksaveboolHS = False
+                elif filenamecheck.lower() in ('n', 'no'):
+                    newfilename = input('\nInput your desired filename with no'
+                                        + ' whitespaces and without the .txt'
+                                        + ' file '
+                                        + 'extension (e.g. "my_SLHA_DHS_list"'
+                                        + ' without the quotes): ')
+                    print('Given the submitted SLHA file, ' + str(direc) +
+                          ', your value for the electroweak\n'
+                          + 'naturalness measure, Delta_HS, is: '
+                          + str(myDelta_HS[0][0]),
+                          file=open(newfilename + ".txt", "w"))
+                    print('\nThe ordered contributions to Delta_HS are as'
+                          + ' follows (decr. order): ',
+                          file=open(newfilename + ".txt", "a"))
+                    print('', file=open(newfilename + ".txt", "a"))
+                    for i in range(0, len(myDelta_HS)):
+                        print(str(i + 1) + ': ' + str(myDelta_HS[i][0]) + ', '
+                              + str(myDelta_HS[i][1]),
+                              file=open(newfilename + ".txt", "a"))
+                    print('\nThese results have been saved to the'
+                          + ' directory ' + str(os.getcwd())
+                          + ' as ' + newfilename + '.txt.\n')
+                    checksaveboolHS = False
+                else:
+                    print("Invalid user input")
+            else:
+                print("\nOutput not saved.\n")
+                checksaveboolHS = False
+        ##### Save Delta_BG results? #####
+        checksaveboolBG = True
+        while checksaveboolBG:
+            checksave = input("\nWould you like to save these Delta_BG "
+                              + "results to a .txt file (will be saved to the"
+                              + " directory " + str(os.getcwd())
+                              + ")? Enter Y to save the result or"
+                              + " N to continue: ")
+            timestr = time.strftime("%Y-%m-%d_%H-%M-%S")
+            if checksave.lower() in ('y', 'yes'):
+                filenamecheck = input('\nThe default file name is '
+                                      + '"current_system_time_DBG_contrib_list'
+                                      + '.txt'
+                                      + '", e.g., '
+                                      + timestr + '_DBG_contrib_list.txt.'
+                                      + ' Would you like to keep this name or'
+                                      + ' input your own file name?'
+                                      +  ' Enter Y to keep the default file'
+                                      + ' name'
+                                      + ' or N to be able to input your own: ')
+                if filenamecheck.lower() in ('y', 'yes'):
+                    print('Given the submitted SLHA file, ' + str(direc) +
+                          ', your value for the Barbieri-Giudice\n'
+                          + 'naturalness measure, Delta_BG, is: '
+                          + str(myDelta_BG[0][0]),
+                          file=open(timestr + "_DBG_contrib_list.txt", "w"))
+                    print('\nThe ordered contributions to Delta_BG are as'
+                          + ' follows (decr. order): ',
+                          file=open(timestr + "_DBG_contrib_list.txt", "a"))
+                    print('', file=open(timestr + "_DBG_contrib_list.txt",
+                                        "a"))
+                    for i in range(0, len(myDelta_BG)):
+                        print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
+                              + str(myDelta_BG[i][1]),
+                              file=open(timestr + "_DBG_contrib_list.txt",
+                                        "a"))
+                    print('\nThese results have been saved to the'
+                          + ' directory ' + str(os.getcwd()) + ' as ' + timestr
+                          + '_DBG_contrib_list.txt.\n')
+                    checksaveboolBG = False
+                elif filenamecheck.lower() in ('n', 'no'):
+                    newfilename = input('\nInput your desired filename with no'
+                                        + ' whitespaces and without the .txt'
+                                        + ' file '
+                                        + 'extension (e.g. "my_SLHA_DBG_list"'
+                                        + ' without the quotes): ')
+                    print('Given the submitted SLHA file, ' + str(direc) +
+                          ', your value for the Barbieri-Giudice\n'
+                          + 'naturalness measure, Delta_BG, is: '
+                          + str(myDelta_BG[0][0]),
+                          file=open(newfilename + ".txt", "w"))
+                    print('\nThe ordered contributions to Delta_BG are as'
+                          + ' follows (decr. order): ',
+                          file=open(newfilename + ".txt", "a"))
+                    print('', file=open(newfilename + ".txt", "a"))
+                    for i in range(0, len(myDelta_BG)):
+                        print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
+                              + str(myDelta_BG[i][1]),
+                              file=open(newfilename + ".txt", "a"))
+                    print('\nThese results have been saved to the'
+                          + ' directory ' + str(os.getcwd())
+                          + ' as ' + newfilename + '.txt.\n')
+                    checksaveboolBG = False
+                else:
+                    print("Invalid user input")
+            else:
+                print("\nOutput not saved.\n")
+                checksaveboolBG = False
+        ##### Try again? #####
         checkcontinue = input("Would you like to try again with a new SLHA "
                               + "file? Enter Y to try again or N to stop: ")
         if checkcontinue.lower() in ('y', 'yes'):
@@ -10338,6 +24512,7 @@ if __name__ == "__main__":
             print('')
         elif checkcontinue.lower() in ('n', 'no'):
             userContinue = False
+            print('Thank you for using DEW4SLHA.')
         else:
             userContinue = True
             print("\nInvalid user input. Returning to SLHA directory input.\n")
