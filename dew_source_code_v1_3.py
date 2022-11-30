@@ -23540,12 +23540,12 @@ def Delta_HS_calc(mHdsq_Lambda, delta_mHdsq, mHusq_Lambda, delta_mHusq,
                                            'Delta_HS(mHd^2(GUT))'),
                                           (np.abs(B_deltaHd)
                                            / (running_mz_sq / 2),
-                                           'Delta_HS(delta(mHd^2)'),
+                                           'Delta_HS(delta(mHd^2))'),
                                           (np.abs(B_Hu)/ (running_mz_sq / 2),
                                            'Delta_HS(mHu^2(GUT))'),
                                           (np.abs(B_deltaHu)
                                            / (running_mz_sq / 2),
-                                           'Delta_HS(delta(mHd^2))'),
+                                           'Delta_HS(delta(mHu^2))'),
                                           (np.abs(B_Sigmadd)
                                            / (running_mz_sq / 2),
                                            'Delta_HS(Sigma_d^d)'),

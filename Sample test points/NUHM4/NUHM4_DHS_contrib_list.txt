@@ -9,5 +9,5 @@ The ordered contributions to Delta_HS are as follows (decr. order):
 4: 10.884443856097086, Delta_HS(mHd^2(GUT))
 5: 9.317926576929038, Delta_HS(mu(GUT))
 6: 0.766134658422565, Delta_HS(delta(mu))
-7: 0.40681175169754746, Delta_HS(delta(mHd^2)
+7: 0.40681175169754746, Delta_HS(delta(mHu^2))
 8: 0.026640008601459667, Delta_HS(Sigma_d^d)
