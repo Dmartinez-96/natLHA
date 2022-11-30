@@ -9154,6 +9154,7 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
 
     if (modselno == 1):
         print("Computing sensitivity coefficient derivatives...")
+        print("NOTE: this computation can take a while")
         mym0 = inputGUT_BCs[27]
         hm0 = 1e-6
         mymhf = inputGUT_BCs[3]
@@ -10321,6 +10322,7 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
         #print(sens_params)
     elif (modselno == 2):
         print("Computing sensitivity coefficient derivatives...")
+        print("NOTE: this computation can take a while")
         mym0 = inputGUT_BCs[27]
         hm0 = 1e-6
         mymhf = inputGUT_BCs[3]
@@ -11727,6 +11729,7 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
                               order='BGContrib')
     elif (modselno == 3):
         print("Computing sensitivity coefficient derivatives...")
+        print("NOTE: this computation can take a while")
         mym0 = inputGUT_BCs[27]
         hm0 = 1e-6
         mymhf = inputGUT_BCs[3]
@@ -13368,6 +13371,7 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
                               order='BGContrib')
     elif (modselno == 4):
         print("Computing sensitivity coefficient derivatives...")
+        print("NOTE: this computation can take a while")
         mym012 = inputGUT_BCs[27]
         mym03 = inputGUT_BCs[29]
         hm0 = 1e-6
@@ -15238,6 +15242,7 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
                               order='BGContrib')
     elif (modselno == 5):
         print("Computing sensitivity coefficient derivatives...")
+        print("NOTE: this computation can take a while")
         mym01 = inputGUT_BCs[27]
         mym02 = inputGUT_BCs[28]
         mym03 = inputGUT_BCs[29]
@@ -17338,6 +17343,7 @@ def Delta_BG_calc(modselno, mymzsq, GUT_SCALE, inputGUT_BCs):
                               order='BGContrib')
     elif (modselno == 6):
         print("Computing sensitivity coefficient derivatives...")
+        print("NOTE: this computation can take a while")
         mymqL1 = inputGUT_BCs[27]
         mymqL2 = inputGUT_BCs[28]
         mymqL3 = inputGUT_BCs[29]
@@ -23773,139 +23779,139 @@ def Delta_EW_calc(myQ, vHiggs_wk, mu_wk, beta_wk, yt_wk, yc_wk, yu_wk, yb_wk,
                         ) / (running_mZ_sq / 2)
     #print(contribs)
     label_sort_array = np.sort(np.array([(contribs[0], np.abs(contribs[0]),
-                                          'mu'),
+                                          'Delta_EW(mu)'),
                                          (contribs[1], np.abs(contribs[1]),
-                                          'H_u'),
+                                          'Delta_EW(H_u)'),
                                          (contribs[2], np.abs(contribs[2]),
-                                          'H_d'),
+                                          'Delta_EW(H_d)'),
                                          (contribs[3], np.abs(contribs[3]),
-                                          'Sigma_u^u(stop_1)'),
+                                          'Delta_EW(Sigma_u^u(stop_1))'),
                                          (contribs[4], np.abs(contribs[4]),
-                                          'Sigma_d^d(stop_1)'),
+                                          'Delta_EW(Sigma_d^d(stop_1))'),
                                          (contribs[5], np.abs(contribs[5]),
-                                          'Sigma_u^u(stop_2)'),
+                                          'Delta_EW(Sigma_u^u(stop_2))'),
                                          (contribs[6], np.abs(contribs[6]),
-                                          'Sigma_d^d(stop_2)'),
+                                          'Delta_EW(Sigma_d^d(stop_2))'),
                                          (contribs[7], np.abs(contribs[7]),
-                                          'Sigma_u^u(sbot_1)'),
+                                          'Delta_EW(Sigma_u^u(sbot_1))'),
                                          (contribs[8], np.abs(contribs[8]),
-                                          'Sigma_d^d(sbot_1)'),
+                                          'Delta_EW(Sigma_d^d(sbot_1))'),
                                          (contribs[9], np.abs(contribs[9]),
-                                          'Sigma_u^u(sbot_2)'),
+                                          'Delta_EW(Sigma_u^u(sbot_2))'),
                                          (contribs[10], np.abs(contribs[10]),
-                                          'Sigma_d^d(sbot_2)'),
+                                          'Delta_EW(Sigma_d^d(sbot_2))'),
                                          (contribs[11], np.abs(contribs[11]),
-                                          'Sigma_u^u(stau_1)'),
+                                          'Delta_EW(Sigma_u^u(stau_1))'),
                                          (contribs[12], np.abs(contribs[12]),
-                                          'Sigma_d^d(stau_1)'),
+                                          'Delta_EW(Sigma_d^d(stau_1))'),
                                          (contribs[13], np.abs(contribs[13]),
-                                          'Sigma_u^u(stau_2)'),
+                                          'Delta_EW(Sigma_u^u(stau_2))'),
                                          (contribs[14], np.abs(contribs[14]),
-                                          'Sigma_d^d(stau_2)'),
+                                          'Delta_EW(Sigma_d^d(stau_2))'),
                                          (contribs[15], np.abs(contribs[15]),
-                                          'Sigma_u^u(stau sneutrino)'),
+                                          'Delta_EW(Sigma_u^u(stau sneutrino))'),
                                          (contribs[16], np.abs(contribs[16]),
-                                          'Sigma_d^d(stau sneutrino)'),
+                                          'Delta_EW(Sigma_d^d(stau sneutrino))'),
                                          (contribs[17] + contribs[19]
                                           + contribs[21] + contribs[23],
                                           np.abs(contribs[17] + contribs[19]
                                                  + contribs[21]
                                                  + contribs[23]),
-                                          'Sigma_u^u(sum 2nd gen. squarks)'),
+                                          'Delta_EW(Sigma_u^u(sum 2nd gen. squarks))'),
                                          (contribs[18] + contribs[20]
                                           + contribs[22] + contribs[24],
                                           np.abs(contribs[18] + contribs[20]
                                                  + contribs[22]
                                                  + contribs[24]),
-                                          'Sigma_d^d(sum 2nd gen. squarks)'),
+                                          'Delta_EW(Sigma_d^d(sum 2nd gen. squarks))'),
                                          (contribs[25], np.abs(contribs[25]),
-                                          'Sigma_u^u(smuon_1)'),
+                                          'Delta_EW(Sigma_u^u(smuon_1))'),
                                          (contribs[26], np.abs(contribs[26]),
-                                          'Sigma_d^d(smuon_1)'),
+                                          'Delta_EW(Sigma_d^d(smuon_1))'),
                                          (contribs[27], np.abs(contribs[27]),
-                                          'Sigma_u^u(smuon_2)'),
+                                          'Delta_EW(Sigma_u^u(smuon_2))'),
                                          (contribs[28], np.abs(contribs[28]),
-                                          'Sigma_d^d(smuon_2)'),
+                                          'Delta_EW(Sigma_d^d(smuon_2))'),
                                          (contribs[29], np.abs(contribs[29]),
-                                          'Sigma_u^u(smuon sneutrino)'),
+                                          'Delta_EW(Sigma_u^u(smuon sneutrino))'),
                                          (contribs[30], np.abs(contribs[30]),
-                                          'Sigma_d^d(smuon sneutrino)'),
+                                          'Delta_EW(Sigma_d^d(smuon sneutrino))'),
                                          (contribs[31] + contribs[33]
                                           + contribs[35] + contribs[37],
                                           np.abs(contribs[31] + contribs[33]
                                                  + contribs[35]
                                                  + contribs[37]),
-                                          'Sigma_u^u(sum 1st gen. squarks)'),
+                                          'Delta_EW(Sigma_u^u(sum 1st gen. squarks))'),
                                          (contribs[32] + contribs[34]
                                           + contribs[36] + contribs[38],
                                           np.abs(contribs[32] + contribs[34]
                                                  + contribs[36]
                                                  + contribs[38]),
-                                          'Sigma_d^d(sum 1st gen. squarks)'),
+                                          'Delta_EW(Sigma_d^d(sum 1st gen. squarks))'),
                                          (contribs[39], np.abs(contribs[39]),
-                                          'Sigma_u^u(selectron_1)'),
+                                          'Delta_EW(Sigma_u^u(selectron_1))'),
                                          (contribs[40], np.abs(contribs[40]),
-                                          'Sigma_d^d(selectron_1)'),
+                                          'Delta_EW(Sigma_d^d(selectron_1))'),
                                          (contribs[41], np.abs(contribs[41]),
-                                          'Sigma_u^u(selectron_2)'),
+                                          'Delta_EW(Sigma_u^u(selectron_2))'),
                                          (contribs[42], np.abs(contribs[42]),
-                                          'Sigma_d^d(selectron_2)'),
+                                          'Delta_EW(Sigma_d^d(selectron_2))'),
                                          (contribs[43], np.abs(contribs[43]),
-                                          'Sigma_u^u(selectron sneutrino)'),
+                                          'Delta_EW(Sigma_u^u(selectron sneutrino))'),
                                          (contribs[44], np.abs(contribs[44]),
-                                          'Sigma_d^d(selectron sneutrino)'),
+                                          'Delta_EW(Sigma_d^d(selectron sneutrino))'),
                                          (contribs[45], np.abs(contribs[45]),
-                                          'Sigma_u^u(neutralino_1)'),
+                                          'Delta_EW(Sigma_u^u(neutralino_1))'),
                                          (contribs[46], np.abs(contribs[46]),
-                                          'Sigma_d^d(neutralino_1)'),
+                                          'Delta_EW(Sigma_d^d(neutralino_1))'),
                                          (contribs[47], np.abs(contribs[47]),
-                                          'Sigma_u^u(neutralino_2)'),
+                                          'Delta_EW(Sigma_u^u(neutralino_2))'),
                                          (contribs[48], np.abs(contribs[48]),
-                                          'Sigma_d^d(neutralino_2)'),
+                                          'Delta_EW(Sigma_d^d(neutralino_2))'),
                                          (contribs[49], np.abs(contribs[49]),
-                                          'Sigma_u^u(neutralino_3)'),
+                                          'Delta_EW(Sigma_u^u(neutralino_3))'),
                                          (contribs[50], np.abs(contribs[50]),
-                                          'Sigma_d^d(neutralino_3)'),
+                                          'Delta_EW(Sigma_d^d(neutralino_3))'),
                                          (contribs[51], np.abs(contribs[51]),
-                                          'Sigma_u^u(neutralino_4)'),
+                                          'Delta_EW(Sigma_u^u(neutralino_4))'),
                                          (contribs[52], np.abs(contribs[52]),
-                                          'Sigma_d^d(neutralino_4)'),
+                                          'Delta_EW(Sigma_d^d(neutralino_4))'),
                                          (contribs[53], np.abs(contribs[53]),
-                                          'Sigma_u^u(chargino_1)'),
+                                          'Delta_EW(Sigma_u^u(chargino_1))'),
                                          (contribs[54], np.abs(contribs[54]),
-                                          'Sigma_d^d(chargino_1)'),
+                                          'Delta_EW(Sigma_d^d(chargino_1))'),
                                          (contribs[55], np.abs(contribs[55]),
-                                          'Sigma_u^u(chargino_2)'),
+                                          'Delta_EW(Sigma_u^u(chargino_2))'),
                                          (contribs[56], np.abs(contribs[56]),
-                                          'Sigma_d^d(chargino_2)'),
+                                          'Delta_EW(Sigma_d^d(chargino_2))'),
                                          (contribs[57], np.abs(contribs[57]),
-                                          'Sigma_u^u(h_0)'),
+                                          'Delta_EW(Sigma_u^u(h_0))'),
                                          (contribs[58], np.abs(contribs[58]),
-                                          'Sigma_d^d(h_0)'),
+                                          'Delta_EW(Sigma_d^d(h_0))'),
                                          (contribs[59], np.abs(contribs[59]),
-                                          'Sigma_u^u(H_0)'),
+                                          'Delta_EW(Sigma_u^u(H_0))'),
                                          (contribs[60], np.abs(contribs[60]),
-                                          'Sigma_d^d(H_0)'),
+                                          'Delta_EW(Sigma_d^d(H_0))'),
                                          (contribs[61], np.abs(contribs[61]),
-                                          'Sigma_u^u(H_+-)'),
+                                          'Delta_EW(Sigma_u^u(H_+-))'),
                                          (contribs[62], np.abs(contribs[62]),
-                                          'Sigma_d^d(H_+-)'),
+                                          'Delta_EW(Sigma_d^d(H_+-))'),
                                          (contribs[63], np.abs(contribs[63]),
-                                          'Sigma_u^u(W_+-)'),
+                                          'Delta_EW(Sigma_u^u(W_+-))'),
                                          (contribs[64], np.abs(contribs[64]),
-                                          'Sigma_d^d(W_+-)'),
+                                          'Delta_EW(Sigma_d^d(W_+-))'),
                                          (contribs[65], np.abs(contribs[65]),
-                                          'Sigma_u^u(Z_0)'),
+                                          'Delta_EW(Sigma_u^u(Z_0))'),
                                          (contribs[66], np.abs(contribs[66]),
-                                          'Sigma_d^d(Z_0)'),
+                                          'Delta_EW(Sigma_d^d(Z_0))'),
                                          (contribs[67], np.abs(contribs[67]),
-                                          'Sigma_u^u(SM fermions)'),
+                                          'Delta_EW(Sigma_u^u(SM fermions))'),
                                          (contribs[68], np.abs(contribs[68]),
-                                          'Sigma_d^d(SM fermions)'),
+                                          'Delta_EW(Sigma_d^d(SM fermions))'),
                                          (contribs[69], np.abs(contribs[69]),
-                                          'Sigma_u^u(O(alpha_s alpha_t))'),
+                                          'Delta_EW(Sigma_u^u(O(alpha_s alpha_t)))'),
                                          (contribs[70], np.abs(contribs[70]),
-                                          'Sigma_d^d(O(alpha_s alpha_t))')],
+                                          'Delta_EW(Sigma_d^d(O(alpha_s alpha_t)))')],
                                         dtype=[('Contrib', float),
                                                ('AbsContrib', float),
                                                ('label', 'U40')]),
@@ -23946,6 +23952,8 @@ if __name__ == "__main__":
         print("to model. For this reason, prior to entering the directory of")
         print("your SLHA file, please enter the model number below")
         print("corresponding to your SLHA file.")
+        print("NOTE: this computation can take a while, especially"
+              + " for the pMSSM-30.")
         print("")
         print("Model numbers: ")
         print("1: CMSSM/mSUGRA")
@@ -24331,19 +24339,24 @@ if __name__ == "__main__":
                           ', your value for the electroweak\n'
                           + 'naturalness measure, Delta_EW, is: '
                           + str(dewlist[0][1]),
-                          file=open(timestr + "_DEW_contrib_list.txt", "w"))
+                          file=open("DEW4SLHAoutput/"
+                                    + timestr + "_DEW_contrib_list.txt", "w"))
                     print('\nThe ordered contributions to Delta_EW are as'
                           + ' follows (decr. order): ',
-                          file=open(timestr + "_DEW_contrib_list.txt", "a"))
-                    print('', file=open(timestr + "_DEW_contrib_list.txt",
+                          file=open("DEW4SLHAoutput/"
+                                    + timestr + "_DEW_contrib_list.txt", "a"))
+                    print('', file=open("DEW4SLHAoutput/"
+                                        + timestr + "_DEW_contrib_list.txt",
                                         "a"))
                     for i in range(0, len(dewlist)):
                         print(str(i + 1) + ': ' + str(dewlist[i][0]) + ', '
                               + str(dewlist[i][2]),
-                              file=open(timestr + "_DEW_contrib_list.txt",
+                              file=open("DEW4SLHAoutput/"
+                                        + timestr + "_DEW_contrib_list.txt",
                                         "a"))
                     print('\nThese results have been saved to the'
-                          + ' directory ' + str(os.getcwd()) + ' as ' + timestr
+                          + ' directory ' + str(os.getcwd())
+                          + '/DEW4SLHAoutput as ' + timestr
                           + '_DEW_contrib_list.txt.\n')
                     checksavebool = False
                 elif filenamecheck.lower() in ('n', 'no'):
@@ -24356,18 +24369,22 @@ if __name__ == "__main__":
                           ', your value for the electroweak\n'
                           + 'naturalness measure, Delta_EW, is: '
                           + str(dewlist[0][1]),
-                          file=open(newfilename + ".txt", "w"))
+                          file=open("DEW4SLHAoutput/"
+                                    + newfilename + ".txt", "w"))
                     print('\nThe ordered contributions to Delta_EW are as'
                           + ' follows (decr. order): ',
-                          file=open(newfilename + ".txt", "a"))
-                    print('', file=open(newfilename + ".txt", "a"))
+                          file=open("DEW4SLHAoutput/"
+                                    + newfilename + ".txt", "a"))
+                    print('', file=open("DEW4SLHAoutput/"
+                                        + newfilename + ".txt", "a"))
                     for i in range(0, len(dewlist)):
                         print(str(i + 1) + ': ' + str(dewlist[i][0]) + ', '
                               + str(dewlist[i][2]),
-                              file=open(newfilename + ".txt", "a"))
+                              file=open("DEW4SLHAoutput/"
+                                        + newfilename + ".txt", "a"))
                     print('\nThese results have been saved to the'
                           + ' directory ' + str(os.getcwd())
-                          + ' as ' + newfilename + '.txt.\n')
+                          + '/DEW4SLHAoutput as ' + newfilename + '.txt.\n')
                     checksavebool = False
                 else:
                     print("Invalid user input")
@@ -24399,19 +24416,24 @@ if __name__ == "__main__":
                           ', your value for the high-scale\n'
                           + 'naturalness measure, Delta_HS, is: '
                           + str(myDelta_HS[0][0]),
-                          file=open(timestr + "_DHS_contrib_list.txt", "w"))
+                          file=open("DEW4SLHAoutput/"
+                                    + timestr + "_DHS_contrib_list.txt", "w"))
                     print('\nThe ordered contributions to Delta_HS are as'
                           + ' follows (decr. order): ',
-                          file=open(timestr + "_DHS_contrib_list.txt", "a"))
-                    print('', file=open(timestr + "_DHS_contrib_list.txt",
+                          file=open("DEW4SLHAoutput/"
+                                    + timestr + "_DHS_contrib_list.txt", "a"))
+                    print('', file=open("DEW4SLHAoutput/"
+                                        + timestr + "_DHS_contrib_list.txt",
                                         "a"))
                     for i in range(0, len(myDelta_HS)):
                         print(str(i + 1) + ': ' + str(myDelta_HS[i][0]) + ', '
                               + str(myDelta_HS[i][1]),
-                              file=open(timestr + "_DHS_contrib_list.txt",
+                              file=open("DEW4SLHAoutput/"
+                                        + timestr + "_DHS_contrib_list.txt",
                                         "a"))
                     print('\nThese results have been saved to the'
-                          + ' directory ' + str(os.getcwd()) + ' as ' + timestr
+                          + ' directory ' + str(os.getcwd())
+                          + '/DEW4SLHAoutput as ' + timestr
                           + '_DHS_contrib_list.txt.\n')
                     checksaveboolHS = False
                 elif filenamecheck.lower() in ('n', 'no'):
@@ -24424,18 +24446,22 @@ if __name__ == "__main__":
                           ', your value for the high-scale\n'
                           + 'naturalness measure, Delta_HS, is: '
                           + str(myDelta_HS[0][0]),
-                          file=open(newfilename + ".txt", "w"))
+                          file=open("DEW4SLHAoutput/"
+                                    + newfilename + ".txt", "w"))
                     print('\nThe ordered contributions to Delta_HS are as'
                           + ' follows (decr. order): ',
-                          file=open(newfilename + ".txt", "a"))
-                    print('', file=open(newfilename + ".txt", "a"))
+                          file=open("DEW4SLHAoutput/"
+                                    + newfilename + ".txt", "a"))
+                    print('', file=open("DEW4SLHAoutput/"
+                                        + newfilename + ".txt", "a"))
                     for i in range(0, len(myDelta_HS)):
                         print(str(i + 1) + ': ' + str(myDelta_HS[i][0]) + ', '
                               + str(myDelta_HS[i][1]),
-                              file=open(newfilename + ".txt", "a"))
+                              file=open("DEW4SLHAoutput/"
+                                        + newfilename + ".txt", "a"))
                     print('\nThese results have been saved to the'
                           + ' directory ' + str(os.getcwd())
-                          + ' as ' + newfilename + '.txt.\n')
+                          + '/DEW4SLHAoutput as ' + newfilename + '.txt.\n')
                     checksaveboolHS = False
                 else:
                     print("Invalid user input")
@@ -24467,19 +24493,24 @@ if __name__ == "__main__":
                           ', your value for the Barbieri-Giudice\n'
                           + 'naturalness measure, Delta_BG, is: '
                           + str(myDelta_BG[0][0]),
-                          file=open(timestr + "_DBG_contrib_list.txt", "w"))
+                          file=open("DEW4SLHAoutput/"
+                                    + timestr + "_DBG_contrib_list.txt", "w"))
                     print('\nThe ordered contributions to Delta_BG are as'
                           + ' follows (decr. order): ',
-                          file=open(timestr + "_DBG_contrib_list.txt", "a"))
-                    print('', file=open(timestr + "_DBG_contrib_list.txt",
+                          file=open("DEW4SLHAoutput/"
+                                    + timestr + "_DBG_contrib_list.txt", "a"))
+                    print('', file=open("DEW4SLHAoutput/"
+                                        + timestr + "_DBG_contrib_list.txt",
                                         "a"))
                     for i in range(0, len(myDelta_BG)):
                         print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
                               + str(myDelta_BG[i][1]),
-                              file=open(timestr + "_DBG_contrib_list.txt",
+                              file=open("DEW4SLHAoutput/"
+                                        + timestr + "_DBG_contrib_list.txt",
                                         "a"))
                     print('\nThese results have been saved to the'
-                          + ' directory ' + str(os.getcwd()) + ' as ' + timestr
+                          + ' directory ' + str(os.getcwd())
+                          + '/DEW4SLHAoutput as ' + timestr
                           + '_DBG_contrib_list.txt.\n')
                     checksaveboolBG = False
                 elif filenamecheck.lower() in ('n', 'no'):
@@ -24492,18 +24523,22 @@ if __name__ == "__main__":
                           ', your value for the Barbieri-Giudice\n'
                           + 'naturalness measure, Delta_BG, is: '
                           + str(myDelta_BG[0][0]),
-                          file=open(newfilename + ".txt", "w"))
+                          file=open("DEW4SLHAoutput/"
+                                    + newfilename + ".txt", "w"))
                     print('\nThe ordered contributions to Delta_BG are as'
                           + ' follows (decr. order): ',
-                          file=open(newfilename + ".txt", "a"))
-                    print('', file=open(newfilename + ".txt", "a"))
+                          file=open("DEW4SLHAoutput/"
+                                    + newfilename + ".txt", "a"))
+                    print('', file=open("DEW4SLHAoutput/"
+                                        + newfilename + ".txt", "a"))
                     for i in range(0, len(myDelta_BG)):
                         print(str(i + 1) + ': ' + str(myDelta_BG[i][0]) + ', '
                               + str(myDelta_BG[i][1]),
-                              file=open(newfilename + ".txt", "a"))
+                              file=open("DEW4SLHAoutput/"
+                                        + newfilename + ".txt", "a"))
                     print('\nThese results have been saved to the'
                           + ' directory ' + str(os.getcwd())
-                          + ' as ' + newfilename + '.txt.\n')
+                          + '/DEW4SLHAoutput as ' + newfilename + '.txt.\n')
                     checksaveboolBG = False
                 else:
                     print("Invalid user input")
