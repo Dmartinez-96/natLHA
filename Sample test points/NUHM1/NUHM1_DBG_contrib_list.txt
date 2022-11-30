@@ -1,0 +1,10 @@
+Given the submitted SLHA file, your value for the Barbieri-Giudice
+naturalness measure, Delta_BG, is: 217.34525791753154
+
+The ordered contributions to Delta_BG are as follows (decr. order): 
+
+1: 217.34525791753154, Delta_BG(mu)
+2: 124.73567637938858, Delta_BG(m_0)
+3: 70.96077787400598, Delta_BG(A_0)
+4: 23.603738260068322, Delta_BG(m_1/2)
+5: 4.074605210154052, Delta_BG(mHu,d^2)
