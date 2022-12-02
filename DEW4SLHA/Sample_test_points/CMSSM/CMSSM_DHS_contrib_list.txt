@@ -1,0 +1,13 @@
+Given the submitted SLHA file, your value for the high-scale
+naturalness measure, Delta_HS, is: 9523.69900834734
+
+The ordered contributions to Delta_HS are as follows (decr. order): 
+
+1: 9523.69900834734, Delta_HS(delta(mHu^2))
+2: 6885.143617973933, Delta_HS(mHu^2(GUT))
+3: 2405.9331866244293, Delta_HS(mu(GUT))
+4: 388.3693941463389, Delta_HS(delta(mu))
+5: 124.24947291374279, Delta_HS(Sigma_u^u)
+6: 71.10603763444911, Delta_HS(mHd^2(GUT))
+7: 4.85476417523574, Delta_HS(delta(mHd^2))
+8: 0.22443453936950267, Delta_HS(Sigma_d^d)

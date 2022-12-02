@@ -1,0 +1,385 @@
+# SOFTSUSY4.1.12 SLHA compliant output
+# B.C. Allanach, Comput. Phys. Commun. 143 (2002) 305-331, hep-ph/0104145
+Block SPINFO          # Program information
+     1    SOFTSUSY    # spectrum calculator
+     2    4.1.12       # version number
+Block MODSEL  # Select model
+     1    0   # nonUniversal
+     6    1   # flavour violating MSSM
+Block SMINPUTS             # Standard Model inputs
+     1    1.27944000e+02   # alpha_em^(-1)(MZ) SM MSbar
+     2    1.16637870e-05   # G_Fermi
+     3    1.18400000e-01   # alpha_s(MZ)MSbar
+     4    9.11876000e+01   # MZ(pole)
+     5    4.18000000e+00   # mb(mb)
+     6    1.73200000e+02   # Mtop(pole)
+     7    1.77700000e+00   # Mtau(pole)
+    21    4.75000000e-03   # Mdown(2 GeV) MSbar
+    22    2.40000000e-03   # Mup(2 GeV) MSbar
+    23    1.04000000e-01   # Mstrange(2 GeV) MSbar
+    24    1.27000000e+00   # Mcharm(Mcharm) MSbar
+    11    5.10998902e-04   # Me(pole)
+    13    1.05658357e-01   # Mmu(pole)
+Block VCKMIN               # input CKM mixing matrix parameters
+     1    0.00000000e+00   # lambda_W
+     2    0.00000000e+00   # A
+     3    0.00000000e+00   # rhobar
+     4    0.00000000e+00   # etabar (no phases used in SOFTSUSY yet though)
+Block MINPAR               # SUSY breaking input parameters
+     3    1.00000000e+01   # tanb
+Block EXTPAR               # non-universal SUSY breaking parameters
+     0     1.71058979e+16  # MX scale
+     1    1.00000000e+03   # M_1(MX)
+     2    1.00000000e+03   # M_2(MX)
+     3    1.00000000e+03   # M_3(MX)
+     23    2.00000000e+02  # mu(MX)
+     26    2.00000000e+03  # mA(pole)
+Block MSQ2IN               # GUT-scale input for DRbar mass^2 parameter
+   1 1    2.02500000e+07   # input (mhat_Q^2)_{1,1} in SCKM basis
+   1 2    0.00000000e+00   # input (mhat_Q^2)_{1,2} in SCKM basis
+   1 3    0.00000000e+00   # input (mhat_Q^2)_{1,3} in SCKM basis
+   2 2    2.02500000e+07   # input (mhat_Q^2)_{2,2} in SCKM basis
+   2 3    0.00000000e+00   # input (mhat_Q^2)_{2,3} in SCKM basis
+   3 3    2.50000000e+07   # input (mhat_Q^2)_{3,3} in SCKM basis
+Block MSU2IN               # GUT-scale input for DRbar mass^2 parameter
+   1 1    2.02500000e+07   # input (mhat_u^2)_{1,1} in SCKM basis
+   1 2    0.00000000e+00   # input (mhat_u^2)_{1,2} in SCKM basis
+   1 3    0.00000000e+00   # input (mhat_u^2)_{1,3} in SCKM basis
+   2 2    2.02500000e+07   # input (mhat_u^2)_{2,2} in SCKM basis
+   2 3    0.00000000e+00   # input (mhat_u^2)_{2,3} in SCKM basis
+   3 3    2.50000000e+07   # input (mhat_u^2)_{3,3} in SCKM basis
+Block MSD2IN               # GUT-scale input for DRbar mass^2 parameter
+   1 1    2.02500000e+07   # input (mhat_d^2)_{1,1} in SCKM basis
+   1 2    0.00000000e+00   # input (mhat_d^2)_{1,2} in SCKM basis
+   1 3    0.00000000e+00   # input (mhat_d^2)_{1,3} in SCKM basis
+   2 2    2.02500000e+07   # input (mhat_d^2)_{2,2} in SCKM basis
+   2 3    0.00000000e+00   # input (mhat_d^2)_{2,3} in SCKM basis
+   3 3    2.50000000e+07   # input (mhat_d^2)_{3,3} in SCKM basis
+Block MSL2IN               # GUT-scale input for DRbar mass^2 parameter
+   1 1    2.02500000e+07   # input (mhat_L^2)_{1,1} in SCKM basis
+   1 2    0.00000000e+00   # input (mhat_L^2)_{1,2} in SCKM basis
+   1 3    0.00000000e+00   # input (mhat_L^2)_{1,3} in SCKM basis
+   2 2    2.02500000e+07   # input (mhat_L^2)_{2,2} in SCKM basis
+   2 3    0.00000000e+00   # input (mhat_L^2)_{2,3} in SCKM basis
+   3 3    2.50000000e+07   # input (mhat_L^2)_{3,3} in SCKM basis
+Block MSE2IN               # GUT-scale input for DRbar mass^2 parameter
+   1 1    2.02500000e+07   # input (mhat_L^2)_{1,1} in SCKM basis
+   1 2    0.00000000e+00   # input (mhat_L^2)_{1,2} in SCKM basis
+   1 3    0.00000000e+00   # input (mhat_L^2)_{1,3} in SCKM basis
+   2 2    2.02500000e+07   # input (mhat_L^2)_{2,2} in SCKM basis
+   2 3    0.00000000e+00   # input (mhat_L^2)_{2,3} in SCKM basis
+   3 3    2.50000000e+07   # input (mhat_L^2)_{3,3} in SCKM basis
+# CAUTION: a universal A0=-8.00000000e+03 was set in addition.
+# SOFTSUSY-specific non SLHA information:
+# mixing=0 Desired accuracy=1.00000000e-04 Achieved accuracy=3.41191751e-05
+# 3-loop RGE corrections are on. 2-loop Yukawa/g3 thresholds are on
+# 2-loop O(a_s^2) threshold corrections to mt are on
+# 2-loop O(a_s^2) threshold corrections mb are on
+# 2-loop O(a_s y^2) and O(y^4) threshold corrections to mb are on
+# 2-loop O(y^4) threshold corrections to mtau are on
+# 2-loop O(a_s^2) and O(a_s y^2) threshold corrections to a_s are on
+# 2-loop SUSY QCD computation of squark/gluino pole masses are on.
+# Expansion around gluino and squark pole masses.
+# Matching scale=1.73200000e+02
+Block MASS                      # Mass spectrum
+# PDG code     mass             particle
+        24     8.03462299e+01   # MW
+        25     1.26617253e+02   # h0
+        35     2.00008501e+03   # H0
+        36     1.99999976e+03   # A0
+        37     2.00182451e+03   # H+
+   1000021     2.39120104e+03   # ~g
+   1000022     1.94917715e+02   # ~neutralino(1)
+   1000023    -2.09097021e+02   # ~neutralino(2)
+   1000024     2.02322574e+02   # ~chargino(1)
+   1000025     4.48467123e+02   # ~neutralino(3)
+   1000035     8.61757956e+02   # ~neutralino(4)
+   1000037     8.61908982e+02   # ~chargino(2)
+   1000011     4.30765021e+03   # ~e_1
+   1000013     4.30789598e+03   # ~e_2
+   1000015     4.63072339e+03   # ~e_3
+   2000011     4.63083736e+03   # ~e_4
+   2000013     4.75814371e+03   # ~e_5
+   2000015     5.08017378e+03   # ~e_6
+   1000012     4.62972645e+03   # ~nu_1
+   1000014     4.62984048e+03   # ~nu_2
+   1000016     5.08588392e+03   # ~nu_3
+   1000001     3.82154908e+03   # ~d_1
+   1000003     4.74894512e+03   # ~d_2
+   1000005     4.74898318e+03   # ~d_3
+   2000001     4.80455469e+03   # ~d_4
+   2000003     4.80459584e+03   # ~d_5
+   2000005     5.16224299e+03   # ~d_6
+   1000002     1.85843977e+03   # ~u_1
+   1000004     3.82902805e+03   # ~u_2
+   1000006     4.80387451e+03   # ~u_3
+   2000002     4.80391567e+03   # ~u_4
+   2000004     4.93696887e+03   # ~u_5
+   2000006     4.93701281e+03   # ~u_6
+Block alpha                     # Effective Higgs mixing parameter
+          -1.03879621e-01       # alpha - evaluated at p^2=0
+Block nmix                  # neutralino mixing matrix Q=2.60056566e+03
+  1  1     1.31076339e-01   # N_{1,1}
+  1  2    -9.43603634e-02   # N_{1,2}
+  1  3     7.12595611e-01   # N_{1,3}
+  1  4    -6.82731727e-01   # N_{1,4}
+  2  1    -4.34498087e-02   # N_{2,1}
+  2  2     4.87748788e-02   # N_{2,2}
+  2  3     6.97833635e-01   # N_{2,3}
+  2  4     7.13275082e-01   # N_{2,4}
+  3  1     9.90339427e-01   # N_{3,1}
+  3  2     2.72817774e-02   # N_{3,2}
+  3  3    -6.32517175e-02   # N_{3,3}
+  3  4     1.20344270e-01   # N_{3,4}
+  4  1    -1.26065898e-02   # N_{4,1}
+  4  2     9.93968228e-01   # N_{4,2}
+  4  3     3.51416154e-02   # N_{4,3}
+  4  4    -1.03117909e-01   # N_{4,4}
+Block Umix                  # chargino U mixing matrix  at Q=2.60056566e+03
+  1  1    -4.94434458e-02   # U_{1,1}
+  1  2     9.98776925e-01   # U_{1,2}
+  2  1    -9.98776925e-01   # U_{2,1}
+  2  2    -4.94434458e-02   # U_{2,2}
+Block Vmix                  # chargino V mixing matrix  at Q=2.60056566e+03
+  1  1    -1.45454111e-01   # V_{1,1}
+  1  2     9.89364999e-01   # V_{1,2}
+  2  1    -9.89364999e-01   # V_{2,1}
+  2  2    -1.45454111e-01   # V_{2,2}
+Block USQMIX  # super CKM squark mass^2 matrix
+  1  1     0.00000000e+00   # (USQMIX)_{11}
+  1  2     0.00000000e+00   # (USQMIX)_{12}
+  1  3     6.00318946e-02   # (USQMIX)_{13}
+  1  4     0.00000000e+00   # (USQMIX)_{14}
+  1  5     0.00000000e+00   # (USQMIX)_{15}
+  1  6     9.98196459e-01   # (USQMIX)_{16}
+  2  1     0.00000000e+00   # (USQMIX)_{21}
+  2  2     0.00000000e+00   # (USQMIX)_{22}
+  2  3     9.98196459e-01   # (USQMIX)_{23}
+  2  4     0.00000000e+00   # (USQMIX)_{24}
+  2  5     0.00000000e+00   # (USQMIX)_{25}
+  2  6    -6.00318946e-02   # (USQMIX)_{26}
+  3  1     0.00000000e+00   # (USQMIX)_{31}
+  3  2     9.99995029e-01   # (USQMIX)_{32}
+  3  3     0.00000000e+00   # (USQMIX)_{33}
+  3  4     0.00000000e+00   # (USQMIX)_{34}
+  3  5     3.15298981e-03   # (USQMIX)_{35}
+  3  6     0.00000000e+00   # (USQMIX)_{36}
+  4  1     1.00000000e+00   # (USQMIX)_{41}
+  4  2     0.00000000e+00   # (USQMIX)_{42}
+  4  3     0.00000000e+00   # (USQMIX)_{43}
+  4  4     6.92704679e-06   # (USQMIX)_{44}
+  4  5     0.00000000e+00   # (USQMIX)_{45}
+  4  6     0.00000000e+00   # (USQMIX)_{46}
+  5  1     0.00000000e+00   # (USQMIX)_{51}
+  5  2    -3.15298981e-03   # (USQMIX)_{52}
+  5  3     0.00000000e+00   # (USQMIX)_{53}
+  5  4     0.00000000e+00   # (USQMIX)_{54}
+  5  5     9.99995029e-01   # (USQMIX)_{55}
+  5  6     0.00000000e+00   # (USQMIX)_{56}
+  6  1    -6.92704679e-06   # (USQMIX)_{61}
+  6  2     0.00000000e+00   # (USQMIX)_{62}
+  6  3     0.00000000e+00   # (USQMIX)_{63}
+  6  4     1.00000000e+00   # (USQMIX)_{64}
+  6  5     0.00000000e+00   # (USQMIX)_{65}
+  6  6     0.00000000e+00   # (USQMIX)_{66}
+Block DSQMIX  # super CKM squark mass^2 matrix
+  1  1     0.00000000e+00   # (DSQMIX)_{11}
+  1  2     0.00000000e+00   # (DSQMIX)_{12}
+  1  3     9.99997694e-01   # (DSQMIX)_{13}
+  1  4     0.00000000e+00   # (DSQMIX)_{14}
+  1  5     0.00000000e+00   # (DSQMIX)_{15}
+  1  6     2.14777018e-03   # (DSQMIX)_{16}
+  2  1     0.00000000e+00   # (DSQMIX)_{21}
+  2  2     1.17885806e-03   # (DSQMIX)_{22}
+  2  3     0.00000000e+00   # (DSQMIX)_{23}
+  2  4     0.00000000e+00   # (DSQMIX)_{24}
+  2  5     9.99999305e-01   # (DSQMIX)_{25}
+  2  6     0.00000000e+00   # (DSQMIX)_{26}
+  3  1     5.38389712e-05   # (DSQMIX)_{31}
+  3  2     0.00000000e+00   # (DSQMIX)_{32}
+  3  3     0.00000000e+00   # (DSQMIX)_{33}
+  3  4     9.99999999e-01   # (DSQMIX)_{34}
+  3  5     0.00000000e+00   # (DSQMIX)_{35}
+  3  6     0.00000000e+00   # (DSQMIX)_{36}
+  4  1     0.00000000e+00   # (DSQMIX)_{41}
+  4  2     9.99999305e-01   # (DSQMIX)_{42}
+  4  3     0.00000000e+00   # (DSQMIX)_{43}
+  4  4     0.00000000e+00   # (DSQMIX)_{44}
+  4  5    -1.17885806e-03   # (DSQMIX)_{45}
+  4  6     0.00000000e+00   # (DSQMIX)_{46}
+  5  1     9.99999999e-01   # (DSQMIX)_{51}
+  5  2     0.00000000e+00   # (DSQMIX)_{52}
+  5  3     0.00000000e+00   # (DSQMIX)_{53}
+  5  4    -5.38389712e-05   # (DSQMIX)_{54}
+  5  5     0.00000000e+00   # (DSQMIX)_{55}
+  5  6     0.00000000e+00   # (DSQMIX)_{56}
+  6  1     0.00000000e+00   # (DSQMIX)_{61}
+  6  2     0.00000000e+00   # (DSQMIX)_{62}
+  6  3    -2.14777018e-03   # (DSQMIX)_{63}
+  6  4     0.00000000e+00   # (DSQMIX)_{64}
+  6  5     0.00000000e+00   # (DSQMIX)_{65}
+  6  6     9.99997694e-01   # (DSQMIX)_{66}
+Block SELMIX  # super MNS slepton mass^2 matrix
+  1  1     0.00000000e+00   # (SELMIX)_{11}
+  1  2     3.68351339e-04   # (SELMIX)_{12}
+  1  3     0.00000000e+00   # (SELMIX)_{13}
+  1  4     0.00000000e+00   # (SELMIX)_{14}
+  1  5     9.99999932e-01   # (SELMIX)_{15}
+  1  6     0.00000000e+00   # (SELMIX)_{16}
+  2  1     1.78216081e-06   # (SELMIX)_{21}
+  2  2     0.00000000e+00   # (SELMIX)_{22}
+  2  3     0.00000000e+00   # (SELMIX)_{23}
+  2  4     1.00000000e+00   # (SELMIX)_{24}
+  2  5     0.00000000e+00   # (SELMIX)_{25}
+  2  6     0.00000000e+00   # (SELMIX)_{26}
+  3  1     0.00000000e+00   # (SELMIX)_{31}
+  3  2     9.99999932e-01   # (SELMIX)_{32}
+  3  3     0.00000000e+00   # (SELMIX)_{33}
+  3  4     0.00000000e+00   # (SELMIX)_{34}
+  3  5    -3.68351339e-04   # (SELMIX)_{35}
+  3  6     0.00000000e+00   # (SELMIX)_{36}
+  4  1     1.00000000e+00   # (SELMIX)_{41}
+  4  2     0.00000000e+00   # (SELMIX)_{42}
+  4  3     0.00000000e+00   # (SELMIX)_{43}
+  4  4    -1.78216081e-06   # (SELMIX)_{44}
+  4  5     0.00000000e+00   # (SELMIX)_{45}
+  4  6     0.00000000e+00   # (SELMIX)_{46}
+  5  1     0.00000000e+00   # (SELMIX)_{51}
+  5  2     0.00000000e+00   # (SELMIX)_{52}
+  5  3     5.70311738e-03   # (SELMIX)_{53}
+  5  4     0.00000000e+00   # (SELMIX)_{54}
+  5  5     0.00000000e+00   # (SELMIX)_{55}
+  5  6     9.99983737e-01   # (SELMIX)_{56}
+  6  1     0.00000000e+00   # (SELMIX)_{61}
+  6  2     0.00000000e+00   # (SELMIX)_{62}
+  6  3     9.99983737e-01   # (SELMIX)_{63}
+  6  4     0.00000000e+00   # (SELMIX)_{64}
+  6  5     0.00000000e+00   # (SELMIX)_{65}
+  6  6    -5.70311738e-03   # (SELMIX)_{66}
+Block SNUMIX                # super MNS slepton mass^2 matrix
+  1  1     0.00000000e+00   # (SNUMIX)_{11}
+  1  2     1.00000000e+00   # (SNUMIX)_{12}
+  1  3     0.00000000e+00   # (SNUMIX)_{13}
+  2  1     1.00000000e+00   # (SNUMIX)_{21}
+  2  2     0.00000000e+00   # (SNUMIX)_{22}
+  2  3     0.00000000e+00   # (SNUMIX)_{23}
+  3  1     0.00000000e+00   # (SNUMIX)_{31}
+  3  2     0.00000000e+00   # (SNUMIX)_{32}
+  3  3     1.00000000e+00   # (SNUMIX)_{33}
+Block gauge Q= 2.00000000e+03  # SM gauge couplings
+     1     3.63418929e-01   # g'(Q)MSSM DRbar
+     2     6.37994344e-01   # g(Q)MSSM DRbar
+     3     1.00380519e+00   # g3(Q)MSSM DRbar
+Block yu Q= 2.00000000e+03   # diagonal Up Yukawa matrix
+  1  1     6.95086974e-06    # YU_{11}(Q)MSSM DRbar
+  2  2     3.16381045e-03    # YU_{22}(Q)MSSM DRbar
+  3  3     8.14822929e-01    # YU_{33}(Q)MSSM DRbar
+Block yd Q= 2.00000000e+03   # diagonal down Yukawa matrix
+  1  1     1.34148984e-04    # YD_{11}(Q)MSSM DRbar
+  2  2     2.93715850e-03    # YD_{22}(Q)MSSM DRbar
+  3  3     1.30298528e-01    # YD_{33}(Q)MSSM DRbar
+Block ye Q= 2.00000000e+03   # diagonal lepton Yukawa matrix
+  1  1     2.80977647e-05    # YE_{11}(Q)MSSM DRbar
+  2  2     5.80973546e-03    # YE_{22}(Q)MSSM DRbar
+  3  3     1.00003013e-01    # YE_{33}(Q)MSSM DRbar
+Block hmix Q= 2.00000000e+03 # Higgs mixing parameters
+     1     1.99752985e+02    # mu(Q)MSSM DRbar
+     2     9.68466467e+00    # tan beta(Q)MSSM DRbar Feynman gauge
+     3     2.42261457e+02    # higgs vev(Q)MSSM DRbar Feynman gauge
+     4     4.12009552e+06    # mA^2(Q)MSSM DRbar
+Block msq2 Q= 2.00000000e+03 # super CKM squark mass^2 matrix - DRbar
+  1  1     2.25612462e+07    # (m_Q^2)_{11}
+  1  2     0.00000000e+00    # (m_Q^2)_{12}
+  1  3     0.00000000e+00    # (m_Q^2)_{13}
+  2  1     0.00000000e+00    # (m_Q^2)_{21}
+  2  2     2.25608490e+07    # (m_Q^2)_{22}
+  2  3     0.00000000e+00    # (m_Q^2)_{23}
+  3  1     0.00000000e+00    # (m_Q^2)_{31}
+  3  2     0.00000000e+00    # (m_Q^2)_{32}
+  3  3     1.43720260e+07    # (m_Q^2)_{33}
+Block msl2 Q= 2.00000000e+03 # super MNS slepton mass^2 matrix - DRbar
+  1  1     2.13650726e+07    # (m_L^2)_{11}
+  1  2     0.00000000e+00    # (m_L^2)_{12}
+  1  3     0.00000000e+00    # (m_L^2)_{13}
+  2  1     0.00000000e+00    # (m_L^2)_{21}
+  2  2     2.13640077e+07    # (m_L^2)_{22}
+  2  3     0.00000000e+00    # (m_L^2)_{23}
+  3  1     0.00000000e+00    # (m_L^2)_{31}
+  3  2     0.00000000e+00    # (m_L^2)_{32}
+  3  3     2.57748562e+07    # (m_L^2)_{33}
+Block msd2 Q= 2.00000000e+03 # super CKM squark mass^2 matrix - DRbar
+  1  1     2.21067047e+07    # (m_d^2)_{11}
+  1  2     0.00000000e+00    # (m_d^2)_{12}
+  1  3     0.00000000e+00    # (m_d^2)_{13}
+  2  1     0.00000000e+00    # (m_d^2)_{21}
+  2  2     2.21063386e+07    # (m_d^2)_{22}
+  2  3     0.00000000e+00    # (m_d^2)_{23}
+  3  1     0.00000000e+00    # (m_d^2)_{31}
+  3  2     0.00000000e+00    # (m_d^2)_{32}
+  3  3     2.61520072e+07    # (m_d^2)_{33}
+Block msu2 Q= 2.00000000e+03 # super CKM squark mass^2 matrix - DRbar
+  1  1     2.39050917e+07    # (m_u^2)_{11}
+  1  2     0.00000000e+00    # (m_u^2)_{12}
+  1  3     0.00000000e+00    # (m_u^2)_{13}
+  2  1     0.00000000e+00    # (m_u^2)_{21}
+  2  2     2.39046568e+07    # (m_u^2)_{22}
+  2  3     0.00000000e+00    # (m_u^2)_{23}
+  3  1     0.00000000e+00    # (m_u^2)_{31}
+  3  2     0.00000000e+00    # (m_u^2)_{32}
+  3  3     3.08841028e+06    # (m_u^2)_{33}
+Block mse2 Q= 2.00000000e+03 # super MNS slepton mass^2 matrix - DRbar
+  1  1     1.85148034e+07    # (m_e^2)_{11}
+  1  2     0.00000000e+00    # (m_e^2)_{12}
+  1  3     0.00000000e+00    # (m_e^2)_{13}
+  2  1     0.00000000e+00    # (m_e^2)_{21}
+  2  2     1.85126637e+07    # (m_e^2)_{22}
+  2  3     0.00000000e+00    # (m_e^2)_{23}
+  3  1     0.00000000e+00    # (m_e^2)_{31}
+  3  2     0.00000000e+00    # (m_e^2)_{32}
+  3  3     2.25811475e+07    # (m_e^2)_{33}
+Block tu Q= 2.00000000e+03   # super CKM trilinear matrix - DRbar
+  1  1    -5.27544321e-02    # (T_u)_{11}
+  1  2     0.00000000e+00    # (T_u)_{12}
+  1  3     0.00000000e+00    # (T_u)_{13}
+  2  1     0.00000000e+00    # (T_u)_{21}
+  2  2    -2.40119295e+01    # (T_u)_{22}
+  2  3     0.00000000e+00    # (T_u)_{23}
+  3  1     0.00000000e+00    # (T_u)_{31}
+  3  2     0.00000000e+00    # (T_u)_{32}
+  3  3    -3.84107360e+03    # (T_u)_{33}
+Block td Q= 2.00000000e+03   # super CKM trilinear matrix - DRbar
+  1  1    -1.39520378e+00    # (T_d)_{11}
+  1  2     0.00000000e+00    # (T_d)_{12}
+  1  3     0.00000000e+00    # (T_d)_{13}
+  2  1     0.00000000e+00    # (T_d)_{21}
+  2  2    -3.05474842e+01    # (T_d)_{22}
+  2  3     0.00000000e+00    # (T_d)_{23}
+  3  1     0.00000000e+00    # (T_d)_{31}
+  3  2     0.00000000e+00    # (T_d)_{32}
+  3  3    -1.22265577e+03    # (T_d)_{33}
+Block te Q= 2.00000000e+03   # super CKM trilinear matrix - DRbar
+  1  1    -2.38652189e-01    # (T_e)_{11}
+  1  2     0.00000000e+00    # (T_e)_{12}
+  1  3     0.00000000e+00    # (T_e)_{13}
+  2  1     0.00000000e+00    # (T_e)_{21}
+  2  2    -4.93444230e+01    # (T_e)_{22}
+  2  3     0.00000000e+00    # (T_e)_{23}
+  3  1     0.00000000e+00    # (T_e)_{31}
+  3  2     0.00000000e+00    # (T_e)_{32}
+  3  3    -8.42474549e+02    # (T_e)_{33}
+Block VCKM Q= 2.00000000e+03 # DRbar CKM mixing matrix
+  1  1     1.00000000e+00    # CKM_{11} matrix element
+  1  2     0.00000000e+00    # CKM_{12} matrix element
+  1  3     0.00000000e+00    # CKM_{13} matrix element
+  2  1     0.00000000e+00    # CKM_{21} matrix element
+  2  2     1.00000000e+00    # CKM_{22} matrix element
+  2  3     0.00000000e+00    # CKM_{23} matrix element
+  3  1     0.00000000e+00    # CKM_{31} matrix element
+  3  2     0.00000000e+00    # CKM_{32} matrix element
+  3  3     1.00000000e+00    # CKM_{33} matrix element
+Block msoft Q= 2.00000000e+03 # MSSM DRbar SUSY breaking parameters
+     1     4.40243884e+02     # M_1(Q)
+     2     8.03541962e+02     # M_2(Q)
+     3     2.09145549e+03     # M_3(Q)
+    21     3.84648439e+06     # mH1^2(Q)
+    22    -2.30103108e+05     # mH2^2(Q)
