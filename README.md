@@ -1,4 +1,3 @@
-
 # DEW4SLHAv1.3
 This program computes the naturalness measures $\Delta_{EW}$ (DEW) and produces an ordered list of contributions to DEW from the one-loop and partial two-loop Higgs minimization conditions using the effective potential method and a user-provided input SLHA file from the user's choice of spectrum generator. For versions later than v1.3, the program also computes the naturalness measures $\Delta_{HS}$ and $\Delta_{BG}$ for the user-input SLHA file. This documentation is for v1.3.
 
@@ -120,6 +119,8 @@ The calculation progress is tracked via a progress bar onscreen, courtesy of the
 After the computations are complete, a list with the various contributions to $\Delta_{BG}$ from greatest to least, like the one below, will be printed. If the user did not choose to evaluate $\Delta_{BG}$, these relevant step will not occur.
 
 ![DBG_results](Readme_images/DBG_results.png "Ordered list of results for DBG")
+
+The user is then prompted on whether to save their results, as well as the naming scheme by which they would like to save their results. The default filename format is `current_system_time_Dxx_contrib_list.txt`, where "`xx`" is "`EW`", "`HS`", or "`BG`" as suggested by the corresponding prompts. The program will generate an output folder if one does not exist and tell the user where their results may be found.
 
 Lastly, the user can either choose to try again with a new SLHA file from the beginning or quit the program altogether.
 
