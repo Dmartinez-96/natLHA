@@ -7,8 +7,11 @@ There are two main options for obtaining and running DEW4SLHA. The first is perh
 **NOTE**: The DEW4SLHA routine is written nearly exclusively in Python3, specifically Python3.9.16. Installing a Python3 compiler is straightforward on most systems -- however, for the user's convenience, DEW4SLHA is packaged here and should function as a standalone executable together with its supporting source code, independent of whether a system has a Python interpreter installed or not. The tradeoff here is that the file size is rather large, as the compiler for Python is packaged into the executable here, together with all dependencies, so that the user's need for installation is minimized.  
 
 Now unpack this archive. For example, unpacking a `tar.gz` archive with an Ubuntu 22.04 terminal could entail using the command:
+
 `cd /path/containing/DEW4SLHAv1_3.tar.gz/archive/`
+
 `tar -xvzf DEW4SLHAv1_3.tar.gz`
+
 `cd DEW4SLHAv1_3`
 
 Alternatively, if one were to just want the Python scripts for use in their own Python environment, details on packages needed are below. Instead of downloading the large executable, precompiled version, the scripts can be downloaded from [GitHub](https://github.com/Dmartinez-96/DEW-Calculator/tree/main/python_script) as a tarball or ZIP file. Click on the type of compressed archive you want to download and download them from here.
@@ -30,8 +33,11 @@ Using a package manager such as `pip` (or `conda`, though some packages such as 
 |    `pyslha`    |          3.2.5          |    [Source](https://pypi.org/project/pyslha/)     |
 
 Make sure that the Python script compressed archive you downloaded has been extracted. For example, on Ubuntu 22.04 with a `tar.gz` archive, do:
+
 `cd /path/to/where/DEW4SLHAv1_3_py.tar.gz/lives/`
+
 `tar -xvzf DEW4SLHAv1_3_py.tar.gz`
+
 `cd DEW4SLHAv1_3_py`
 
 # Startup Instructions
