@@ -7,6 +7,6 @@
 
 using namespace std;
 
-double getmZ2(vector<double> input_weakscaleBCs, double input_QSUSY, double mZ2GuessValue);
+double getmZ2(const vector<double>& input_weakscaleBCs, double input_QSUSY, double guess);//double lowerbnd, double upperbnd);
 
 #endif

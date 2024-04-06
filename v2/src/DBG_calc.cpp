@@ -14,7 +14,7 @@
 using namespace std;
 
 double deriv_mZ_step_calc(double RGE_scale_init_val, double RGE_scale_final_val, vector<double> BCs_to_run) {
-    vector<double> currentweaksol = solveODEs(BCs_to_run, RGE_scale_init_val, RGE_scale_final_val, copysign(1.0e-4, (RGE_scale_final_val - RGE_scale_init_val)));
+    vector<double> currentweaksol = solveODEs(BCs_to_run, RGE_scale_init_val, RGE_scale_final_val, copysign(1.0e-6, (RGE_scale_final_val - RGE_scale_init_val)));
     double QSUSY_for_calc = exp(RGE_scale_final_val);
     // cout << "Weak-scale values on current iteration: " << endl;
     // for (double value : currentweaksol) {
@@ -84,6 +84,10 @@ double deriv_step_calc_scalars(double& shift_amt, vector<double> inputGUT_BCs, d
     for (int i = 25; i < 42; ++i) {
         inputGUT_BCs[i] = copysign(pow((sqrt(abs(inputGUT_BCs[i])) + shift_amt), 2.0), inputGUT_BCs[i]);
     }
+    // cout << "Shifted GUT values: " << endl;
+    // for (double value : inputGUT_BCs) {
+    //     cout << value << endl;
+    // }
     double testShiftedMZ2 = deriv_mZ_step_calc(initialScale, finalScale, inputGUT_BCs);
     return testShiftedMZ2;
 }
@@ -395,8 +399,8 @@ vector<double> stepsize_generator(int& modselno, int& precselno, vector<double>&
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     else if (modselno == 5) {
-        double mHu0Value = sqrt(abs(inputGUT_BCs[25]));
-        double mHd0Value = sqrt(abs(inputGUT_BCs[26]));
+        double mHu0Value = copysign(sqrt(abs(inputGUT_BCs[25])), inputGUT_BCs[25]);
+        double mHd0Value = copysign(sqrt(abs(inputGUT_BCs[26])), inputGUT_BCs[26]);
         vector<double> m01candidates = {inputGUT_BCs[27], inputGUT_BCs[30],
                                         inputGUT_BCs[33], inputGUT_BCs[36],
                                         inputGUT_BCs[39]};
@@ -476,8 +480,8 @@ vector<double> stepsize_generator(int& modselno, int& precselno, vector<double>&
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     else {
-        double mHu0Value = sqrt(abs(inputGUT_BCs[25]));
-        double mHd0Value = sqrt(abs(inputGUT_BCs[26]));
+        double mHu0Value = copysign(sqrt(abs(inputGUT_BCs[25])), inputGUT_BCs[25]);
+        double mHd0Value = copysign(sqrt(abs(inputGUT_BCs[26])), inputGUT_BCs[26]);
         double maxmqL12Val = sqrt(abs(max(inputGUT_BCs[27], inputGUT_BCs[28])));
         double mqL3Val = sqrt(abs(inputGUT_BCs[29]));
         double maxmuR12Val = sqrt(abs(max(inputGUT_BCs[33], inputGUT_BCs[34])));
@@ -603,6 +607,13 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
     vector<LabeledValueBG> dbglist;
     double mymZ_squared = 91.1876 * 91.1876;
     vector<double> derivative_stepsizes = stepsize_generator(modselno, precselno, GUT_boundary_conditions);
+    // double h_step = 1.0e-3;
+    // vector<double> fixed_derivative_stepsizes(derivative_stepsizes.size(), h_step);
+    // derivative_stepsizes = fixed_derivative_stepsizes;
+    // cout << "Step sizes: " << endl;
+    // for (double value : derivative_stepsizes) { 
+    //     cout << value << endl;
+    // }
     if (modselno == 1) {
         vector<double> mZ_m0_var_vals, mZ_mhf_var_vals, mZ_A0_var_vals, mZ_mu0_var_vals;
         
@@ -613,9 +624,11 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
         auto maxm0It = max_element(m0candidates.begin(), m0candidates.end(),
                                    [](double a, double b) { return abs(a) < abs(b); });
         double maxm0Val = copysign(sqrt(abs(*maxm0It)), *maxm0It);
+        cout << "m0 = " << maxm0Val << endl;
         vector<double> mhfcandidates = {GUT_boundary_conditions[3], GUT_boundary_conditions[4], GUT_boundary_conditions[5]};
         auto maxmhfIt = max_element(mhfcandidates.begin(), mhfcandidates.end());
         double maxGauginoMass = *maxmhfIt;
+        cout << "mhf = " << maxGauginoMass << endl;
         vector<double> A0candidates;
         for (int i = 16; i < 25; ++i) {
                 A0candidates.push_back(GUT_boundary_conditions[i] / GUT_boundary_conditions[i-9]);
@@ -623,7 +636,9 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
         auto maxA0It = max_element(A0candidates.begin(), A0candidates.end(),
                                    [](double a, double b) { return abs(a) < abs(b); });
         double maxTrilin = *maxA0It;
+        cout << "A0 = " << maxTrilin << endl;
         double mu0value = GUT_boundary_conditions[6];
+        cout << "mu0 = " << mu0value << endl;
         if (precselno == 1) {
             vector<double> m0steps = {(-4.0) * derivative_stepsizes[0], (-3.0) * derivative_stepsizes[0], (-2.0) * derivative_stepsizes[0], (-1.0) * derivative_stepsizes[0],
                                       derivative_stepsizes[0], 2.0 * derivative_stepsizes[0], 3.0 * derivative_stepsizes[0], 4.0 * derivative_stepsizes[0]};
@@ -639,7 +654,7 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
             // }
             for (int j = 0; j < m0steps.size(); ++j) {
                 double step_Resultm0 = deriv_step_calc_scalars(m0steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale);
-                cout << "Step mZ result with m0 variation: " << endl << step_Resultm0 << endl;
+                //cout << "Step mZ result with m0 variation: " << endl << step_Resultm0 << endl;
                 mZ_m0_var_vals.push_back(step_Resultm0);
                 double step_Resultmhf = deriv_step_calc_gaugino(mhfsteps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale);
                 mZ_mhf_var_vals.push_back(step_Resultmhf);
@@ -649,12 +664,12 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
                 mZ_mu0_var_vals.push_back(step_Resultmu0);
             }
 
-            cout << "mZ due to m0 variation: " << endl;
-            for (double value : mZ_m0_var_vals) {
-                cout << value << endl;
-            }
+            // cout << "mZ due to m0 variation: " << endl;
+            // for (double value : mZ_m0_var_vals) {
+            //     cout << value << endl;
+            // }
 
-            cout << "DBG(m0) = " << (maxm0Val / mymZ_squared) * deriv_num_calc(precselno, derivative_stepsizes[0], mZ_m0_var_vals) << endl;
+            //cout << "DBG(m0) = " << (maxm0Val / mymZ_squared) * deriv_num_calc(precselno, derivative_stepsizes[0], mZ_m0_var_vals) << endl;
             dbglist.push_back({(maxm0Val / mymZ_squared) * deriv_num_calc(precselno, derivative_stepsizes[0], mZ_m0_var_vals), "Delta_BG(m_0)"});
             dbglist.push_back({(maxGauginoMass / mymZ_squared) * deriv_num_calc(precselno, derivative_stepsizes[1], mZ_mhf_var_vals), "Delta_BG(m_1/2)"});
             dbglist.push_back({(maxTrilin / mymZ_squared) * deriv_num_calc(precselno, derivative_stepsizes[2], mZ_A0_var_vals), "Delta_BG(A_0)"});
@@ -1346,6 +1361,7 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
         vector<double> mZ_meR12_var_vals, mZ_meR3_var_vals, mZ_M1_var_vals, mZ_M2_var_vals, mZ_M3_var_vals, mZ_mu0_var_vals;
         vector<double> mZ_Au0_var_vals, mZ_Ad0_var_vals, mZ_Ae0_var_vals;
         vector<double> mZ_mHu_var_vals, mZ_mHd_var_vals;
+        int linecount = 0;
         double mHu0Value = copysign(sqrt(abs(GUT_boundary_conditions[25])), GUT_boundary_conditions[25]);
         double mHd0Value = copysign(sqrt(abs(GUT_boundary_conditions[26])), GUT_boundary_conditions[26]);
         double maxmqL12Val = sqrt(abs(max(GUT_boundary_conditions[27], GUT_boundary_conditions[28])));
@@ -1423,6 +1439,8 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
             for (int j = 0; j < mHu0steps.size(); ++j) {
                 double step_ResultmqL12 = deriv_step_calc_genScalarIndices(mqL12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {27, 28});
                 mZ_mqL12_var_vals.push_back(step_ResultmqL12);
+                double step_ResultmeL12 = deriv_step_calc_genScalarIndices(meL12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {30, 31});
+                mZ_meL12_var_vals.push_back(step_ResultmeL12);
                 double step_ResultmuR12 = deriv_step_calc_genScalarIndices(muR12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {33, 34});
                 mZ_muR12_var_vals.push_back(step_ResultmuR12);
                 double step_ResultmdR12 = deriv_step_calc_genScalarIndices(mdR12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {36, 37});
@@ -1525,6 +1543,8 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
             for (int j = 0; j < mHu0steps.size(); ++j) {
                 double step_ResultmqL12 = deriv_step_calc_genScalarIndices(mqL12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {27, 28});
                 mZ_mqL12_var_vals.push_back(step_ResultmqL12);
+                double step_ResultmeL12 = deriv_step_calc_genScalarIndices(meL12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {30, 31});
+                mZ_meL12_var_vals.push_back(step_ResultmeL12);
                 double step_ResultmuR12 = deriv_step_calc_genScalarIndices(muR12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {33, 34});
                 mZ_muR12_var_vals.push_back(step_ResultmuR12);
                 double step_ResultmdR12 = deriv_step_calc_genScalarIndices(mdR12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {36, 37});
@@ -1625,8 +1645,11 @@ vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
                                        derivative_stepsizes[18]};
             
             for (int j = 0; j < mHu0steps.size(); ++j) {
+                //cout << "Step " << j << endl << "---------------------------" << endl;
                 double step_ResultmqL12 = deriv_step_calc_genScalarIndices(mqL12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {27, 28});
                 mZ_mqL12_var_vals.push_back(step_ResultmqL12);
+                double step_ResultmeL12 = deriv_step_calc_genScalarIndices(meL12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {30, 31});
+                mZ_meL12_var_vals.push_back(step_ResultmeL12);
                 double step_ResultmuR12 = deriv_step_calc_genScalarIndices(muR12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {33, 34});
                 mZ_muR12_var_vals.push_back(step_ResultmuR12);
                 double step_ResultmdR12 = deriv_step_calc_genScalarIndices(mdR12steps[j], GUT_boundary_conditions, GUT_SCALE, myweakscale, {36, 37});

@@ -4,11 +4,10 @@
 #define DSN_CALC_HPP
 
 #include <vector>
+#include <string>
 
-struct LabeledValueSN;
-
-std::vector<LabeledValueSN> DSN_calc(int modselno, double precselno, double& mymZsq,
-                                     double& GUT_SCALE, double& myweakscale, double& inptanbval,
-                                     std::vector<double>& GUT_boundary_conditions);
+double DSN_calc(int precselno, std::vector<double> GUT_boundary_conditions,
+                double& current_mZ2, double& current_logQSUSY,
+                double& current_logQGUT, int& nF, int& nD);
 
 #endif

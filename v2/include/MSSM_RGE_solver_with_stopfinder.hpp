@@ -14,6 +14,6 @@ struct RGEStruct {
 void MSSM_stopscale_RGESolver(const std::vector<double>& x, std::vector<double>& dxdt, const double t);
 struct MyObserver;
 
-std::vector<RGEStruct> solveODEstoMSUSY(std::vector<double> initialConditions, double startTime, double timeStep, double& t_target);
+std::vector<RGEStruct> solveODEstoMSUSY(std::vector<double> initialConditions, double startTime, double timeStep, double& t_target, double value_of_mZ2);
 
 #endif

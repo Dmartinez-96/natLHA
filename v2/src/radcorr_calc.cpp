@@ -554,14 +554,14 @@ double dew_funcd(const double& inp, const double& tangentbeta) {
     return mycontribdd;
 }
 
-std::vector<double> radcorr_calc(std::vector<double> weak_boundary_conditions, double myQ, double mymZsq=pow(91.1876, 2.0)) {
+std::vector<double> radcorr_calc(std::vector<double> weak_boundary_conditions, double myQ, double mymZsq) {
     /*
     DOCSTRING HERE
     */
     // Gauge couplings
-    /*if (mymZsq < 0) {
-        cout << "Warning! mZ^2 < 0 in radcorr_calc, using abs(mZ^2)" << endl;
-    }*/
+    if (mymZsq < 0) {
+        //cout << "Warning! mZ^2 < 0 in radcorr_calc, using abs(mZ^2)" << endl;
+    }
     const double mymZ = sqrt(abs(mymZsq));
     const double g1_wk = weak_boundary_conditions[0];
     const double g2_wk = weak_boundary_conditions[1];
@@ -654,7 +654,7 @@ std::vector<double> radcorr_calc(std::vector<double> weak_boundary_conditions, d
     const double m_w_sq = (pow(g2_wk, 2.0) / 2.0) * v_sq;
 
     // Z-boson tree-level running squared mass
-    const double mz_q_sq = pow(mymZ, 2.0);// v_sq* ((pow(g2_wk, 2.0) + pow(gpr_wk, 2.0)) / 2.0);
+    const double mz_q_sq = mymZsq;// v_sq* ((pow(g2_wk, 2.0) + pow(gpr_wk, 2.0)) / 2.0);
 
     // Higgs psuedoscalar tree-level running squared mass
     const double mA0sq = 2.0 * mu_wk_sq + mHu_sq_wk + mHd_sq_wk;

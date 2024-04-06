@@ -1,6 +1,7 @@
 #include <fstream>
 #include <string>
 #include <iostream>
+#include <sstream>
 #include <vector>
 #include <complex>
 #include <cmath>
@@ -11,12 +12,14 @@
 #include <limits>
 #include <regex>
 #include <cstdlib>
+#include "mZ_numsolver.hpp"
 #include "terminal_UI.hpp"
 #include "MSSM_RGE_solver.hpp"
+#include "MSSM_RGE_solver_with_stopfinder.hpp"
 #include "DEW_calc.hpp"
 #include "DBG_calc.hpp"
 #include "DHS_calc.hpp"
-//#include "DSN_calc.hpp"
+#include "DSN_calc.hpp"
 #include "radcorr_calc.hpp"
 #include "slhaea.h"
 #ifndef M_PI
@@ -114,7 +117,7 @@ double getRenormalizationScale(const Coll& slha, const string& blockName) {
 }
 
 void terminalUI() {
-    std::cout << fixed << setprecision(15);
+    std::cout << fixed << setprecision(9);
     bool userContinue = true;
     std::cout << "Welcome to DEW4SLHA, a program for computing the naturalness\n"
          << "measures Delta_EW, Delta_BG, and Delta_HS in the MSSM\n"
@@ -226,6 +229,37 @@ void terminalUI() {
             }
         }
 
+        /******************************************************************
+         ********************* PRECISION SELECTION ************************
+        ******************************************************************/
+
+        bool checkPrec = true;
+        int printPrec = 9;
+        while (checkPrec) {
+            std::cout << "\n##############################################################\n";
+            std::cout << "To what precision, 10^(-n), do you want your results printed?" << endl << "The default value is n=9.\n";
+            std::cout << "Valid values for n are integers between 1 and 12, though higher precision (e.g., n=12) may lose accuracy due to double floating-point precision." << endl;
+            std::cout << "Input the number of decimals, n, to which you want the results printed: ";
+            string precCheckInp;
+            getline(cin, precCheckInp);
+            stringstream ss(precCheckInp);
+            int n;
+
+            if (ss >> n && !(ss >> precCheckInp)) {
+                if (n >= 1 && n <= 12) {
+                    printPrec = n;
+                    checkPrec = false; // Input is valid, exit the loop
+                    cout << "Precision level set to " << printPrec << " decimal places.\n";
+                } else {
+                    cerr << "Error: Please input an integer between 1 and 12.\n";
+                    this_thread::sleep_for(chrono::seconds(1));
+                }
+            
+            } else {
+                cerr << "Error: Invalid input. Please input an integer between 1 and 12.\n";
+            }
+        }
+        std::cout << fixed << setprecision(printPrec);
         
         /******************************************************************
          ********************* DBG MODEL SELECTION ************************
@@ -248,40 +282,92 @@ void terminalUI() {
                 std::cout << "From the list above, input the number of the model your SLHA file corresponds to: "; 
                 if ((!(cin >> modinp)) || (modinp < 1 || modinp > 6)) {
                     std::cout << "Invalid model number selected, please try again.\n\n";
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
                     this_thread::sleep_for(chrono::seconds(1));
                 } else {
                     break;
                 }
             }
-            cin.ignore(numeric_limits<streamsize>::max(), '\n');
             std::cout << "\n####################################################\n"
                     << "Please select the level of precision you want for the Delta_BG calculation.\n"
                     << "Below are the options: \n"
                     << "1: High precision, slowest calculation.\n"
                     << "2: Medium precision, twice as fast as high precision mode.\n"
-                    << "3: Lowest precision, four times as fast as high precision mode.\n";
+                    << "3: Lowest precision, four times as fast as high precision mode.\n\n";
 
             while (true) {
                 std::cout << "From the list above, input the number corresponding to the precision you want: ";
                 if (!(cin >> precinp) || (precinp < 1 || precinp > 3)) {
                     std::cout << "Invalid Delta_BG precision setting selected, please try again.\n\n";
-                    cin.clear(); 
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
+                    
                     this_thread::sleep_for(chrono::seconds(1));
                 } else {
                     break; 
                 }
             }
         }
+        
+        /******************************************************************
+         ********************** DSN Configuration *************************
+        ******************************************************************/
+       
+        int DSNcalcSelect = 0;
+        int nF_input = 0;
+        int nD_input = 0;
+        if (DSNcalc) {
+            std::cout << "\n####################################################\n"
+                    << "Please select the level of precision you want for the Delta_SN calculation.\n"
+                    << "Below are the options: \n"
+                    << "1: High precision, Monte Carlo routine for hypervolume density measure \n"
+                    << "2: Lower precision, full DSN P_mu + soft terms hypervolume density measure\n"
+                    << "3: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+            while (true) {
+                std::cout << "From the list above, input the number corresponding to the precision you want: ";
+                if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 3)) {
+                    std::cout << "Invalid Delta_SN precision setting selected, please try again.\n\n";
+                    
+                    this_thread::sleep_for(chrono::seconds(1));
+                    std::cout << "1: High precision, Monte Carlo routine for hypervolume density measure \n"
+                        << "2: Lower precision, full DSN P_mu + soft terms hypervolume density measure\n"
+                        << "3: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+                    
+                } else {
+                    break; 
+                }
+            }            
+            std::cout << "\n####################################################\n";
+            while (true) {
+                std::cout << "Please input the number of F-type SUSY breaking fields as an integer: ";
+                if (!(cin >> nF_input) || (nF_input < 0) || (isnan(nF_input))) {
+                    std::cout << "Invalid number of F-type fields input, please try again.\n\n";
+                    
+                    this_thread::sleep_for(chrono::seconds(1));
+                } else {
+                    break; 
+                }
+            }                
+            std::cout << "\n####################################################\n";
+            while (true) {
+                std::cout << "Please input the number of D-type SUSY breaking fields as an integer: ";
+                if (!(cin >> nD_input) || (nD_input < 0) || (isnan(nD_input))) {
+                    std::cout << "Invalid number of D-type fields input, please try again.\n\n";
+                    
+                    this_thread::sleep_for(chrono::seconds(1));
+                } else {
+                    break; 
+                }
+            }       
+        }
+
         std::cout << "\n########## Configuration Complete ##########\n";
         this_thread::sleep_for(chrono::milliseconds(1500));
         clearScreen();
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
             
         /******************************************************************
          ************************ SLHA READ-IN ****************************
         ******************************************************************/
+       
         bool fileCheck = true;
         string direc;
         while (fileCheck) {
@@ -297,6 +383,7 @@ void terminalUI() {
                 std::cout << "The input file cannot be found.\n"
                     << "Please try checking your spelling and try again.\n";
             }
+            
         }
         this_thread::sleep_for(chrono::milliseconds(500));
         clearScreen();
@@ -459,6 +546,7 @@ void terminalUI() {
             mE1sq = getDoubleMatValue("MSE2", 1, 1);
         }
         double SLHA_scale = getRenormalizationScale(input, "GAUGE");
+        std::cout << "Q(SLHA) = " << SLHA_scale << endl;
         std::cout << "SLHA parameters read in." << endl;
         /* Use 2-loop MSSM RGEs to evolve results to a renormalization scale of 
            Q = sqrt(mst1 * mst2) if the submitted SLHA file is not currently at that scale.
@@ -473,11 +561,7 @@ void terminalUI() {
            This running to the GUT scale is used in the evaluations of Delta_HS and Delta_BG.
            Compute loop-level soft Higgs bilinear parameter b=B*mu at SUSY scale for RGE BC
            after. 
-        */
-        double m_stop_1_SLHA, m_stop_2_SLHA;
-        m_stop_1_SLHA = abs(getDoubleVecValue("MASS", 1000006));
-        m_stop_2_SLHA = abs(getDoubleVecValue("MASS", 2000006));
-        double SLHAQSUSY = sqrt(m_stop_1_SLHA * m_stop_2_SLHA);
+        */        
 
         /******************************************************************
          ***************** ESTABLISH WEAK-SCALE VALUES ********************
@@ -490,11 +574,21 @@ void terminalUI() {
                      mHusq, mHdsq, mQ1sq, mQ2sq, mQ3sq, mL1sq, mL2sq,
                      mL3sq, mU1sq, mU2sq, mU3sq, mD1sq, mD2sq, mD3sq,
                      mE1sq, mE2sq, mE3sq, 0.0, tanb};
-        vector<double> first_SUSY_BCs = solveODEs(mySLHABCs, log(SLHA_scale), log(SLHAQSUSY), copysign(1.0e-4, (SLHAQSUSY - SLHA_scale)));
+        vector<double> dummyrun = solveODEs(mySLHABCs, log(SLHA_scale), log(1.0e12), copysign(1.0e-6, (log(1.0e12 / SLHA_scale))));
+        // SUSY scale equal to Q = sqrt(mt1(Q) * mt2(Q))
+        double tempT_target = log(250.0); 
+        vector<RGEStruct> SUSYscale_struct = solveODEstoMSUSY(dummyrun, log(1.0e12), -1.0e-6, tempT_target, 91.1876 * 91.1876);
+
+        double SLHAQSUSY = exp(SUSYscale_struct[0].SUSYscale_eval);
+        std::cout << "Q(SUSY) = " << SLHAQSUSY << endl;
+        vector<double> first_SUSY_BCs = solveODEs(mySLHABCs, log(SLHA_scale), log(SLHAQSUSY), copysign(1.0e-6, (SLHAQSUSY - SLHA_scale)));
         vector<double> first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
         tanb = first_SUSY_BCs[43];
+        mHdsq = first_SUSY_BCs[26];
+        mHusq = first_SUSY_BCs[25];
+        muQ = first_SUSY_BCs[6];
         // Converge a value of mu that gives mZ=91.1876 GeV
-        double lsqtol = 1.0e-9;
+        double lsqtol = 1.0e-8;
         double curr_iter_lsq = 100.0;
         double muQsq = muQ * muQ;
         double newmuQsq = muQsq;
@@ -502,17 +596,24 @@ void terminalUI() {
             newmuQsq = ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)) - (91.1876 * 91.1876 / 2.0);
             first_SUSY_BCs[6] = copysign(sqrt(abs(newmuQsq)), muQ);
             first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
-            curr_iter_lsq = pow((1.0 - (sqrt(abs(muQsq / newmuQsq)))), 2.0);
+            curr_iter_lsq = pow((muQsq) - (newmuQsq), 2.0);
             muQsq = newmuQsq;
         }
         double currentmZ2 = ((2.0 * ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)))
                              - (2.0 * muQsq));
-        //cout << "first mZ^2: " << currentmZ2 << endl;
+        cout << "first mZ: " << sqrt(currentmZ2) << endl;
+        double getmZ2_value = getmZ2(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
+        // cout << "mZ value from routine = " << copysign(sqrt(abs(getmZ2_value)), getmZ2_value) << endl;
+
         // Now we calculate the value of b=B*mu coming from this SLHA point. 
         double BmuSLHA = sin(2.0 * beta) * (mHusq + first_radcorrs[0] + mHdsq + first_radcorrs[1] + (2.0 * muQsq)) / 2.0;
         first_SUSY_BCs[42] = BmuSLHA;
         std::cout << "Weak scale parameters established." << endl;
         this_thread::sleep_for(chrono::seconds(1));
+        // std::cout << "First weak scale BCs: " << endl;
+        // for (double value : first_SUSY_BCs) {
+        //     cout << value << endl;
+        // }
 
         /******************************************************************
          ******************** ESTABLISH GUT VALUES ************************
@@ -520,13 +621,13 @@ void terminalUI() {
         
         // Get GUT scale now
         curr_iter_lsq = 100.0;
-        vector<double> first_GUT_BCs = solveODEs(first_SUSY_BCs, log(SLHAQSUSY), log(3.0e16), 1.0e-4);
+        vector<double> first_GUT_BCs = solveODEs(first_SUSY_BCs, log(SLHAQSUSY), log(3.0e16), 1.0e-6);
         vector<double> currbetag1g2GUT = beta_g1g2(first_GUT_BCs[0], first_GUT_BCs[1], first_GUT_BCs[2], first_GUT_BCs[7], first_GUT_BCs[8], first_GUT_BCs[9],
                                                    first_GUT_BCs[10], first_GUT_BCs[11], first_GUT_BCs[12], first_GUT_BCs[13], first_GUT_BCs[14], first_GUT_BCs[15]);
         double curr_iter_QGUT = log(3.0e16 * exp((first_GUT_BCs[1] - first_GUT_BCs[0]) / (currbetag1g2GUT[0] - currbetag1g2GUT[1])));
         double new_QGUT = curr_iter_QGUT;
         while (curr_iter_lsq > lsqtol) {
-            first_GUT_BCs = solveODEs(first_SUSY_BCs, log(SLHAQSUSY), curr_iter_QGUT, 1.0e-4);
+            first_GUT_BCs = solveODEs(first_SUSY_BCs, log(SLHAQSUSY), curr_iter_QGUT, 1.0e-6);
             new_QGUT = log(exp(curr_iter_QGUT) * exp((first_GUT_BCs[1] - first_GUT_BCs[0]) / (currbetag1g2GUT[0] - currbetag1g2GUT[1])));
             curr_iter_lsq = pow((1.0 - (new_QGUT / curr_iter_QGUT)), 2.0);
             curr_iter_QGUT = new_QGUT;
@@ -613,6 +714,16 @@ void terminalUI() {
             std::cout << "\n##### Press Enter to continue... #####";
             getline(cin, continueinputBG); // User presses enter to continue.
         
+        }
+     
+        /******************************************************************
+         ********************* COMPUTE DSN VALUES *************************
+         ******************************************************************/
+
+        if (DSNcalc) {
+            double logQSUSY = log(SLHAQSUSY);
+            double myDSN = DSN_calc(DSNcalcSelect, first_GUT_BCs, getmZ2_value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
+            cout << "Delta_SN = " << myDSN << endl;
         }
         break;
     }

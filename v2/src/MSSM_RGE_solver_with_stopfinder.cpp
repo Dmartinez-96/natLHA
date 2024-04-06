@@ -3437,9 +3437,10 @@ struct MyObserver{
     double& t_target;
     double& min_difference;
     bool& condition_met;
+    double intermmz_q_sq;
 
-    MyObserver(double& t_target, double& min_difference, bool& condition_met) : t_target(t_target),
-        min_difference(min_difference), condition_met(condition_met) {}
+    MyObserver(double& t_target, double& min_difference, bool& condition_met, double intermmz_q_sq) : t_target(t_target),
+        min_difference(min_difference), condition_met(condition_met), intermmz_q_sq(intermmz_q_sq) {}
 
     void operator()(const std::vector<double>& x, const double t) const {
         double current_Q = std::exp(t);
@@ -3463,7 +3464,7 @@ struct MyObserver{
         double intermyt_wk = x[7];
         double intermmymt = intermyt_wk * intermvu;
         double intermmymtsq = std::pow(intermmymt, 2.0);
-        double intermmz_q_sq = std::pow(91.1876, 2.0);
+        //double intermmz_q_sq = std::pow(91.1876, 2.0);
         double intermat_wk = x[16];
         double intermmuweakBC = x[6];
         double intermcos2b = std::cos(2.0 * intermbeta_wk);
@@ -3494,14 +3495,14 @@ struct MyObserver{
     }
 };
 
-std::vector<RGEStruct> solveODEstoMSUSY(std::vector<double> initialConditions, double startTime, double timeStep, double& t_target) {
+std::vector<RGEStruct> solveODEstoMSUSY(std::vector<double> initialConditions, double startTime, double timeStep, double& t_target, double value_of_mZ2) {
     using state_type = std::vector<double>;
     state_type x = initialConditions;
     double endTime = std::log(500.0);
     double min_difference = std::numeric_limits<double>::infinity();
     bool condition_met = false;
 
-    MyObserver myObserver(t_target, min_difference, condition_met);
+    MyObserver myObserver(t_target, min_difference, condition_met, value_of_mZ2);
 
     // Integrate
     boost::numeric::odeint::integrate_adaptive(

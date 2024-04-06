@@ -35,25 +35,66 @@ double PVB1(double extmom, double mass2, double Qval) {
 }
 
 // Function to compute tree-level mass spectrum
-vector<double> TreeMassCalculator(double myQ, double vHiggs_wk, double mu_wk, double beta_wk,
-                                  double yt_wk, double yc_wk, double yu_wk, double yb_wk, double ys_wk, double yd_wk,
-                                  double ytau_wk, double ymu_wk, double ye_wk, double g1_wk, double g2_wk, double g3_wk,
-                                  double mQ3_sq_wk, double mQ2_sq_wk, double mQ1_sq_wk, double mL3_sq_wk, double mL2_sq_wk,
-                                  double mL1_sq_wk, double mU3_sq_wk, double mU2_sq_wk, double mU1_sq_wk, double mD3_sq_wk,
-                                  double mD2_sq_wk, double mD1_sq_wk, double mE3_sq_wk, double mE2_sq_wk, double mE1_sq_wk,
-                                  double M1_wk, double M2_wk, double M3_wk, double mHu_sq_wk, double mHd_sq_wk, double at_wk,
-                                  double ac_wk, double au_wk, double ab_wk, double as_wk, double ad_wk, double atau_wk,
-                                  double amu_wk, double ae_wk, double b_wk) {
-    // // cout << "beta_wk: " << beta_wk << endl;
+vector<double> TreeMassCalculator(std::vector<double> weak_boundary_conditions, double myQ, double mymZsq) {
+    const double mymZ = copysign(sqrt(abs(mymZsq)), mymZsq);
+    const double g1_wk = weak_boundary_conditions[0];
+    const double g2_wk = weak_boundary_conditions[1];
+    const double g3_wk = weak_boundary_conditions[2];
+    // Higgs parameters
+    const double beta_wk = atan(weak_boundary_conditions[43]);
+    const double mu_wk = weak_boundary_conditions[6];
+    const double mu_wk_sq = pow(mu_wk, 2.0);
+    // Yukawas
+    const double yt_wk = weak_boundary_conditions[7];
+    const double yc_wk = weak_boundary_conditions[8];
+    const double yu_wk = weak_boundary_conditions[9];
+    const double yb_wk = weak_boundary_conditions[10];
+    const double ys_wk = weak_boundary_conditions[11];
+    const double yd_wk = weak_boundary_conditions[12];
+    const double ytau_wk = weak_boundary_conditions[13];
+    const double ymu_wk = weak_boundary_conditions[14];
+    const double ye_wk = weak_boundary_conditions[15];
+    // Soft trilinears
+    const double at_wk = weak_boundary_conditions[16];
+    const double ac_wk = weak_boundary_conditions[17];
+    const double au_wk = weak_boundary_conditions[18];
+    const double ab_wk = weak_boundary_conditions[19];
+    const double as_wk = weak_boundary_conditions[20];
+    const double ad_wk = weak_boundary_conditions[21];
+    const double atau_wk = weak_boundary_conditions[22];
+    const double amu_wk = weak_boundary_conditions[23];
+    const double ae_wk = weak_boundary_conditions[24];
+    // Gaugino masses
+    const double M1_wk = weak_boundary_conditions[3];
+    const double M2_wk = weak_boundary_conditions[4];
+    const double M3_wk = weak_boundary_conditions[5];
+    // Soft mass dim. 2 terms
+    const double mHu_sq_wk = weak_boundary_conditions[25];
+    const double mHd_sq_wk = weak_boundary_conditions[26];
+    const double mQ1_sq_wk = weak_boundary_conditions[27];
+    const double mQ2_sq_wk = weak_boundary_conditions[28];
+    const double mQ3_sq_wk = weak_boundary_conditions[29];
+    const double mL1_sq_wk = weak_boundary_conditions[30];
+    const double mL2_sq_wk = weak_boundary_conditions[31];
+    const double mL3_sq_wk = weak_boundary_conditions[32];
+    const double mU1_sq_wk = weak_boundary_conditions[33];
+    const double mU2_sq_wk = weak_boundary_conditions[34];
+    const double mU3_sq_wk = weak_boundary_conditions[35];
+    const double mD1_sq_wk = weak_boundary_conditions[36];
+    const double mD2_sq_wk = weak_boundary_conditions[37];
+    const double mD3_sq_wk = weak_boundary_conditions[38];
+    const double mE1_sq_wk = weak_boundary_conditions[39];
+    const double mE2_sq_wk = weak_boundary_conditions[40];
+    const double mE3_sq_wk = weak_boundary_conditions[41];
+    const double b_wk = weak_boundary_conditions[42];
     double gpr_wk = g1_wk * sqrt(3.0 / 5.0);
     // // cout << "gpr_wk: " << gpr_wk << endl;
     double gpr_sq = pow(gpr_wk, 2.0);
     // // cout << "gpr_sq: " << gpr_sq << endl;
     double g2_sq = pow(g2_wk, 2.0);
     // // cout << "g2_sq: " << g2_sq << endl;
-    double mu_wk_sq = pow(mu_wk, 2.0);
     // // cout << "mu_wk_sq: " << mu_wk_sq << endl;
-
+    double vHiggs_wk = mymZ * sqrt(2.0 / (gpr_sq + g2_sq));
     double sinsqb = pow(sin(beta_wk), 2.0);
     // // cout << "sinsqb: " << sinsqb << endl;
     double cossqb = pow(cos(beta_wk), 2.0);
@@ -84,58 +125,57 @@ vector<double> TreeMassCalculator(double myQ, double vHiggs_wk, double mu_wk, do
     ////////// Mass relations: //////////
 
     // W-boson tree-level running squared mass
-    double m_w_sq = (pow(g2_wk, 2.0) / 2.0) * v_sq;
+    const double m_w_sq = (pow(g2_wk, 2.0) / 2.0) * v_sq;
 
     // Z-boson tree-level running squared mass
-    double mz_q_sq = v_sq * ((pow(g2_wk, 2.0) + pow(gpr_wk, 2.0)) / 2.0);
+    const double mz_q_sq = pow(mymZ, 2.0);// v_sq* ((pow(g2_wk, 2.0) + pow(gpr_wk, 2.0)) / 2.0);
 
     // Higgs psuedoscalar tree-level running squared mass
-    double mA0sq = (2.0 * mu_wk_sq) + mHu_sq_wk + mHd_sq_wk;
-    //double mA0sq = 2.0 * b_wk / sin(2.0 * beta_wk);
+    const double mA0sq = 2.0 * mu_wk_sq + mHu_sq_wk + mHd_sq_wk;
 
     // Top quark tree-level running mass
-    double mymt = yt_wk * vu;
-    double mymtsq = pow(mymt, 2.0);
+    const double mymt = yt_wk * vu;
+    const double mymtsq = pow(mymt, 2.0);
 
     // Bottom quark tree-level running mass
-    double mymb = yb_wk * vd;
-    double mymbsq = pow(mymb, 2.0);
+    const double mymb = yb_wk * vd;
+    const double mymbsq = pow(mymb, 2.0);
 
     // Tau tree-level running mass
-    double mymtau = ytau_wk * vd;
-    double mymtausq = pow(mymtau, 2.0);
+    const double mymtau = ytau_wk * vd;
+    const double mymtausq = pow(mymtau, 2.0);
 
     // Charm quark tree-level running mass
-    double mymc = yc_wk * vu;
-    double mymcsq = pow(mymc, 2.0);
+    const double mymc = yc_wk * vu;
+    const double mymcsq = pow(mymc, 2.0);
 
     // Strange quark tree-level running mass
-    double myms = ys_wk * vd;
-    double mymssq = pow(myms, 2.0);
+    const double myms = ys_wk * vd;
+    const double mymssq = pow(myms, 2.0);
 
     // Muon tree-level running mass
-    double mymmu = ymu_wk * vd;
-    double mymmusq = pow(mymmu, 2.0);
+    const double mymmu = ymu_wk * vd;
+    const double mymmusq = pow(mymmu, 2.0);
 
     // Up quark tree-level running mass
-    double mymu = yu_wk * vu;
-    double mymusq = pow(mymu, 2.0);
+    const double mymu = yu_wk * vu;
+    const double mymusq = pow(mymu, 2.0);
 
     // Down quark tree-level running mass
-    double mymd = yd_wk * vd;
-    double mymdsq = pow(mymd, 2.0);
+    const double mymd = yd_wk * vd;
+    const double mymdsq = pow(mymd, 2.0);
 
     // Electron tree-level running mass
-    double myme = ye_wk * vd;
-    double mymesq = pow(myme, 2.0);
+    const double myme = ye_wk * vd;
+    const double mymesq = pow(myme, 2.0);
 
     // Sneutrino running masses
-    double mselecneutsq = mL1_sq_wk + (0.25 * (gpr_sq + g2_sq) * (vd_sq - vu_sq));
-    double msmuneutsq = mL2_sq_wk + (0.25 * (gpr_sq + g2_sq) * (vd_sq - vu_sq));
-    double mstauneutsq = mL3_sq_wk + (0.25 * (gpr_sq + g2_sq) * (vd_sq - vu_sq));
+    const double mselecneutsq = mL1_sq_wk + (0.25 * (gpr_sq + g2_sq) * (vd_sq - vu_sq));
+    const double msmuneutsq = mL2_sq_wk + (0.25 * (gpr_sq + g2_sq) * (vd_sq - vu_sq));
+    const double mstauneutsq = mL3_sq_wk + (0.25 * (gpr_sq + g2_sq) * (vd_sq - vu_sq));
 
     // Tree-level charged Higgs running squared mass.
-    double mH_pmsq = mA0sq + m_w_sq;
+    const double mH_pmsq = mA0sq + m_w_sq;
 
     // Set up hyperfine splitting contributions to squark/slepton masses
     double Delta_suL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 6.0) - (g2_sq / 4.0));
@@ -249,6 +289,17 @@ vector<double> TreeMassCalculator(double myQ, double vHiggs_wk, double mu_wk, do
     Eigen::Matrix<double, 4, 1> mneutrsq = my_neut_mass_eigvals.array().square();
     sort(mneutrsq.data(), mneutrsq.data() + mneutrsq.size());
 
+    vector<double> eigval_vector(my_neut_mass_eigvals.data(), my_neut_mass_eigvals.data() + my_neut_mass_eigvals.size());
+    sort(eigval_vector.begin(), eigval_vector.end(), [](double a, double b) {
+        return abs(a) < abs(b);
+    });
+
+    double msN1 = eigval_vector[0];
+    double msN2 = eigval_vector[1];
+    double msN3 = eigval_vector[2];
+    double msN4 = eigval_vector[3];
+    //cout << "msN1 = " << msN1 << "\nmsN2 = " << msN2 <<  "\nmsN3 = " << msN3 <<  "\nmsN4 = " << msN4 << endl;
+
     double msN1sq = mneutrsq[0];
     double msN2sq = mneutrsq[1];
     double msN3sq = mneutrsq[2];
@@ -261,6 +312,7 @@ vector<double> TreeMassCalculator(double myQ, double vHiggs_wk, double mu_wk, do
     double mH0sq = (0.5)\
         * ((mA0sq) + (mz_q_sq)
            + sqrt(pow(mA0sq - mz_q_sq, 2.0) + (4.0 * mz_q_sq * mA0sq * pow(sin(2.0 * beta_wk), 2.0))));
+
     double Deltamgl_gluon_gluino = (((3.0 * pow(g3_wk, 2.0)) / (16.0 * pow(M_PI, 2.0)))
                              * (5.0 + (3.0 * log(pow((myQ / M3_wk) , 2.0)))));
     
@@ -269,18 +321,18 @@ vector<double> TreeMassCalculator(double myQ, double vHiggs_wk, double mu_wk, do
     double m_gluino = M3_wk * (1.0 - Deltamgl_SUSY);
 
     /* Output order:
-     {0: mu, 1: mst1^2, 2: mst2^2, 3: msc1^2, 4: msc2^2, 5: msu1^2, 6: msu2^2, 7: msb1^2, 8: msb2^2,
+     {0: mu^2, 1: mst1^2, 2: mst2^2, 3: msc1^2, 4: msc2^2, 5: msu1^2, 6: msu2^2, 7: msb1^2, 8: msb2^2,
       9: mss1^2, 10: mss2^2, 11: msd1^2, 12: msd2^2, 13: mstau1^2, 14: mstau2^2, 15: msmu1^2, 16: msmu2^2,
       17: mse1^2, 18: mse2^2, 19: m_Chargino_1, 20: m_chargino_2, 21: m_neutralino_1, 22: m_neutralino_2,
       23: m_neutralino_3, 24: m_neutralino_4, 25: m_gluino, 26: mA0^2, 27: mH0^2, 28: mHpm^2,
       29: m_snu_tau^2, 30: m_snu_mu^2, 31: m_snu_e^2}
     */
-    vector<double> masses = {mu_wk, m_stop_1sq, m_stop_2sq, m_scharm_1sq, m_scharm_2sq,
+    vector<double> masses = {mu_wk * mu_wk, m_stop_1sq, m_stop_2sq, m_scharm_1sq, m_scharm_2sq,
                              m_sup_1sq, m_sup_2sq, m_sbot_1sq, m_sbot_2sq, m_sstrange_1sq,
                              m_sstrange_2sq, m_sdown_1sq, m_sdown_2sq, m_stau_1sq,
-                             m_stau_2sq, m_smu_1sq, m_smu_2sq, m_se_1sq, m_se_2sq, sqrt(msC1sq),
-                             sqrt(msC2sq), sqrt(msN1sq), sqrt(msN2sq),
-                             sqrt(msN3sq), sqrt(msN4sq), m_gluino, mA0sq, mH0sq, mH_pmsq,
+                             m_stau_2sq, m_smu_1sq, m_smu_2sq, m_se_1sq, m_se_2sq, copysign(sqrt(msC1sq), msC1sq),
+                             copysign(sqrt(msC2sq), msC2sq), copysign(sqrt(msN1sq), msN1sq), copysign(sqrt(msN2sq), msN2sq),
+                             copysign(sqrt(msN3sq), msN3sq), copysign(sqrt(msN4sq), msN4sq), m_gluino, mA0sq, mH0sq, mH_pmsq,
                              mstauneutsq, msmuneutsq, mselecneutsq};
 
     return masses;
