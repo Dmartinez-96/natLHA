@@ -278,8 +278,8 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
     }
     // std::cout << "B(ABDS, minus) = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
     double B_GUT_minus = BnewGUTs_minus[42] / BnewGUTs_minus[6];
-    if (B_GUT_minus == GUT_boundary_conditions[42] / GUT_boundary_conditions[6]) {
-        B_GUT_minus = copysign(boost::math::float_prior(abs(B_GUT_minus)), B_GUT_minus);
+    if (abs(B_GUT_minus - (GUT_boundary_conditions[42] / GUT_boundary_conditions[6])) < 1.0e-9) {
+        B_GUT_minus = 0.9999 * B_GUT_minus;
     }
     Bcurr_tanbGUT = GUT_boundary_conditions[43];
     Bnew_tanbGUT = Bcurr_tanbGUT;
@@ -354,8 +354,8 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
     }
     // std::cout << "B(ABDS, plus) = " << BnewGUTs_plus[42] / BnewGUTs_plus[6] << endl;
     double B_GUT_plus = BnewGUTs_plus[42] / BnewGUTs_plus[6];
-    if (B_GUT_plus == GUT_boundary_conditions[42] / GUT_boundary_conditions[6]) {
-        B_GUT_plus = copysign(boost::math::float_next(abs(B_GUT_plus)), B_GUT_plus);
+    if (abs(B_GUT_plus - (GUT_boundary_conditions[42] / GUT_boundary_conditions[6])) < 1.0e-9) {
+        B_GUT_plus = 1.0001 * B_GUT_plus;
     }
     Bcurr_tanbGUT = BnewGUTs_minus[43];
     Bnew_tanbGUT = Bcurr_tanbGUT;
@@ -368,12 +368,12 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
     bool ABDSpluscheck = (BplusEWSB && BplusNoCCB);
     double B_TOTAL_GUT_minus, B_TOTAL_GUT_plus;
     if (!(ABDSminuscheck) && !(ABDSpluscheck)) {
-        if (B_GUT_minus <= B_GUT_plus) {
-            B_TOTAL_GUT_minus = boost::math::float_prior(B_GUT_minus);
-            B_TOTAL_GUT_plus = boost::math::float_next(B_GUT_plus);
+        if (abs(B_GUT_minus) <= abs(B_GUT_plus)) {
+            B_TOTAL_GUT_minus = pow(10.0, -0.5) * B_GUT_minus;
+            B_TOTAL_GUT_plus = pow(10.0, 0.5) * B_GUT_plus;
         } else {
-            B_TOTAL_GUT_minus = boost::math::float_next(B_GUT_minus);
-            B_TOTAL_GUT_plus = boost::math::float_prior(B_GUT_plus);
+            B_TOTAL_GUT_minus = pow(10.0, 0.5) * B_GUT_minus;
+            B_TOTAL_GUT_plus = pow(10.0, -0.5) * B_GUT_plus;
         }
 
         std::cout << "General window established for B variation." << endl;
@@ -521,12 +521,12 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
     B_TOTAL_GUT_plus = BnewGUTs_plus[42] / BnewGUTs_plus[6];
 
     if ((abs(B_TOTAL_GUT_minus - B_GUT_minus) < 1.0e-12) && (abs(B_TOTAL_GUT_plus - B_GUT_plus) < 1.0e-12)) {
-        if (B_GUT_minus <= B_GUT_plus) {
-            B_TOTAL_GUT_minus = boost::math::float_prior(B_GUT_minus);
-            B_TOTAL_GUT_plus = boost::math::float_next(B_GUT_plus);
+        if (abs(B_GUT_minus) <= abs(B_GUT_plus)) {
+            B_TOTAL_GUT_minus = pow(10.0, -0.5) * B_GUT_minus;
+            B_TOTAL_GUT_plus = pow(10.0, 0.5) * B_GUT_plus;
         } else {
-            B_TOTAL_GUT_minus = boost::math::float_next(B_GUT_minus);
-            B_TOTAL_GUT_plus = boost::math::float_prior(B_GUT_plus);
+            B_TOTAL_GUT_minus = pow(10.0, 0.5) * B_GUT_minus;
+            B_TOTAL_GUT_plus = pow(10.0, -0.5) * B_GUT_plus;
         }
         std::cout << "General window established for B variation." << endl;
 
@@ -705,8 +705,8 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
     }
     // std::cout << paramName << "(ABDS, minus) = " << pinewGUTs_minus[SpecificIndex] << endl; 
     double pi_GUT_minus = pinewGUTs_minus[SpecificIndex];
-    if (pi_GUT_minus == GUT_boundary_conditions[SpecificIndex]) {
-        pi_GUT_minus = copysign(boost::math::float_prior(abs(pi_GUT_minus)), pi_GUT_minus);
+    if (abs(pi_GUT_minus - GUT_boundary_conditions[SpecificIndex]) < 1.0e-9) {
+        pi_GUT_minus = 0.9999 * pi_GUT_minus;
     }
     lambdapi = 0.5;
     pi_least_Sq_Tol = 1.0e-4;
@@ -793,8 +793,8 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
     }
     // std::cout << paramName << "(ABDS, plus) = " << pinewGUTs_plus[SpecificIndex] << endl; 
     double pi_GUT_plus = pinewGUTs_plus[SpecificIndex];
-    if (pi_GUT_plus == GUT_boundary_conditions[SpecificIndex]) {
-        pi_GUT_plus = copysign(boost::math::float_prior(abs(pi_GUT_plus)), pi_GUT_plus);
+    if (abs(pi_GUT_plus - GUT_boundary_conditions[SpecificIndex]) < 1.0e-9) {
+        pi_GUT_plus = 1.0001 * pi_GUT_plus;
     }
 
     std::cout << "ABDS window established for " << paramName << " variation." << endl;
@@ -803,12 +803,12 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
     bool ABDSpluscheck = (piplusEWSB && piplusNoCCB);
     double pi_TOTAL_GUT_minus, pi_TOTAL_GUT_plus;
     if (!(ABDSminuscheck) && !(ABDSpluscheck)) {
-        if (pi_GUT_minus <= pi_GUT_plus) {
-            pi_TOTAL_GUT_minus = boost::math::float_prior(pi_GUT_minus);
-            pi_TOTAL_GUT_plus = boost::math::float_next(pi_GUT_plus);
+        if (abs(pi_GUT_minus) <= abs(pi_GUT_plus)) {
+            pi_TOTAL_GUT_minus = pow(10.0, -0.5) * pi_TOTAL_GUT_minus;
+            pi_TOTAL_GUT_plus = pow(10.0, 0.5) * pi_TOTAL_GUT_plus;
         } else {
-            pi_TOTAL_GUT_minus = boost::math::float_next(pi_GUT_minus);
-            pi_TOTAL_GUT_plus = boost::math::float_prior(pi_GUT_plus);
+            pi_TOTAL_GUT_minus = pow(10.0, 0.5) * pi_TOTAL_GUT_minus;
+            pi_TOTAL_GUT_plus = pow(10.0, -0.5) * pi_TOTAL_GUT_plus;
         }
 
         std::cout << "General window established for " << paramName << " variation." << endl;
@@ -977,12 +977,12 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
     pi_TOTAL_GUT_plus = pinewGUTs_plus[SpecificIndex];
 
     if ((abs(pi_TOTAL_GUT_minus - pi_GUT_minus) < 1.0e-12) && (abs(pi_TOTAL_GUT_plus - pi_GUT_plus) < 1.0e-12)) {
-        if (pi_GUT_minus <= pi_GUT_plus) {
-            pi_TOTAL_GUT_minus = boost::math::float_prior(pi_GUT_minus);
-            pi_TOTAL_GUT_plus = boost::math::float_next(pi_GUT_plus);
+        if (abs(pi_GUT_minus) <= abs(pi_GUT_plus)) {
+            pi_TOTAL_GUT_minus = pow(10.0, -0.5) * pi_GUT_minus;
+            pi_TOTAL_GUT_plus = pow(10.0, 0.5) * pi_GUT_plus;
         } else {
-            pi_TOTAL_GUT_minus = boost::math::float_next(pi_GUT_minus);
-            pi_TOTAL_GUT_plus = boost::math::float_prior(pi_GUT_plus);
+            pi_TOTAL_GUT_minus = pow(10.0, 0.5) * pi_GUT_minus;
+            pi_TOTAL_GUT_plus = pow(10.0, -0.5) * pi_GUT_plus;
         }
 
         std::cout << "General window established for " << paramName << " variation." << endl;
@@ -1110,8 +1110,8 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
     }
     // std::cout << "mu(ABDS, minus) = " << munewGUTs_minus[6] << endl; 
     double mu_GUT_minus = munewGUTs_minus[6];
-    if (mu_GUT_minus == GUT_boundary_conditions[6]) {
-        mu_GUT_minus = copysign(boost::math::float_prior(abs(mu_GUT_minus)), mu_GUT_minus);
+    if (abs(mu_GUT_minus - GUT_boundary_conditions[6]) < 1.0e-9) {
+        mu_GUT_minus = 0.9999 * mu_GUT_minus;
     }
 
     lambdaMu = 0.5;
@@ -1203,8 +1203,8 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
     }
     // std::cout << "mu(ABDS, plus) = " << munewGUTs_plus[6] << endl; 
     double mu_GUT_plus = munewGUTs_plus[6];
-    if (mu_GUT_plus == GUT_boundary_conditions[6]) {
-        mu_GUT_plus = copysign(boost::math::float_next(abs(mu_GUT_plus)), mu_GUT_plus);
+    if (abs(mu_GUT_plus - GUT_boundary_conditions[6]) < 1.0e-9) {
+        mu_GUT_plus = 1.0001 * mu_GUT_minus;
     }
 
     std::cout << "ABDS window established for mu variation." << endl;
@@ -1213,12 +1213,12 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
     bool ABDSpluscheck = (muplusEWSB && muplusNoCCB);
     double mu_TOTAL_GUT_minus, mu_TOTAL_GUT_plus;
     if (!(ABDSminuscheck) && !(ABDSpluscheck)) {
-        if (mu_GUT_minus <= mu_GUT_plus) {
-            mu_TOTAL_GUT_minus = boost::math::float_prior(mu_GUT_minus);
-            mu_TOTAL_GUT_plus = boost::math::float_next(mu_GUT_plus);
+        if (abs(mu_GUT_minus) <= abs(mu_GUT_plus)) {
+            mu_TOTAL_GUT_minus = pow(10.0, -0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = pow(10.0, 0.5) * mu_GUT_plus;
         } else {
-            mu_TOTAL_GUT_minus = boost::math::float_next(mu_GUT_minus);
-            mu_TOTAL_GUT_plus = boost::math::float_prior(mu_GUT_plus);
+            mu_TOTAL_GUT_minus = pow(10.0, 0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = pow(10.0, -0.5) * mu_GUT_plus;
         }
 
         std::cout << "General window established for mu variation." << endl;
@@ -1398,12 +1398,12 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
     mu_TOTAL_GUT_plus = munewGUTs_plus[6];
 
     if ((abs(mu_TOTAL_GUT_minus - mu_GUT_minus) < 1.0e-12) && (abs(mu_TOTAL_GUT_plus - mu_GUT_plus) < 1.0e-12)) {
-        if (mu_GUT_minus <= mu_GUT_plus) {
-            mu_TOTAL_GUT_minus = boost::math::float_prior(mu_GUT_minus);
-            mu_TOTAL_GUT_plus = boost::math::float_next(mu_GUT_plus);
+        if (abs(mu_GUT_minus) <= abs(mu_GUT_plus)) {
+            mu_TOTAL_GUT_minus = pow(10.0, -0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = pow(10.0, 0.5) * mu_GUT_plus;
         } else {
-            mu_TOTAL_GUT_minus = boost::math::float_next(mu_GUT_minus);
-            mu_TOTAL_GUT_plus = boost::math::float_prior(mu_GUT_plus);
+            mu_TOTAL_GUT_minus = pow(10.0, 0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = pow(10.0, -0.5) * mu_GUT_plus;
         }
 
         std::cout << "General window established for mu variation." << endl;
@@ -1594,13 +1594,15 @@ double DSN_calc(int precselno, std::vector<double> GUT_boundary_conditions,
         DSN_soft_denom = abs(copysign(sqrt(abs(MQ1windows[1])), MQ1windows[1])  - copysign(sqrt(abs(MQ1windows[0])), MQ1windows[0]));
         DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(MQ1windows[1])), MQ1windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
             - soft_prob_calc(copysign(sqrt(abs(MQ1windows[0])), MQ1windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
+        // std::cout << DSN_soft_num << endl;
+        // std::cout << DSN_soft_denom << endl;
         newterm = DSN_soft_num / DSN_soft_denom;
         // Total normalization
         DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(MQ1windows[3])), MQ1windows[3]), (2.0 * nF) + (1.0 * nD) - 1.0)\
             - soft_prob_calc(copysign(sqrt(abs(MQ1windows[2])), MQ1windows[2]), (2.0 * nF) + (1.0 * nD) - 1.0);
         DSN_soft_denom = abs(copysign(sqrt(abs(MQ1windows[3])), MQ1windows[3]) - copysign(sqrt(abs(MQ1windows[2])), MQ1windows[2]));
-        std::cout << DSN_soft_num / DSN_soft_denom << endl;
-        std::cout << newterm << endl;
+        // std::cout << DSN_soft_num / DSN_soft_denom << endl;
+        // std::cout << newterm << endl;
         if ((abs((DSN_soft_num / DSN_soft_denom) - newterm) < (numeric_limits<double>::epsilon())) || (isnan(newterm)) || (newterm == 0.0) || isinf(newterm) || (isnan((DSN_soft_num / DSN_soft_denom))) || ((DSN_soft_num / DSN_soft_denom) == 0.0) || isinf((DSN_soft_num / DSN_soft_denom))) {
             newterm = (soft_prob_calc(copysign(sqrt(abs(boost::math::float_next(GUT_boundary_conditions[27]))), boost::math::float_next(GUT_boundary_conditions[27])), (2.0 * nF) + (1.0 * nD) - 1.0)
                        - soft_prob_calc(copysign(sqrt(abs(boost::math::float_prior(GUT_boundary_conditions[27]))), boost::math::float_prior(GUT_boundary_conditions[27])), (2.0 * nF) + (1.0 * nD) - 1.0))\
@@ -1608,8 +1610,8 @@ double DSN_calc(int precselno, std::vector<double> GUT_boundary_conditions,
             DSN_soft_num = soft_prob_calc(copysign(pow(10.0, 0.5) * sqrt(abs(GUT_boundary_conditions[27])), GUT_boundary_conditions[27]), (2.0 * nF) + (1.0 * nD) - 1.0)\
                 - soft_prob_calc(copysign(pow(10.0, -0.5) * sqrt(abs(GUT_boundary_conditions[27])), GUT_boundary_conditions[27]), (2.0 * nF) + (1.0 * nD) - 1.0);
             DSN_soft_denom = abs((pow(10.0, 0.5) * sqrt(abs(GUT_boundary_conditions[27]))) - (pow(10.0, -0.5) * sqrt(abs(GUT_boundary_conditions[27]))));
-            std::cout << DSN_soft_num / DSN_soft_denom << endl;
-            std::cout << newterm << endl;
+            // std::cout << DSN_soft_num / DSN_soft_denom << endl;
+            // std::cout << newterm << endl;
         }
         DSN += abs(log10(abs(DSN_soft_num / DSN_soft_denom)) - log10(abs(newterm)));
         std::cout << "DSN soft term = " << abs(log10(abs(DSN_soft_num / DSN_soft_denom)) - log10(abs(newterm))) << endl;
