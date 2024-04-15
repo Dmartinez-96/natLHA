@@ -540,7 +540,7 @@ double sigmadd_2loop(const double& myQ, const double& mu_wk, const double& beta_
     return real(mysigmadd_2loop);
 }
 
-double dew_funcu(const double& inp, const double& tangentbeta) {
+inline double dew_funcu(const double& inp, const double& tangentbeta) {
     /*
     Compute individual one-loop DEW contributions from Sigma_u^u.
 
@@ -553,7 +553,7 @@ double dew_funcu(const double& inp, const double& tangentbeta) {
     return mycontribuu;
 }
 
-double dew_funcd(const double& inp, const double& tangentbeta) {
+inline double dew_funcd(const double& inp, const double& tangentbeta) {
     /*
     Compute individual one-loop DEW contributions from Sigma_d^d.
 

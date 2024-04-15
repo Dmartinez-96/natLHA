@@ -40,7 +40,7 @@ bool EWSB_Check(vector<double>& weak_boundary_conditions, vector<double>& radiat
     bool checkifEWSB = true;
 
     if (abs(2.0 * weak_boundary_conditions[42]) > abs((2.0 * pow(weak_boundary_conditions[6], 2.0)) + weak_boundary_conditions[25] + radiat_correcs[0] + weak_boundary_conditions[26] + radiat_correcs[1])) {
-        // std::cout << "Scalar pot'l UFB at loop-level." << endl;
+        std::cout << "Scalar pot'l UFB at loop-level." << endl;
         checkifEWSB = false;
     }
     return checkifEWSB;
@@ -50,119 +50,316 @@ bool CCB_Check(vector<double>& weak_boundary_conditions) {
     bool checkifNoCCB = true;
     for (int i = 27; i < 42; ++i) {
         if (weak_boundary_conditions[i] < 0) {
-            // std::cout << "CCB minima" << endl;
+            std::cout << "CCB minima" << endl;
             checkifNoCCB = false;
         }
     }
     return checkifNoCCB;
 }
 
+double first_derivative_calc(double hStep, double pm2h, double pmh, double pph, double pp2h) {
+    return ((pm2h / 12.0) - (2.0 * pmh / 3.0) + (2.0 * pph / 3.0) - (pp2h / 12.0)) / hStep;
+}
+
+double second_derivative_calc(double hStep, double pStart, double pm2h, double pmh, double pph, double pp2h) {
+    return (((-1.0) * pm2h / 12.0) + (4.0 * pmh / 3.0) - (5.0 * pStart / 2.0) + (4.0 * pph / 3.0) - (pp2h / 12.0)) / (hStep * hStep);
+}
+
+double mixed_second_derivative_calc(double pStep, double tStep, double fm2pm2t, double fm2pmt, double fm2ppt, double fm2pp2t,
+                                    double fmpm2t, double fmpmt, double fmppt, double fmpp2t, double fppm2t, double fppmt, double fpppt,
+                                    double fppp2t, double fp2pm2t, double fp2pmt, double fp2ppt, double fp2pp2t) {
+    return ((1.0 / (32.0 * pStep * tStep))
+            * ((4.0 * fpppt) - fp2ppt - fppp2t + (2.0 * fp2pp2t) - (4.0 * fmppt) + fm2ppt + fmpp2t - (2.0 * fm2pp2t)
+               - (4.0 * fppmt) + fp2pmt + fppm2t - (2.0 * fp2pm2t) + (4.0 * fmpmt) - fm2pmt - fmpm2t + (2.0 * fm2pm2t)));
+}
+
+double calculate_approx_mZ2(vector<double> weak_solutions, double explogQSUSY, double mZ2Value) {
+    vector<double> calculateRadCorrs = radcorr_calc(weak_solutions, explogQSUSY, mZ2Value);
+    return 2.0 * ((((weak_solutions[26] + calculateRadCorrs[1] - ((weak_solutions[25] + calculateRadCorrs[0]) * weak_solutions[43] * weak_solutions[43]))) / ((weak_solutions[43] * weak_solutions[43]) - 1.0)) - (weak_solutions[6] * weak_solutions[6]));
+}
+
+double calculate_approx_tanb(vector<double> weak_solutions, double explogQSUSY, double mZ2Value) {
+    vector<double> calculateRadCorrs = radcorr_calc(weak_solutions, explogQSUSY, mZ2Value);
+    return tan(0.5 * (M_PI - asin(abs(2.0 * weak_solutions[42] / (weak_solutions[25] + weak_solutions[26] + calculateRadCorrs[0] + calculateRadCorrs[1] + (2.0 * weak_solutions[6] * weak_solutions[6]))))));
+}
+
 vector<double> single_var_deriv_approxes(vector<double>& original_GUT_conditions, double& fixed_mZ2_val, int idx_to_shift, double& logQSUSYval, double& logQGUTval) {
     double p_orig, h_p, p_plus, p_minus, p_plusplus, p_minusminus;
     if (idx_to_shift == 42) {
         p_orig = original_GUT_conditions[idx_to_shift] / original_GUT_conditions[6];
-        h_p = max(pow(10.25 * (boost::math::float_next(abs(p_orig)) - abs(p_orig)), 0.2), 1.0e-6);
+        h_p = max(pow(10.25 * (boost::math::float_next(abs(p_orig)) - abs(p_orig)), (1.0 / 5.0)), 1.0e-6);//max(pow(10.25 * (boost::math::float_next(abs(p_orig)) - abs(p_orig)), 0.2), 1.0e-6);
         p_plus = p_orig + h_p;
         p_minus = p_orig - h_p;
-    //    p_plusplus = p_plus + h_p;
-    //    p_minusminus = p_minus - h_p;
+        p_plusplus = p_plus + h_p;
+        p_minusminus = p_minus - h_p;
     }
     else {
         p_orig = original_GUT_conditions[idx_to_shift];
-        h_p = max(pow(10.25 * (boost::math::float_next(abs(p_orig)) - abs(p_orig)), 0.2), 1.0e-6);
+        h_p = max(pow(10.25 * (boost::math::float_next(abs(p_orig)) - abs(p_orig)), (1.0 / 5.0)), 1.0e-6);//max(pow(10.25 * (boost::math::float_next(abs(p_orig)) - abs(p_orig)), 0.2), 1.0e-6);
         p_plus = p_orig + h_p;
         p_minus = p_orig - h_p;
-    //    p_plusplus = p_plus + h_p;
-    //    p_minusminus = p_minus - h_p;
+        p_plusplus = p_plus + h_p;
+        p_minusminus = p_minus - h_p;
     }
 
     vector<double> newmZ2GUTs_plus = original_GUT_conditions;
-    //vector<double> newmZ2GUTs_plusplus = original_GUT_conditions;
+    vector<double> newmZ2GUTs_plusplus = original_GUT_conditions;
     vector<double> newtanbGUTs_plus = original_GUT_conditions;
-    //vector<double> newtanbGUTs_plusplus = original_GUT_conditions;
+    vector<double> newtanbGUTs_plusplus = original_GUT_conditions;
     vector<double> newmZ2GUTs_minus = original_GUT_conditions;
-    //vector<double> newmZ2GUTs_minusminus = original_GUT_conditions;
+    vector<double> newmZ2GUTs_minusminus = original_GUT_conditions;
     vector<double> newtanbGUTs_minus = original_GUT_conditions;
-    //vector<double> newtanbGUTs_minusminus = original_GUT_conditions;
+    vector<double> newtanbGUTs_minusminus = original_GUT_conditions;
+    vector<double> newtanb_plus_p_plus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plusplus_p_plus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plus_p_plusplus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plusplus_p_plusplus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plus_p_minus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plusplus_p_minus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plus_p_minusminus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_plusplus_p_minusminus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minus_p_plus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minusminus_p_plus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minus_p_plusplus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minusminus_p_plusplus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minus_p_minus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minusminus_p_minus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minus_p_minusminus_GUTS = original_GUT_conditions;
+    vector<double> newtanb_minusminus_p_minusminus_GUTS = original_GUT_conditions;
 
     double tanb_orig = original_GUT_conditions[43];
-    double h_tanb = pow(10.25 * (boost::math::float_next(abs(tanb_orig)) - abs(tanb_orig)), 0.2);
-    //std::cout << "tanb step size = " << h_tanb << endl;
+    double h_tanb = pow(3.0 * (boost::math::float_next(abs(tanb_orig)) - abs(tanb_orig)), (1.0 / 3.0));//pow(10.25 * (boost::math::float_next(abs(tanb_orig)) - abs(tanb_orig)), 0.2);
+    
     newtanbGUTs_plus[43] = tanb_orig + h_tanb;
+    newtanbGUTs_plusplus[43] = tanb_orig + (2.0 * h_tanb);
+    newtanb_plus_p_plus_GUTS[43] = tanb_orig + h_tanb;
+    newtanb_plus_p_plusplus_GUTS[43] = tanb_orig + h_tanb;
+    newtanb_plusplus_p_plus_GUTS[43] = tanb_orig + (2.0 * h_tanb);
+    newtanb_plusplus_p_plusplus_GUTS[43] = tanb_orig + (2.0 * h_tanb);
+    newtanb_plus_p_minus_GUTS[43] = tanb_orig + h_tanb;
+    newtanb_plus_p_minusminus_GUTS[43] = tanb_orig + h_tanb;
+    newtanb_plusplus_p_minus_GUTS[43] = tanb_orig + (2.0 * h_tanb);
+    newtanb_plusplus_p_minusminus_GUTS[43] = tanb_orig + (2.0 * h_tanb);
     newtanbGUTs_minus[43] = tanb_orig - h_tanb;
-    //newtanbGUTs_plusplus[43] = tanb_orig + h_tanb + h_tanb;
-    //newtanbGUTs_minusminus[43] = tanb_orig - h_tanb - h_tanb;
+    newtanbGUTs_minusminus[43] = tanb_orig - (2.0 * h_tanb);
+    newtanb_minus_p_plus_GUTS[43] = tanb_orig - h_tanb;
+    newtanb_minus_p_plusplus_GUTS[43] = tanb_orig - h_tanb;
+    newtanb_minusminus_p_plus_GUTS[43] = tanb_orig - (2.0 * h_tanb);
+    newtanb_minusminus_p_plusplus_GUTS[43] = tanb_orig - (2.0 * h_tanb);
+    newtanb_minus_p_minus_GUTS[43] = tanb_orig - h_tanb;
+    newtanb_minus_p_minusminus_GUTS[43] = tanb_orig - h_tanb;
+    newtanb_minusminus_p_minus_GUTS[43] = tanb_orig - (2.0 * h_tanb);
+    newtanb_minusminus_p_minusminus_GUTS[43] = tanb_orig - (2.0 * h_tanb);
+
+    // Adjust Yukawas at Q=mt=173.2 GeV for shifted tanb points
+    vector<double> weaksols_original = solveODEs(original_GUT_conditions, logQGUTval, logQSUSYval, -1.0e-6);
+    double wk_tanb = weaksols_original[43];
+    vector<double> mZsols_original = solveODEs(original_GUT_conditions, logQGUTval, log(173.2), -1.0e-6);
+    vector<double> mZsolstanb_plus = solveODEs(newtanbGUTs_plus, logQGUTval, log(173.2), -1.0e-6);
+    vector<double> mZsolstanb_minus = solveODEs(newtanbGUTs_minus, logQGUTval, log(173.2), -1.0e-6);
+    vector<double> mZsolstanb_plusplus = solveODEs(newtanbGUTs_plusplus, logQGUTval, log(173.2), -1.0e-6);
+    vector<double> mZsolstanb_minusminus = solveODEs(newtanbGUTs_minusminus, logQGUTval, log(173.2), -1.0e-6);
+    for (int UpYukawaIndex = 7; UpYukawaIndex < 10; ++UpYukawaIndex) {
+        mZsolstanb_plus[UpYukawaIndex] *= sin(atan(mZsols_original[43])) / sin(atan(mZsolstanb_plus[43]));
+        mZsolstanb_plusplus[UpYukawaIndex] *= sin(atan(mZsols_original[43])) / sin(atan(mZsolstanb_plusplus[43]));
+        mZsolstanb_minus[UpYukawaIndex] *= sin(atan(mZsols_original[43])) / sin(atan(mZsolstanb_minus[43]));
+        mZsolstanb_minusminus[UpYukawaIndex] *= sin(atan(mZsols_original[43])) / sin(atan(mZsolstanb_minusminus[43]));
+    }
+    for (int DownYukawaIndex = 10; DownYukawaIndex < 16; ++DownYukawaIndex) {
+        mZsolstanb_plus[DownYukawaIndex] *= cos(atan(mZsols_original[43])) / cos(atan(mZsolstanb_plus[43]));
+        mZsolstanb_plusplus[DownYukawaIndex] *= cos(atan(mZsols_original[43])) / cos(atan(mZsolstanb_plusplus[43]));
+        mZsolstanb_minus[DownYukawaIndex] *= cos(atan(mZsols_original[43])) / cos(atan(mZsolstanb_minus[43]));
+        mZsolstanb_minusminus[DownYukawaIndex] *= cos(atan(mZsols_original[43])) / cos(atan(mZsolstanb_minusminus[43]));
+    }
+    vector<double> newGUTyuks_tanb_plus = solveODEs(mZsolstanb_plus, log(173.2), logQGUTval, 1.0e-6);
+    vector<double> newGUTyuks_tanb_plusplus = solveODEs(mZsolstanb_plusplus, log(173.2), logQGUTval, 1.0e-6);
+    vector<double> newGUTyuks_tanb_minus = solveODEs(mZsolstanb_minus, log(173.2), logQGUTval, 1.0e-6);
+    vector<double> newGUTyuks_tanb_minusminus = solveODEs(mZsolstanb_minusminus, log(173.2), logQGUTval, 1.0e-6);
+    for (int YukawaIndex = 7; YukawaIndex < 16; ++YukawaIndex) {
+        newtanbGUTs_plus[YukawaIndex] = newGUTyuks_tanb_plus[YukawaIndex];
+        newtanbGUTs_plusplus[YukawaIndex] = newGUTyuks_tanb_plusplus[YukawaIndex];
+        newtanb_plus_p_plus_GUTS[YukawaIndex] = newGUTyuks_tanb_plus[YukawaIndex];
+        newtanb_plus_p_plusplus_GUTS[YukawaIndex] = newGUTyuks_tanb_plus[YukawaIndex];
+        newtanb_plusplus_p_plus_GUTS[YukawaIndex] = newGUTyuks_tanb_plusplus[YukawaIndex];
+        newtanb_plusplus_p_plusplus_GUTS[YukawaIndex] = newGUTyuks_tanb_plusplus[YukawaIndex];
+        newtanb_plus_p_minus_GUTS[YukawaIndex] = newGUTyuks_tanb_plus[YukawaIndex];
+        newtanb_plus_p_minusminus_GUTS[YukawaIndex] = newGUTyuks_tanb_plus[YukawaIndex];
+        newtanb_plusplus_p_minus_GUTS[YukawaIndex] = newGUTyuks_tanb_plusplus[YukawaIndex];
+        newtanb_plusplus_p_minusminus_GUTS[YukawaIndex] = newGUTyuks_tanb_plusplus[YukawaIndex];
+        newtanbGUTs_minus[YukawaIndex] = newGUTyuks_tanb_minus[YukawaIndex];
+        newtanbGUTs_minusminus[YukawaIndex] = newGUTyuks_tanb_minusminus[YukawaIndex];
+        newtanb_minus_p_plus_GUTS[YukawaIndex] = newGUTyuks_tanb_minus[YukawaIndex];
+        newtanb_minus_p_plusplus_GUTS[YukawaIndex] = newGUTyuks_tanb_minus[YukawaIndex];
+        newtanb_minusminus_p_plus_GUTS[YukawaIndex] = newGUTyuks_tanb_minusminus[YukawaIndex];
+        newtanb_minusminus_p_plusplus_GUTS[YukawaIndex] = newGUTyuks_tanb_minusminus[YukawaIndex];
+        newtanb_minus_p_minus_GUTS[YukawaIndex] = newGUTyuks_tanb_minus[YukawaIndex];
+        newtanb_minus_p_minusminus_GUTS[YukawaIndex] = newGUTyuks_tanb_minus[YukawaIndex];
+        newtanb_minusminus_p_minus_GUTS[YukawaIndex] = newGUTyuks_tanb_minusminus[YukawaIndex];
+        newtanb_minusminus_p_minusminus_GUTS[YukawaIndex] = newGUTyuks_tanb_minusminus[YukawaIndex];
+    }
 
     vector<double> weaksolstanb_plus = solveODEs(newtanbGUTs_plus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
     vector<double> weaksolstanb_minus = solveODEs(newtanbGUTs_minus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
-    //vector<double> weaksolstanb_plusplus = solveODEs(newtanbGUTs_plusplus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
-    //vector<double> weaksolstanb_minusminus = solveODEs(newtanbGUTs_minusminus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
-
-    vector<double> TanbPlusRadCorrs = radcorr_calc(weaksolstanb_plus, exp(logQSUSYval), fixed_mZ2_val);
-    vector<double> TanbMinusRadCorrs = radcorr_calc(weaksolstanb_minus, exp(logQSUSYval), fixed_mZ2_val);
-    //vector<double> TanbPlusPlusRadCorrs = radcorr_calc(weaksolstanb_plusplus, exp(logQSUSYval), fixed_mZ2_val);
-    //vector<double> TanbMinusMinusRadCorrs = radcorr_calc(weaksolstanb_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    vector<double> weaksolstanb_plusplus = solveODEs(newtanbGUTs_plusplus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minusminus = solveODEs(newtanbGUTs_minusminus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
     
-    double tanb_mZ2_plus = (1.0 / 2.0) - (((weaksolstanb_plus[26] + TanbPlusRadCorrs[1] - ((weaksolstanb_plus[25] + TanbPlusRadCorrs[0]) * pow(weaksolstanb_plus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolstanb_plus[43], 2.0) - 1.0))) - (pow(weaksolstanb_plus[6], 2.0) / fixed_mZ2_val));
-    double tanb_mZ2_minus = (1.0 / 2.0) - (((weaksolstanb_minus[26] + TanbMinusRadCorrs[1] - ((weaksolstanb_minus[25] + TanbMinusRadCorrs[0]) * pow(weaksolstanb_minus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolstanb_minus[43], 2.0) - 1.0))) - (pow(weaksolstanb_minus[6], 2.0) / fixed_mZ2_val));
-    //double tanb_mZ2_plusplus = (1.0 / 2.0) - (((weaksolstanb_plusplus[26] + TanbPlusPlusRadCorrs[1] - ((weaksolstanb_plusplus[25] + TanbPlusPlusRadCorrs[0]) * pow(weaksolstanb_plusplus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolstanb_plusplus[43], 2.0) - 1.0))) - (pow(weaksolstanb_plusplus[6], 2.0) / fixed_mZ2_val));
-    //double tanb_mZ2_minusminus = (1.0 / 2.0) - (((weaksolstanb_minusminus[26] + TanbMinusMinusRadCorrs[1] - ((weaksolstanb_minusminus[25] + TanbMinusMinusRadCorrs[0]) * pow(weaksolstanb_minusminus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolstanb_minusminus[43], 2.0) - 1.0))) - (pow(weaksolstanb_minusminus[6], 2.0) / fixed_mZ2_val));
-    
-    double tanb_tanb_plus = weaksolstanb_plus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolstanb_plus[42] / (weaksolstanb_plus[25] + TanbPlusRadCorrs[0] + weaksolstanb_plus[26] + TanbPlusRadCorrs[1] + (2.0 * pow(weaksolstanb_plus[6], 2.0))))));
-    double tanb_tanb_minus = weaksolstanb_minus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolstanb_minus[42] / (weaksolstanb_minus[25] + TanbMinusRadCorrs[0] + weaksolstanb_minus[26] + TanbMinusRadCorrs[1] + (2.0 * pow(weaksolstanb_minus[6], 2.0))))));
-    //double tanb_tanb_plusplus = weaksolstanb_plusplus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolstanb_plusplus[42] / (weaksolstanb_plusplus[25] + TanbPlusPlusRadCorrs[0] + weaksolstanb_plusplus[26] + TanbPlusPlusRadCorrs[1] + (2.0 * pow(weaksolstanb_plusplus[6], 2.0))))));
-    //double tanb_tanb_minusminus = weaksolstanb_minusminus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolstanb_minusminus[42] / (weaksolstanb_minusminus[25] + TanbMinusMinusRadCorrs[0] + weaksolstanb_minusminus[26] + TanbMinusMinusRadCorrs[1] + (2.0 * pow(weaksolstanb_minusminus[6], 2.0))))));
+    double mZ2_tanb_plus = calculate_approx_mZ2(weaksolstanb_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_tanb_minus = calculate_approx_mZ2(weaksolstanb_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_tanb_plusplus = calculate_approx_mZ2(weaksolstanb_plusplus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_tanb_minusminus = calculate_approx_mZ2(weaksolstanb_minusminus, exp(logQSUSYval), fixed_mZ2_val);
 
     if (idx_to_shift == 6) {
         newmZ2GUTs_plus[42] = original_GUT_conditions[42] * p_plus / original_GUT_conditions[6];
-    //    newmZ2GUTs_plusplus[42] = original_GUT_conditions[42] * p_plusplus / original_GUT_conditions[6];
+        newmZ2GUTs_plusplus[42] = original_GUT_conditions[42] * p_plusplus / original_GUT_conditions[6];
+        newtanb_plus_p_plus_GUTS[42] = original_GUT_conditions[42] * p_plus / original_GUT_conditions[6];
+        newtanb_plusplus_p_plus_GUTS[42] = original_GUT_conditions[42] * p_plus / original_GUT_conditions[6];
+        newtanb_plus_p_plusplus_GUTS[42] = original_GUT_conditions[42] * p_plusplus / original_GUT_conditions[6];
+        newtanb_plusplus_p_plusplus_GUTS[42] = original_GUT_conditions[42] * p_plusplus / original_GUT_conditions[6];
+        newtanb_minus_p_plus_GUTS[42] = original_GUT_conditions[42] * p_plus / original_GUT_conditions[6];
+        newtanb_minusminus_p_plus_GUTS[42] = original_GUT_conditions[42] * p_plus / original_GUT_conditions[6];
+        newtanb_minus_p_plusplus_GUTS[42] = original_GUT_conditions[42] * p_plusplus / original_GUT_conditions[6];
+        newtanb_minusminus_p_plusplus_GUTS[42] = original_GUT_conditions[42] * p_plusplus / original_GUT_conditions[6];
         newmZ2GUTs_minus[42] = original_GUT_conditions[42] * p_minus / original_GUT_conditions[6];
-    //    newmZ2GUTs_minusminus[42] = original_GUT_conditions[42] * p_minusminus / original_GUT_conditions[6];
+        newmZ2GUTs_minusminus[42] = original_GUT_conditions[42] * p_minusminus / original_GUT_conditions[6];
+        newtanb_plus_p_minus_GUTS[42] = original_GUT_conditions[42] * p_minus / original_GUT_conditions[6];
+        newtanb_plusplus_p_minus_GUTS[42] = original_GUT_conditions[42] * p_minus / original_GUT_conditions[6];
+        newtanb_plusplus_p_minusminus_GUTS[42] = original_GUT_conditions[42] * p_minusminus / original_GUT_conditions[6];
+        newtanb_plus_p_minusminus_GUTS[42] = original_GUT_conditions[42] * p_minusminus / original_GUT_conditions[6];
+        newtanb_minus_p_minus_GUTS[42] = original_GUT_conditions[42] * p_minus / original_GUT_conditions[6];
+        newtanb_minusminus_p_minus_GUTS[42] = original_GUT_conditions[42] * p_minus / original_GUT_conditions[6];
+        newtanb_minusminus_p_minusminus_GUTS[42] = original_GUT_conditions[42] * p_minusminus / original_GUT_conditions[6];
+        newtanb_minus_p_minusminus_GUTS[42] = original_GUT_conditions[42] * p_minusminus / original_GUT_conditions[6];
         newmZ2GUTs_plus[6] = p_plus;
-    //    newmZ2GUTs_plusplus[6] = p_plusplus;
+        newmZ2GUTs_plusplus[6] = p_plusplus;
+        newtanb_plus_p_plus_GUTS[6] = p_plus;
+        newtanb_plusplus_p_plus_GUTS[6] = p_plus;
+        newtanb_plusplus_p_plusplus_GUTS[6] = p_plusplus;
+        newtanb_plus_p_plusplus_GUTS[6] = p_plusplus;
+        newtanb_minus_p_plus_GUTS[6] = p_plus;
+        newtanb_minusminus_p_plus_GUTS[6] = p_plus;
+        newtanb_minusminus_p_plusplus_GUTS[6] = p_plusplus;
+        newtanb_minus_p_plusplus_GUTS[6] = p_plusplus;
         newmZ2GUTs_minus[6] = p_minus;
-    //    newmZ2GUTs_minusminus[6] = p_minusminus;
+        newmZ2GUTs_minusminus[6] = p_minusminus;
+        newtanb_plus_p_minus_GUTS[6] = p_minus;
+        newtanb_plusplus_p_minus_GUTS[6] = p_minus;
+        newtanb_plusplus_p_minusminus_GUTS[6] = p_minusminus;
+        newtanb_plus_p_minusminus_GUTS[6] = p_minusminus;
+        newtanb_minus_p_minus_GUTS[6] = p_minus;
+        newtanb_minusminus_p_minus_GUTS[6] = p_minus;
+        newtanb_minusminus_p_minusminus_GUTS[6] = p_minusminus;
+        newtanb_minus_p_minusminus_GUTS[6] = p_minusminus;
     } else if (idx_to_shift == 42) {
         newmZ2GUTs_plus[42] = original_GUT_conditions[6] * p_plus;
-    //    newmZ2GUTs_plusplus[42] = original_GUT_conditions[6] * p_plusplus;
+        newmZ2GUTs_plusplus[42] = original_GUT_conditions[6] * p_plusplus;
+        newtanb_plus_p_plus_GUTS[42] = original_GUT_conditions[6] * p_plus;
+        newtanb_plusplus_p_plus_GUTS[42] = original_GUT_conditions[6] * p_plus;
+        newtanb_plus_p_plusplus_GUTS[42] = original_GUT_conditions[6] * p_plusplus;
+        newtanb_plusplus_p_plusplus_GUTS[42] = original_GUT_conditions[6] * p_plusplus;
+        newtanb_minus_p_plus_GUTS[42] = original_GUT_conditions[6] * p_plus;
+        newtanb_minusminus_p_plus_GUTS[42] = original_GUT_conditions[6] * p_plus;
+        newtanb_minus_p_plusplus_GUTS[42] = original_GUT_conditions[6] * p_plusplus;
+        newtanb_minusminus_p_plusplus_GUTS[42] = original_GUT_conditions[6] * p_plusplus;
         newmZ2GUTs_minus[42] = original_GUT_conditions[6] * p_minus;
-    //    newmZ2GUTs_minusminus[42] = original_GUT_conditions[6] * p_minusminus;
+        newmZ2GUTs_minusminus[42] = original_GUT_conditions[6] * p_minusminus;
+        newtanb_plus_p_minus_GUTS[42] = original_GUT_conditions[6] * p_minus;
+        newtanb_plusplus_p_minus_GUTS[42] = original_GUT_conditions[6] * p_minus;
+        newtanb_plus_p_minusminus_GUTS[42] = original_GUT_conditions[6] * p_minusminus;
+        newtanb_plusplus_p_minusminus_GUTS[42] = original_GUT_conditions[6] * p_minusminus;
+        newtanb_minus_p_minus_GUTS[42] = original_GUT_conditions[6] * p_minus;
+        newtanb_minusminus_p_minus_GUTS[42] = original_GUT_conditions[6] * p_minus;
+        newtanb_minus_p_minusminus_GUTS[42] = original_GUT_conditions[6] * p_minusminus;
+        newtanb_minusminus_p_minusminus_GUTS[42] = original_GUT_conditions[6] * p_minusminus;
     } else {
         newmZ2GUTs_plus[idx_to_shift] = p_plus;
+        newmZ2GUTs_plusplus[idx_to_shift] = p_plusplus;
+        newtanb_plus_p_plus_GUTS[idx_to_shift] = p_plus;
+        newtanb_plusplus_p_plus_GUTS[idx_to_shift] = p_plus;
+        newtanb_plus_p_plusplus_GUTS[idx_to_shift] = p_plusplus;
+        newtanb_plusplus_p_plusplus_GUTS[idx_to_shift] = p_plusplus;
+        newtanb_minus_p_plus_GUTS[idx_to_shift] = p_plus;
+        newtanb_minusminus_p_plus_GUTS[idx_to_shift] = p_plus;
+        newtanb_minusminus_p_plusplus_GUTS[idx_to_shift] = p_plusplus;
+        newtanb_minus_p_plusplus_GUTS[idx_to_shift] = p_plusplus;
         newmZ2GUTs_minus[idx_to_shift] = p_minus;
-    //    newmZ2GUTs_plusplus[idx_to_shift] = p_plusplus;
-    //    newmZ2GUTs_minusminus[idx_to_shift] = p_minusminus;
+        newmZ2GUTs_minusminus[idx_to_shift] = p_minusminus;
+        newtanb_plus_p_minus_GUTS[idx_to_shift] = p_minus;
+        newtanb_plusplus_p_minus_GUTS[idx_to_shift] = p_minus;
+        newtanb_plus_p_minusminus_GUTS[idx_to_shift] = p_minusminus;
+        newtanb_plusplus_p_minusminus_GUTS[idx_to_shift] = p_minusminus;
+        newtanb_minus_p_minus_GUTS[idx_to_shift] = p_minus;
+        newtanb_minusminus_p_minus_GUTS[idx_to_shift] = p_minus;
+        newtanb_minus_p_minusminus_GUTS[idx_to_shift] = p_minusminus;
+        newtanb_minusminus_p_minusminus_GUTS[idx_to_shift] = p_minusminus;
     }
 
-    vector<double> weaksolsmZ2_plus = solveODEs(newmZ2GUTs_plus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
-    //vector<double> weaksolsmZ2_plusplus = solveODEs(newmZ2GUTs_plusplus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
-    vector<double> weaksolsmZ2_minus = solveODEs(newmZ2GUTs_minus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
-    //vector<double> weaksolsmZ2_minusminus = solveODEs(newmZ2GUTs_minusminus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolsp_plus = solveODEs(newmZ2GUTs_plus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolsp_plusplus = solveODEs(newmZ2GUTs_plusplus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plus_p_plus = solveODEs(newtanb_plus_p_plus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plusplus_p_plus = solveODEs(newtanb_plusplus_p_plus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plus_p_plusplus = solveODEs(newtanb_plus_p_plusplus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plusplus_p_plusplus = solveODEs(newtanb_plusplus_p_plusplus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minus_p_plus = solveODEs(newtanb_minus_p_plus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minusminus_p_plus = solveODEs(newtanb_minusminus_p_plus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minus_p_plusplus = solveODEs(newtanb_minus_p_plusplus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minusminus_p_plusplus = solveODEs(newtanb_minusminus_p_plusplus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolsp_minus = solveODEs(newmZ2GUTs_minus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolsp_minusminus = solveODEs(newmZ2GUTs_minusminus, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plus_p_minus = solveODEs(newtanb_plus_p_minus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plusplus_p_minus = solveODEs(newtanb_plusplus_p_minus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plus_p_minusminus = solveODEs(newtanb_plus_p_minusminus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_plusplus_p_minusminus = solveODEs(newtanb_plusplus_p_minusminus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minus_p_minus = solveODEs(newtanb_minus_p_minus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minusminus_p_minus = solveODEs(newtanb_minusminus_p_minus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minus_p_minusminus = solveODEs(newtanb_minus_p_minusminus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+    vector<double> weaksolstanb_minusminus_p_minusminus = solveODEs(newtanb_minusminus_p_minusminus_GUTS, logQGUTval, logQSUSYval, copysign(1.0e-6, logQSUSYval - logQGUTval));
+        
+    double mZ2_p_plus = calculate_approx_mZ2(weaksolsp_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plusplus = calculate_approx_mZ2(weaksolsp_plusplus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plus_tanb_plus = calculate_approx_mZ2(weaksolstanb_plus_p_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plusplus_tanb_plus = calculate_approx_mZ2(weaksolstanb_plus_p_plusplus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plus_tanb_plusplus = calculate_approx_mZ2(weaksolstanb_plusplus_p_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plusplus_tanb_plusplus = calculate_approx_mZ2(weaksolstanb_plusplus_p_plusplus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plus_tanb_minus = calculate_approx_mZ2(weaksolstanb_minus_p_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plusplus_tanb_minus = calculate_approx_mZ2(weaksolstanb_minus_p_plusplus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plus_tanb_minusminus = calculate_approx_mZ2(weaksolstanb_minusminus_p_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_plusplus_tanb_minusminus = calculate_approx_mZ2(weaksolstanb_minusminus_p_plusplus, exp(logQSUSYval), fixed_mZ2_val);
     
-    vector<double> pPlusRadCorrs = radcorr_calc(weaksolsmZ2_plus, exp(logQSUSYval), fixed_mZ2_val);
-    //vector<double> pPlusPlusRadCorrs = radcorr_calc(weaksolsmZ2_plusplus, exp(logQSUSYval), fixed_mZ2_val);
-    vector<double> pMinusRadCorrs = radcorr_calc(weaksolsmZ2_minus, exp(logQSUSYval), fixed_mZ2_val);
-    //vector<double> pMinusMinusRadCorrs = radcorr_calc(weaksolsmZ2_minusminus, exp(logQSUSYval), fixed_mZ2_val);
-
-    double p_mZ2_plus = (1.0 / 2.0) - (((weaksolsmZ2_plus[26] + pPlusRadCorrs[1] - ((weaksolsmZ2_plus[25] + pPlusRadCorrs[0]) * pow(weaksolsmZ2_plus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolsmZ2_plus[43], 2.0) - 1.0))) - (pow(weaksolsmZ2_plus[6], 2.0) / fixed_mZ2_val));
-    //double p_mZ2_plusplus = (1.0 / 2.0) - (((weaksolsmZ2_plusplus[26] + pPlusPlusRadCorrs[1] - ((weaksolsmZ2_plusplus[25] + pPlusPlusRadCorrs[0]) * pow(weaksolsmZ2_plusplus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolsmZ2_plusplus[43], 2.0) - 1.0))) - (pow(weaksolsmZ2_plusplus[6], 2.0) / fixed_mZ2_val));
-    double p_mZ2_minus = (1.0 / 2.0) - (((weaksolsmZ2_minus[26] + pMinusRadCorrs[1] - ((weaksolsmZ2_minus[25] + pMinusRadCorrs[0]) * pow(weaksolsmZ2_minus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolsmZ2_minus[43], 2.0) - 1.0))) - (pow(weaksolsmZ2_minus[6], 2.0) / fixed_mZ2_val));
-    //double p_mZ2_minusminus = (1.0 / 2.0) - (((weaksolsmZ2_minusminus[26] + pMinusMinusRadCorrs[1] - ((weaksolsmZ2_minusminus[25] + pMinusMinusRadCorrs[0]) * pow(weaksolsmZ2_minusminus[43], 2.0))) / (fixed_mZ2_val * (pow(weaksolsmZ2_minusminus[43], 2.0) - 1.0))) - (pow(weaksolsmZ2_minusminus[6], 2.0) / fixed_mZ2_val));
-    double p_tanb_plus = weaksolsmZ2_plus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolsmZ2_plus[42] / (weaksolsmZ2_plus[25] + pPlusRadCorrs[0] + weaksolsmZ2_plus[26] + pPlusRadCorrs[1] + (2.0 * pow(weaksolsmZ2_plus[6], 2.0))))));
-    //double p_tanb_plusplus = weaksolsmZ2_plusplus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolsmZ2_plusplus[42] / (weaksolsmZ2_plusplus[25] + pPlusPlusRadCorrs[0] + weaksolsmZ2_plusplus[26] + pPlusPlusRadCorrs[1] + (2.0 * pow(weaksolsmZ2_plusplus[6], 2.0))))));
-    double p_tanb_minus = weaksolsmZ2_minus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolsmZ2_minus[42] / (weaksolsmZ2_minus[25] + pMinusRadCorrs[0] + weaksolsmZ2_minus[26] + pMinusRadCorrs[1] + (2.0 * pow(weaksolsmZ2_minus[6], 2.0))))));
-    //double p_tanb_minusminus = weaksolsmZ2_minusminus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksolsmZ2_minusminus[42] / (weaksolsmZ2_minusminus[25] + pMinusMinusRadCorrs[0] + weaksolsmZ2_minusminus[26] + pMinusMinusRadCorrs[1] + (2.0 * pow(weaksolsmZ2_minusminus[6], 2.0))))));
-
+    double mZ2_p_minus = calculate_approx_mZ2(weaksolsp_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minusminus = calculate_approx_mZ2(weaksolsp_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minus_tanb_plus = calculate_approx_mZ2(weaksolstanb_plus_p_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minus_tanb_plusplus = calculate_approx_mZ2(weaksolstanb_plusplus_p_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minusminus_tanb_plus = calculate_approx_mZ2(weaksolstanb_plus_p_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minusminus_tanb_plusplus = calculate_approx_mZ2(weaksolstanb_plusplus_p_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minus_tanb_minus = calculate_approx_mZ2(weaksolstanb_minus_p_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minusminus_tanb_minus = calculate_approx_mZ2(weaksolstanb_minus_p_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minus_tanb_minusminus = calculate_approx_mZ2(weaksolstanb_minusminus_p_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double mZ2_p_minusminus_tanb_minusminus = calculate_approx_mZ2(weaksolstanb_minusminus_p_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    
+    double tanb_p_plus = calculate_approx_tanb(weaksolsp_plus, exp(logQSUSYval), fixed_mZ2_val);
+    double tanb_p_plusplus = calculate_approx_tanb(weaksolsp_plusplus, exp(logQSUSYval), fixed_mZ2_val);
+    
+    double tanb_p_minus = calculate_approx_tanb(weaksolsp_minus, exp(logQSUSYval), fixed_mZ2_val);
+    double tanb_p_minusminus = calculate_approx_tanb(weaksolsp_minusminus, exp(logQSUSYval), fixed_mZ2_val);
+    
     /* Order of derivatives:
-        (0: d(mZ^2 eqn)/dp,
-         1: d(mZ^2 eqn)/d(tanb),
-         2: d(tanb eqn)/dp, 
-         3: d(tanb eqn)/d(tanb))
+        (0: dt/dp,
+         1: d^2t/dp^2,
+         2: dm/dt, 
+         3: dm/dp,
+         4: d^2m/dt^2,
+         5: d^2m/dtdp,
+         6: d^2m/dp^2)
     */
-    vector<double> evaluated_derivs = {((0.5 * p_mZ2_plus) - (0.5 * p_mZ2_minus)) / h_p,//(((-1.0) * p_mZ2_plusplus / 12.0) + (2.0 * p_mZ2_plus / 3.0) - (2.0 * p_mZ2_minus / 3.0) + (p_mZ2_minusminus / 12.0)) / (h_p),
-                                       ((0.5 * tanb_mZ2_plus) - (0.5 * tanb_mZ2_minus)) / h_tanb,//(((-1.0) * tanb_mZ2_plusplus / 12.0) + (2.0 * tanb_mZ2_plus / 3.0) - (2.0 * tanb_mZ2_minus / 3.0) + (tanb_mZ2_minusminus / 12.0)) / (h_tanb),
-                                       ((0.5 * p_tanb_plus) - (0.5 * p_tanb_minus)) / h_p,//(((-1.0) * p_tanb_plusplus / 12.0) + (2.0 * p_tanb_plus / 3.0) - (2.0 * p_tanb_minus / 3.0) + (p_tanb_minusminus / 12.0)) / (h_p),
-                                       ((0.5 * tanb_tanb_plus) - (0.5 * tanb_tanb_minus)) / h_tanb};//(((-1.0) * tanb_tanb_plusplus / 12.0) + (2.0 * tanb_tanb_plus / 3.0) - (2.0 * tanb_tanb_minus / 3.0) + (tanb_tanb_minusminus / 12.0)) / (h_tanb)};
+    vector<double> evaluated_derivs = {first_derivative_calc(h_p, tanb_p_minusminus, tanb_p_minus, tanb_p_plus, tanb_p_plusplus),
+                                       second_derivative_calc(h_p, wk_tanb, tanb_p_minusminus, tanb_p_minus, tanb_p_plus, tanb_p_plusplus),
+                                       first_derivative_calc(h_tanb, mZ2_tanb_minusminus, mZ2_tanb_minus, mZ2_tanb_plus, mZ2_tanb_plusplus),
+                                       first_derivative_calc(h_p, mZ2_p_minusminus, mZ2_p_minus, mZ2_p_plus, mZ2_p_plusplus),
+                                       second_derivative_calc(h_tanb, fixed_mZ2_val, mZ2_tanb_minusminus, mZ2_tanb_minus, mZ2_tanb_plus, mZ2_tanb_plusplus),
+                                       mixed_second_derivative_calc(h_p, h_tanb, mZ2_p_minusminus_tanb_minusminus, mZ2_p_minusminus_tanb_minus, mZ2_p_minusminus_tanb_plus, mZ2_p_minusminus_tanb_plusplus,
+                                                                    mZ2_p_minus_tanb_minusminus, mZ2_p_minus_tanb_minus, mZ2_p_minus_tanb_plus, mZ2_p_minus_tanb_plusplus, mZ2_p_plus_tanb_minusminus, mZ2_p_plus_tanb_minus,
+                                                                    mZ2_p_plus_tanb_plus, mZ2_p_plus_tanb_plusplus, mZ2_p_plusplus_tanb_minusminus, mZ2_p_plusplus_tanb_minus, mZ2_p_plusplus_tanb_plus, mZ2_p_plusplus_tanb_plusplus),
+                                       second_derivative_calc(h_p, fixed_mZ2_val, mZ2_p_minusminus, mZ2_p_minus, mZ2_p_plus, mZ2_p_plusplus)};
     return evaluated_derivs;
 }
 
@@ -205,17 +402,18 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
     double muGUT_original = GUT_boundary_conditions[6];
     // First, compute width of ABDS window
     double lambdaB = 0.5;
-    double B_least_Sq_Tol = 1.0e-4;
+    double B_least_Sq_Tol = 1.0e-2;
     double prev_fB = std::numeric_limits<double>::max();
     double curr_lsq_eval = std::numeric_limits<double>::max();
     
     while ((BminusEWSB) && (BminusNoCCB) && ((Bnew_mZ2minus > (45.5938 * 45.5938)) && (Bnew_mZ2minus < (364.7504 * 364.7504)))) {
         lambdaB = 0.5;
-        B_least_Sq_Tol = 1.0e-4;
+        B_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         Bnew_mZ2minus *= 0.99;
-        // std::cout << "New mZ = " << sqrt(Bnew_mZ2minus) << endl;
-        // std::cout << "New B = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
+        std::cout << "New mZ = " << sqrt(Bnew_mZ2minus) << endl;
+        std::cout << "New B = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
+        std::cout << "New tanb = " << BnewGUTs_minus[43] << endl;
         int numStepsDone = 0;
         vector<double> checkweaksols = solveODEs(BnewGUTs_minus, BcurrentlogQGUT, BcurrentlogQSUSY, copysign(1.0e-6, (BcurrentlogQSUSY - BcurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(BnewlogQSUSY), Bnew_mZ2minus);
@@ -276,7 +474,7 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
             BminusEWSB = false;
         }
     }
-    // std::cout << "B(ABDS, minus) = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
+    std::cout << "B(ABDS, minus) = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
     double B_GUT_minus = BnewGUTs_minus[42] / BnewGUTs_minus[6];
     if (abs(B_GUT_minus - (GUT_boundary_conditions[42] / GUT_boundary_conditions[6])) < 1.0e-9) {
         B_GUT_minus = 0.9999 * B_GUT_minus;
@@ -288,10 +486,12 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
 
     while ((BplusEWSB) && (BplusNoCCB) && ((Bnew_mZ2plus > (45.5938 * 45.5938)) && (Bnew_mZ2plus < (364.7504 * 364.7504)))) {
         lambdaB = 0.5;
-        B_least_Sq_Tol = 1.0e-4;
+        B_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         Bnew_mZ2plus *= 1.01;
-        //std::cout << "New mZ = " << sqrt(Bnew_mZ2plus) << endl;
+        std::cout << "New mZ = " << sqrt(Bnew_mZ2plus) << endl;
+        std::cout << "New B = " << BnewGUTs_plus[42] / BnewGUTs_plus[6] << endl;
+        std::cout << "New tanb = " << BnewGUTs_plus[43] << endl;
         int numStepsDone = 0;
         vector<double> checkweaksols = solveODEs(BnewGUTs_plus, BcurrentlogQGUT, BcurrentlogQSUSY, copysign(1.0e-6, (BcurrentlogQSUSY - BcurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(BnewlogQSUSY), Bnew_mZ2plus);
@@ -352,7 +552,7 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
             BplusEWSB = false;
         }
     }
-    // std::cout << "B(ABDS, plus) = " << BnewGUTs_plus[42] / BnewGUTs_plus[6] << endl;
+    std::cout << "B(ABDS, plus) = " << BnewGUTs_plus[42] / BnewGUTs_plus[6] << endl;
     double B_GUT_plus = BnewGUTs_plus[42] / BnewGUTs_plus[6];
     if (abs(B_GUT_plus - (GUT_boundary_conditions[42] / GUT_boundary_conditions[6])) < 1.0e-9) {
         B_GUT_plus = 1.0001 * B_GUT_plus;
@@ -381,9 +581,9 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
         return {B_GUT_minus, B_GUT_plus, B_TOTAL_GUT_minus, B_TOTAL_GUT_plus};
     }
 
-    while ((BminusEWSB) && (BminusNoCCB) && ((Bnew_mZ2minus > (1.0)))) {
+    while ((BminusEWSB) && (BminusNoCCB) && ((Bnew_mZ2minus > (5.0)))) {
         lambdaB = 0.5;
-        B_least_Sq_Tol = 1.0e-4;
+        B_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         Bnew_mZ2minus *= 0.99;
         // std::cout << "New mZ = " << sqrt(Bnew_mZ2minus) << endl;
@@ -448,12 +648,12 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
             BminusEWSB = false;
         }
     }
-    // std::cout << "B(total, minus) = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
+    std::cout << "B(total, minus) = " << BnewGUTs_minus[42] / BnewGUTs_minus[6] << endl;
     B_TOTAL_GUT_minus = BnewGUTs_minus[42] / BnewGUTs_minus[6];
 
-    while ((BplusEWSB) && (BplusNoCCB) && ((Bnew_mZ2plus > (1.0)))) {
+    while ((BplusEWSB) && (BplusNoCCB) && ((Bnew_mZ2plus > (5.0)))) {
         lambdaB = 0.5;
-        B_least_Sq_Tol = 1.0e-4;
+        B_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         Bnew_mZ2plus *= 1.01;
         //std::cout << "New mZ = " << sqrt(Bnew_mZ2plus) << endl;
@@ -517,7 +717,7 @@ vector<double> DSN_B_windows(vector<double>& GUT_boundary_conditions, double& cu
             BplusEWSB = false;
         }
     }
-    // std::cout << "B(total, plus) = " << BnewGUTs_plus[42] / BnewGUTs_plus[6] << endl;
+    std::cout << "B(total, plus) = " << BnewGUTs_plus[42] / BnewGUTs_plus[6] << endl;
     B_TOTAL_GUT_plus = BnewGUTs_plus[42] / BnewGUTs_plus[6];
 
     if ((abs(B_TOTAL_GUT_minus - B_GUT_minus) < 1.0e-12) && (abs(B_TOTAL_GUT_plus - B_GUT_plus) < 1.0e-12)) {
@@ -624,18 +824,19 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
 
     // First compute width of ABDS window
     double lambdapi = 0.5;
-    double pi_least_Sq_Tol = 1.0e-4;
+    double pi_least_Sq_Tol = 1.0e-2;
     double prev_fpi = std::numeric_limits<double>::max();
     double curr_lsq_eval = std::numeric_limits<double>::max();
     while ((piminusEWSB) && (piminusNoCCB) && ((pinew_mZ2minus > (45.5938 * 45.5938)) && (pinew_mZ2minus < (364.7504 * 364.7504)))) {
         lambdapi = 0.5;
-        pi_least_Sq_Tol = 1.0e-4;
+        pi_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         prev_fpi = std::numeric_limits<double>::max();
         pinew_mZ2minus *= 0.99;
         int numStepsDone = 0;
-        // std::cout << "New mZ = " << sqrt(pinew_mZ2minus) << endl;
-        // std::cout << "New " << paramName << "(GUT) = " << pinewGUTs_minus[SpecificIndex] << endl;
+        std::cout << "New mZ = " << sqrt(pinew_mZ2minus) << endl;
+        std::cout << "New " << paramName << "(GUT) = " << pinewGUTs_minus[SpecificIndex] << endl;
+        std::cout << "New tanb = " << pinewGUTs_minus[43] << endl;
         // std::cout << "---------------------------------------" << endl;
         vector<double> checkweaksols = solveODEs(pinewGUTs_minus, picurrentlogQGUT, picurrentlogQSUSY, copysign(1.0e-6, (picurrentlogQSUSY - picurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(pinewlogQSUSY), pinew_mZ2minus);
@@ -703,23 +904,24 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
             piminusEWSB = false;
         }
     }
-    // std::cout << paramName << "(ABDS, minus) = " << pinewGUTs_minus[SpecificIndex] << endl; 
+    std::cout << paramName << "(ABDS, minus) = " << pinewGUTs_minus[SpecificIndex] << endl; 
     double pi_GUT_minus = pinewGUTs_minus[SpecificIndex];
     if (abs(pi_GUT_minus - GUT_boundary_conditions[SpecificIndex]) < 1.0e-9) {
         pi_GUT_minus = 0.9999 * pi_GUT_minus;
     }
     lambdapi = 0.5;
-    pi_least_Sq_Tol = 1.0e-4;
+    pi_least_Sq_Tol = 1.0e-2;
     prev_fpi = std::numeric_limits<double>::max();
     while ((piplusEWSB) && (piplusNoCCB) && ((pinew_mZ2plus > (45.5938 * 45.5938)) && (pinew_mZ2plus < (364.7504 * 364.7504)))) {
         lambdapi = 0.5;
-        pi_least_Sq_Tol = 1.0e-4;
+        pi_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         prev_fpi = std::numeric_limits<double>::max();
         pinew_mZ2plus *= 1.01;
         int numStepsDone = 0;
-        // std::cout << "New mZ = " << sqrt(pinew_mZ2plus) << endl;
-        // std::cout << "New " << paramName << "(GUT) = " << pinewGUTs_plus[SpecificIndex] << endl;
+        std::cout << "New mZ = " << sqrt(pinew_mZ2plus) << endl;
+        std::cout << "New " << paramName << "(GUT) = " << pinewGUTs_plus[SpecificIndex] << endl;
+        std::cout << "New tanb = " << pinewGUTs_plus[43] << endl;
         // std::cout << "---------------------------------------" << endl;
         vector<double> checkweaksols = solveODEs(pinewGUTs_plus, picurrentlogQGUT, picurrentlogQSUSY, copysign(1.0e-6, (picurrentlogQSUSY - picurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(pinewlogQSUSY), pinew_mZ2plus);
@@ -791,7 +993,7 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
             pinewGUTs_plus[43] = oldSolutions[43];
         }         
     }
-    // std::cout << paramName << "(ABDS, plus) = " << pinewGUTs_plus[SpecificIndex] << endl; 
+    std::cout << paramName << "(ABDS, plus) = " << pinewGUTs_plus[SpecificIndex] << endl; 
     double pi_GUT_plus = pinewGUTs_plus[SpecificIndex];
     if (abs(pi_GUT_plus - GUT_boundary_conditions[SpecificIndex]) < 1.0e-9) {
         pi_GUT_plus = 1.0001 * pi_GUT_plus;
@@ -816,9 +1018,9 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
         return {pi_GUT_minus, pi_GUT_plus, pi_TOTAL_GUT_minus, pi_TOTAL_GUT_plus};
     }
 
-    while ((piminusEWSB) && (piminusNoCCB) && ((pinew_mZ2minus > (1.0)))) {
+    while ((piminusEWSB) && (piminusNoCCB) && ((pinew_mZ2minus > (5.0)))) {
         lambdapi = 0.5;
-        pi_least_Sq_Tol = 1.0e-4;
+        pi_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         prev_fpi = std::numeric_limits<double>::max();
         pinew_mZ2minus *= 0.99;
@@ -890,12 +1092,12 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
             piminusEWSB = false;
         }
     }
-    // std::cout << paramName << "(total, minus) = " << pinewGUTs_minus[SpecificIndex] << endl; 
+    std::cout << paramName << "(total, minus) = " << pinewGUTs_minus[SpecificIndex] << endl; 
     pi_TOTAL_GUT_minus = pinewGUTs_minus[SpecificIndex];
 
-    while ((piplusEWSB) && (piplusNoCCB) && ((pinew_mZ2plus > (1.0)))) {
+    while ((piplusEWSB) && (piplusNoCCB) && ((pinew_mZ2plus > (5.0)))) {
         lambdapi = 0.5;
-        pi_least_Sq_Tol = 1.0e-4;
+        pi_least_Sq_Tol = 1.0e-2;
         curr_lsq_eval = std::numeric_limits<double>::max();
         prev_fpi = std::numeric_limits<double>::max();
         pinew_mZ2plus *= 1.01;
@@ -973,7 +1175,7 @@ vector<double> DSN_specific_windows(vector<double>& GUT_boundary_conditions, dou
             pinewGUTs_plus[43] = oldSolutions[43];
         }         
     }
-    // std::cout << paramName << "(total, plus) = " << pinewGUTs_plus[SpecificIndex] << endl; 
+    std::cout << paramName << "(total, plus) = " << pinewGUTs_plus[SpecificIndex] << endl; 
     pi_TOTAL_GUT_plus = pinewGUTs_plus[SpecificIndex];
 
     if ((abs(pi_TOTAL_GUT_minus - pi_GUT_minus) < 1.0e-12) && (abs(pi_TOTAL_GUT_plus - pi_GUT_plus) < 1.0e-12)) {
@@ -1023,20 +1225,47 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
 
     // First compute width of ABDS window
     double lambdaMu = 0.5;
-    double Mu_least_Sq_Tol = 1.0e-4;
+    double Mu_least_Sq_Tol = 1.0e-2;
     double prev_fmu = std::numeric_limits<double>::max();
     double curr_lsq_eval = std::numeric_limits<double>::max();
+    vector<double> current_derivatives = single_var_deriv_approxes(munewGUTs_minus, munew_mZ2minus, 6, munewlogQSUSY, munewlogQGUT);
+    for (double deriv_value : current_derivatives) {
+        //std::cout << "Derivative: " << deriv_value << endl;
+        if (isnan(deriv_value) || isinf(deriv_value)) {
+            muminusEWSB = false;
+        }
+    }
+    double mustep, bigmustep;
+    mustep = (boost::math::float_next(abs(munewGUTs_minus[6])) - abs(munewGUTs_minus[6])) * abs(munewGUTs_minus[6]);
+        
+    double mZ2shift_minus = ((((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (-1.0 * mustep))
+                           + (0.5 * mustep * mustep * ((current_derivatives[1] * current_derivatives[2])
+                                                       + (current_derivatives[0] * current_derivatives[0] * current_derivatives[4])
+                                                       + (2.0 * current_derivatives[0] * current_derivatives[5]) + current_derivatives[6])));
+    
+    std::cout << "mZ^2 minus shift: " << mZ2shift_minus << endl;
+    if (abs(mZ2shift_minus) > 1.0) {
+        mZ2shift_minus = (((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (-1.0 * mustep));
+    }
+    double tanbshift_minus = (current_derivatives[0] * (-1.0) * mustep) + (0.5 * current_derivatives[1] * mustep * mustep);
+    std::cout << "tanb minus shift: " << tanbshift_minus << endl;
+    if (abs(tanbshift_minus) > 1.0) {
+        tanbshift_minus = (current_derivatives[0] * (-1.0) * mustep);
+    }
+    bool too_sensitive_flag = false;
+    double mu_GUT_minus, mu_GUT_plus;
+    if ((abs(mZ2shift_minus) > 1.0) || (abs(tanbshift_minus) > 1.0)) {
+        std::cout << "Sensitivity too high, approximating solution" << endl;
+        too_sensitive_flag = true;
+        mu_GUT_minus = munewGUTs_minus[6] - mustep;
+    } 
     // Mu convergence becomes bad when mu is small (i.e. < 10 GeV), so cutoff at abs(mu) = 10 GeV
-    while ((muminusEWSB) && (muminusNoCCB) && (abs(munewGUTs_minus[6]) > 10.0) && ((munew_mZ2minus > (45.5938 * 45.5938)) && (munew_mZ2minus < (364.7504 * 364.7504)))) {
-        lambdaMu = 0.5;
-        Mu_least_Sq_Tol = 1.0e-4;
-        curr_lsq_eval = std::numeric_limits<double>::max();
-        prev_fmu = std::numeric_limits<double>::max();
-        munew_mZ2minus *= 0.99;
+    while ((!too_sensitive_flag) && (muminusEWSB) && (muminusNoCCB) && (abs(munewGUTs_minus[6]) > 10.0) && ((munew_mZ2minus > (45.5938 * 45.5938)) && (munew_mZ2minus < (364.7504 * 364.7504)))) {
         int numStepsDone = 0;
-        // std::cout << "New mZ = " << sqrt(munew_mZ2minus) << endl;
+        bigmustep = mustep * ((2.0 * sqrt(munew_mZ2minus)) + 1.0) / abs(mZ2shift_minus);
+        std::cout << "New mZ = " << sqrt(munew_mZ2minus) << endl;
         // std::cout << "New mu = " << munewGUTs_minus[6] << endl;
-        // std::cout << "---------------------------------------" << endl;
+        // std::cout << "New tanb = " << munewGUTs_minus[43] << endl;
         vector<double> checkweaksols = solveODEs(munewGUTs_minus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(munewlogQSUSY), munew_mZ2minus);
         muminusEWSB = EWSB_Check(checkweaksols, checkRadCorrs);
@@ -1044,89 +1273,103 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
         if (muminusEWSB == true) {
             muminusEWSB = Hessian_check(checkweaksols, exp(munewlogQSUSY));
         }
-        // if (muminusEWSB == true) {
-        //     muminusEWSB = BFB_check(checkweaksols);
-        // }
         muminusNoCCB = CCB_Check(checkweaksols);
         if (!(muminusEWSB) || !(muminusNoCCB)) {
             break;
         } 
-        vector<double> tree_level_masses = TreeMassCalculator(checkweaksols, exp(mucurrentlogQSUSY), munew_mZ2minus);
-        for (double value : tree_level_masses) {
-            if (value < 0) {
-                muminusNoCCB = false;
-            }
-        }
         if (!(muminusNoCCB)) {
             break;
         } 
+        // std::cout << "Mu step size = " << mustep << endl;
         vector<double> muoldGUTs_minus = munewGUTs_minus;
-        // Finish out convergence with Newton-Raphson now that we have a good enough initial guess
-        while ((numStepsDone < 100) && (curr_lsq_eval > Mu_least_Sq_Tol)) {
-            vector<double> current_derivatives = single_var_deriv_approxes(munewGUTs_minus, munew_mZ2minus, 6, munewlogQSUSY, munewlogQGUT);
-            
-            vector<double> weaksol_minus = solveODEs(munewGUTs_minus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
-            vector<double> RadCorrsMinus = radcorr_calc(weaksol_minus, exp(munewlogQSUSY), munew_mZ2minus);
-            
-            double FMu = (1.0 / 2.0) - (((weaksol_minus[26] + RadCorrsMinus[1] - ((weaksol_minus[25] + RadCorrsMinus[0]) * pow(weaksol_minus[43], 2.0))) / (munew_mZ2minus * (pow(weaksol_minus[43], 2.0) - 1.0))) - (weaksol_minus[6] * weaksol_minus[6] / munew_mZ2minus));
-            double GMu = weaksol_minus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksol_minus[42] / (weaksol_minus[25] + RadCorrsMinus[0] + weaksol_minus[26] + RadCorrsMinus[1] + (2.0 * pow(weaksol_minus[6], 2.0))))));
-
-            double DeltaTanbNum = ((current_derivatives[0] * GMu) - (current_derivatives[2] * FMu));
-            double DeltaDenom = ((current_derivatives[0] * current_derivatives[3]) - (current_derivatives[1] * current_derivatives[2]));
-            double DeltaTanb = DeltaTanbNum / DeltaDenom;
-
-            double DeltaMuNum = ((current_derivatives[3] * FMu) - (current_derivatives[1] * GMu));
-            double DeltaMu = DeltaMuNum / DeltaDenom;
-
-            curr_lsq_eval = pow(DeltaMu, 2.0) + pow(DeltaTanb, 2.0);
-            munewGUTs_minus[43] = munewGUTs_minus[43] - DeltaTanb;
-            munewGUTs_minus[6] = munewGUTs_minus[6] - DeltaMu;
-            munewGUTs_minus[42] = BGUT_original * munewGUTs_minus[6];
-            newmuminus = munewGUTs_minus[6];
-            if ((isnan(munewGUTs_minus[6])) || (isnan(munewGUTs_minus[43])) || (isnan(munewGUTs_minus[42]))) {
-                muminusEWSB = false;
-                break;
-            }
-            numStepsDone++;
+        munewGUTs_minus[6] -= bigmustep;
+        munewGUTs_minus[42] = (munewGUTs_minus[42] / muoldGUTs_minus[6]) * munewGUTs_minus[6];
+        
+        
+        if (!(muminusEWSB)) {
+            munewGUTs_minus[6] = muoldGUTs_minus[6];
+            break;
         }
+        munew_mZ2minus += copysign((2.0 * sqrt(munew_mZ2minus)) + 1.0, mZ2shift_minus);
+        munewGUTs_minus[43] += (tanbshift_minus * ((2.0 * sqrt(munew_mZ2minus)) + 1.0) / abs(mZ2shift_minus));
+        // Now adjust Yukawas for next iteration.
+        if ((munewGUTs_minus[43] < 3.0) || (munewGUTs_minus[43] > 60.0)) {
+            // std::cout << "Yukawas non-perturbative" << endl;
+            muminusEWSB = false;
+        } else {
+            vector<double> oldmZsols = solveODEs(muoldGUTs_minus, current_logQGUT, log(173.2), -1.0e-6);
+            vector<double> newmZsols = solveODEs(munewGUTs_minus, current_logQGUT, log(173.2), -1.0e-6);
+            for (int YukIndx = 7; YukIndx < 16; ++YukIndx) {
+                if ((YukIndx >=7) && (YukIndx < 10)) {
+                    newmZsols[YukIndx] *= sin(atan(oldmZsols[43])) / sin(atan(newmZsols[43]));
+                } else {
+                    newmZsols[YukIndx] *= cos(atan(oldmZsols[43])) / cos(atan(newmZsols[43]));
+                }
+            }
+            vector<double> adjustedYukGUTs = solveODEs(newmZsols, log(173.2), current_logQGUT, 1.0e-6);
+            for (int YukIndex = 7; YukIndex < 16; ++YukIndex) {
+                munewGUTs_minus[YukIndex] = adjustedYukGUTs[YukIndex];
+            }
+        }        
+
         if (!muminusEWSB) {
-            // std::cout << "Failed to converge" << endl;
+            // std::cout << "EWSB issue in convergence loop" << endl;
             munewGUTs_minus[6] = muoldGUTs_minus[6];
             munewGUTs_minus[42] = muoldGUTs_minus[42];
             munewGUTs_minus[43] = muoldGUTs_minus[43];
             break;
         }
-        vector<double> check_valid_solutions = get_F_G_vals(munewGUTs_minus, munew_mZ2minus, current_logQSUSY, current_logQGUT, 6);
-        if ((abs(check_valid_solutions[0]) > 1.0e-2) || (abs(check_valid_solutions[1]) > 1.0e-2)) {
-            // std::cout << "Failed to converge" << endl;
-            muminusEWSB = false;
-            munewGUTs_minus[6] = muoldGUTs_minus[6];
-            munewGUTs_minus[42] = muoldGUTs_minus[42];
-            munewGUTs_minus[43] = muoldGUTs_minus[43];
+        mustep = (boost::math::float_next(abs(munewGUTs_minus[6])) - abs(munewGUTs_minus[6])) * abs(munewGUTs_minus[6]);
+        current_derivatives = single_var_deriv_approxes(munewGUTs_minus, munew_mZ2minus, 6, munewlogQSUSY, munewlogQGUT);
+    
+        mZ2shift_minus = ((((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (-1.0 * mustep))
+                           + (0.5 * mustep * mustep * ((current_derivatives[1] * current_derivatives[2])
+                                                       + (current_derivatives[0] * current_derivatives[0] * current_derivatives[4])
+                                                       + (2.0 * current_derivatives[0] * current_derivatives[5]) + current_derivatives[6])));
+        if (abs(mZ2shift_minus) > 1.0) {
+            mZ2shift_minus = (((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (-1.0 * mustep));
         }
-        if ((munewGUTs_minus[43] < 3.0) || (munewGUTs_minus[43] > 60.0)) {
-            muminusEWSB = false;
+        tanbshift_minus = (current_derivatives[0] * (-1.0) * mustep) + (0.5 * current_derivatives[1] * mustep * mustep);
+        if (abs(tanbshift_minus) > 1.0) {
+            tanbshift_minus = (current_derivatives[0] * (-1.0) * mustep);
         }
+        if ((abs(mZ2shift_minus) > 1.0) || (abs(tanbshift_minus) > 1.0)) {
+            std::cout << "Sensitivity too high, approximating solution" << endl;
+            too_sensitive_flag = true;
+            //mu_GUT_minus = munewGUTs_minus[6] - mustep;
+        } 
     }
-    // std::cout << "mu(ABDS, minus) = " << munewGUTs_minus[6] << endl; 
-    double mu_GUT_minus = munewGUTs_minus[6];
-    if (abs(mu_GUT_minus - GUT_boundary_conditions[6]) < 1.0e-9) {
-        mu_GUT_minus = 0.9999 * mu_GUT_minus;
+    std::cout << "mu(ABDS, minus) = " << munewGUTs_minus[6] << endl; 
+    if (!too_sensitive_flag) {
+        mu_GUT_minus = munewGUTs_minus[6];
     }
 
-    lambdaMu = 0.5;
-    Mu_least_Sq_Tol = 1.0e-4;
-    prev_fmu = std::numeric_limits<double>::max();
-    while ((muplusEWSB) && (muplusNoCCB) && (abs(munewGUTs_plus[6]) > 10.0) && ((munew_mZ2plus > (45.5938 * 45.5938)) && (munew_mZ2plus < (364.7504 * 364.7504)))) {
-        lambdaMu = 0.5;
-        Mu_least_Sq_Tol = 1.0e-4;
-        curr_lsq_eval = std::numeric_limits<double>::max();
-        prev_fmu = std::numeric_limits<double>::max();
-        munew_mZ2plus *= 1.01;
+    double mZ2shift_plus = ((((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (mustep))
+                           + (0.5 * mustep * mustep * ((current_derivatives[1] * current_derivatives[2])
+                                                       + (current_derivatives[0] * current_derivatives[0] * current_derivatives[4])
+                                                       + (2.0 * current_derivatives[0] * current_derivatives[5]) + current_derivatives[6])));
+    double tanbshift_plus = (current_derivatives[0] * mustep) + (0.5 * current_derivatives[1] * mustep * mustep);
+
+    std::cout << "mZ^2 plus shift: " << mZ2shift_plus << endl;
+    if (abs(mZ2shift_plus) > 1.0) {
+        mZ2shift_plus = (((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (mustep));
+    }
+    std::cout << "tanb plus shift: " << tanbshift_plus << endl;
+    if (abs(tanbshift_plus) > 1.0) {
+        tanbshift_plus = (current_derivatives[0] * mustep);
+    }
+    if ((abs(mZ2shift_plus) > 1.0) || (abs(tanbshift_plus) > 1.0)) {
+        std::cout << "Sensitivity too high, approximating solution" << endl;
+        too_sensitive_flag = true;
+        mu_GUT_plus = munewGUTs_plus[6] + mustep;
+    }
+    // Mu convergence becomes bad when mu is small (i.e. < 10 GeV), so cutoff at abs(mu) = 10 GeV
+    while ((!too_sensitive_flag) && (muplusEWSB) && (muplusNoCCB) && (abs(munewGUTs_plus[6]) > 10.0) && ((munew_mZ2plus > (45.5938 * 45.5938)) && (munew_mZ2plus < (364.7504 * 364.7504)))) {
         int numStepsDone = 0;
-        // std::cout << "New mZ = " << sqrt(munew_mZ2plus) << endl;
-        // std::cout << "New mu(GUT) = " << munewGUTs_plus[6] << endl;
-        // std::cout << "---------------------------------------" << endl;
+        bigmustep = mustep * ((2.0 * sqrt(munew_mZ2plus)) + 1.0) / abs(mZ2shift_plus);
+        std::cout << "New mZ = " << sqrt(munew_mZ2plus) << endl;
+        // std::cout << "New mu = " << munewGUTs_plus[6] << endl;
+        // std::cout << "New tanb = " << munewGUTs_plus[43] << endl;
         vector<double> checkweaksols = solveODEs(munewGUTs_plus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(munewlogQSUSY), munew_mZ2plus);
         muplusEWSB = EWSB_Check(checkweaksols, checkRadCorrs);
@@ -1134,91 +1377,90 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
         if (muplusEWSB == true) {
             muplusEWSB = Hessian_check(checkweaksols, exp(munewlogQSUSY));
         }
-        // if (muplusEWSB == true) {
-        //     muplusEWSB = BFB_check(checkweaksols);
-        // }
         muplusNoCCB = CCB_Check(checkweaksols);
         if (!(muplusEWSB) || !(muplusNoCCB)) {
             break;
         } 
-        vector<double> tree_level_masses = TreeMassCalculator(checkweaksols, exp(mucurrentlogQSUSY), munew_mZ2plus);
-        for (double value : tree_level_masses) {
-            if (value < 0) {
-                muplusNoCCB = false;
-            }
-        }
         if (!(muplusNoCCB)) {
             break;
         } 
+        // std::cout << "Mu step size = " << mustep << endl;
         vector<double> muoldGUTs_plus = munewGUTs_plus;
-        // Finish out convergence with Newton-Raphson now that we have a good enough initial guess
-        while ((numStepsDone < 100) && (curr_lsq_eval > Mu_least_Sq_Tol)) {
-            // std::cout << numStepsDone << " steps done" << endl;
-            vector<double> current_derivatives = single_var_deriv_approxes(munewGUTs_plus, munew_mZ2plus, 6, munewlogQSUSY, munewlogQGUT);
-
-            vector<double> weaksol_plus = solveODEs(munewGUTs_plus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
-            vector<double> RadCorrsplus = radcorr_calc(weaksol_plus, exp(munewlogQSUSY), munew_mZ2plus);
-            
-            double FMu = (1.0 / 2.0) - (((weaksol_plus[26] + RadCorrsplus[1] - ((weaksol_plus[25] + RadCorrsplus[0]) * pow(weaksol_plus[43], 2.0))) / (munew_mZ2plus * (pow(weaksol_plus[43], 2.0) - 1.0))) - (weaksol_plus[6] * weaksol_plus[6] / munew_mZ2plus));
-            double GMu = weaksol_plus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksol_plus[42] / (weaksol_plus[25] + RadCorrsplus[0] + weaksol_plus[26] + RadCorrsplus[1] + (2.0 * pow(weaksol_plus[6], 2.0))))));
-
-            double DeltaTanbNum = ((current_derivatives[0] * GMu) - (current_derivatives[2] * FMu));
-            double DeltaDenom = ((current_derivatives[0] * current_derivatives[3]) - (current_derivatives[1] * current_derivatives[2]));
-            double DeltaTanb = DeltaTanbNum / DeltaDenom;
-
-            double DeltaMuNum = ((current_derivatives[3] * FMu) - (current_derivatives[1] * GMu));
-            double DeltaMu = DeltaMuNum / DeltaDenom;
-
-            curr_lsq_eval = pow(DeltaMu, 2.0) + pow(DeltaTanb, 2.0);
-            //std::cout << curr_lsq_eval << " = current L2" << endl;
-
-            munewGUTs_plus[43] = munewGUTs_plus[43] - DeltaTanb;
-            munewGUTs_plus[6] = munewGUTs_plus[6] - DeltaMu;
-            munewGUTs_plus[42] = BGUT_original * munewGUTs_plus[6];
-            
-            if ((isnan(munewGUTs_plus[6])) || (isnan(munewGUTs_plus[42])) || (isnan(munewGUTs_plus[43]))) {
-                muplusEWSB = false;
-                break;
-            }
-            numStepsDone++;
+        munewGUTs_plus[6] += bigmustep;
+        munewGUTs_plus[42] = (munewGUTs_plus[42] / muoldGUTs_plus[6]) * munewGUTs_plus[6];
+        
+        
+        if (!(muplusEWSB)) {
+            munewGUTs_plus[6] = muoldGUTs_plus[6];
+            break;
         }
+        munew_mZ2plus += copysign((2.0 * sqrt(munew_mZ2plus)) + 1.0, mZ2shift_plus);
+        munewGUTs_plus[43] += (tanbshift_plus * ((2.0 * sqrt(munew_mZ2plus)) + 1.0) / abs(mZ2shift_plus));
+        // Now adjust Yukawas for next iteration.
+        if ((munewGUTs_plus[43] < 3.0) || (munewGUTs_plus[43] > 60.0)) {
+            // std::cout << "Yukawas non-perturbative" << endl;
+            muplusEWSB = false;
+        } else {
+            vector<double> oldmZsols = solveODEs(muoldGUTs_plus, current_logQGUT, log(173.2), -1.0e-6);
+            vector<double> newmZsols = solveODEs(munewGUTs_plus, current_logQGUT, log(173.2), -1.0e-6);
+            for (int YukIndx = 7; YukIndx < 16; ++YukIndx) {
+                if ((YukIndx >=7) && (YukIndx < 10)) {
+                    newmZsols[YukIndx] *= sin(atan(oldmZsols[43])) / sin(atan(newmZsols[43]));
+                } else {
+                    newmZsols[YukIndx] *= cos(atan(oldmZsols[43])) / cos(atan(newmZsols[43]));
+                }
+            }
+            vector<double> adjustedYukGUTs = solveODEs(newmZsols, log(173.2), current_logQGUT, 1.0e-6);
+            for (int YukIndex = 7; YukIndex < 16; ++YukIndex) {
+                munewGUTs_plus[YukIndex] = adjustedYukGUTs[YukIndex];
+            }
+        }        
+
         if (!muplusEWSB) {
-            // std::cout << "Failed to converge" << endl;
+            // std::cout << "EWSB issue in convergence loop" << endl;
             munewGUTs_plus[6] = muoldGUTs_plus[6];
             munewGUTs_plus[42] = muoldGUTs_plus[42];
             munewGUTs_plus[43] = muoldGUTs_plus[43];
             break;
-        }   
-        vector<double> check_valid_solutions = get_F_G_vals(munewGUTs_plus, munew_mZ2plus, current_logQSUSY, current_logQGUT, 6);
-        if ((abs(check_valid_solutions[0]) > 1.0e-2) || (abs(check_valid_solutions[1]) > 1.0e-2)) {
-            // std::cout << "Failed to converge" << endl;
-            muplusEWSB = false;
-            munewGUTs_plus[6] = muoldGUTs_plus[6];
-            munewGUTs_plus[42] = muoldGUTs_plus[42];
-            munewGUTs_plus[43] = muoldGUTs_plus[43];
         }
-        if ((munewGUTs_plus[43] < 3.0) || (munewGUTs_plus[43] > 60.0)) {
-            muplusEWSB = false;
-        }         
+        mustep = (boost::math::float_next(abs(munewGUTs_plus[6])) - abs(munewGUTs_plus[6])) * abs(munewGUTs_plus[6]);
+        current_derivatives = single_var_deriv_approxes(munewGUTs_plus, munew_mZ2plus, 6, munewlogQSUSY, munewlogQGUT);
+    
+        mZ2shift_plus = ((((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (mustep))
+                           + (0.5 * mustep * mustep * ((current_derivatives[1] * current_derivatives[2])
+                                                       + (current_derivatives[0] * current_derivatives[0] * current_derivatives[4])
+                                                       + (2.0 * current_derivatives[0] * current_derivatives[5]) + current_derivatives[6])));
+        if (abs(mZ2shift_plus) > 1.0) {
+            mZ2shift_plus = (((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (mustep));
+        }
+        tanbshift_plus = (current_derivatives[0] * mustep) + (0.5 * current_derivatives[1] * mustep * mustep);
+        if (abs(tanbshift_plus) > 1.0) {
+            tanbshift_plus = (current_derivatives[0] * mustep);
+        }
+        if ((abs(mZ2shift_plus) > 1.0) || (abs(tanbshift_plus) > 1.0)) {
+            std::cout << "Sensitivity too high, approximating solution" << endl;
+            too_sensitive_flag = true;
+            //mu_GUT_plus = munewGUTs_plus[6] + mustep;
+        } 
     }
-    // std::cout << "mu(ABDS, plus) = " << munewGUTs_plus[6] << endl; 
-    double mu_GUT_plus = munewGUTs_plus[6];
-    if (abs(mu_GUT_plus - GUT_boundary_conditions[6]) < 1.0e-9) {
-        mu_GUT_plus = 1.0001 * mu_GUT_minus;
+    std::cout << "mu(ABDS, plus) = " << munewGUTs_plus[6] << endl; 
+    if (!too_sensitive_flag) {
+        mu_GUT_plus = munewGUTs_plus[6];
     }
 
     std::cout << "ABDS window established for mu variation." << endl;
 
     bool ABDSminuscheck = (muminusEWSB && muminusNoCCB); 
     bool ABDSpluscheck = (muplusEWSB && muplusNoCCB);
+    bool total_ABDScheck = (ABDSminuscheck && ABDSpluscheck);
     double mu_TOTAL_GUT_minus, mu_TOTAL_GUT_plus;
-    if (!(ABDSminuscheck) && !(ABDSpluscheck)) {
+    if ((!(total_ABDScheck)) || too_sensitive_flag) {
         if (abs(mu_GUT_minus) <= abs(mu_GUT_plus)) {
-            mu_TOTAL_GUT_minus = pow(10.0, -0.5) * mu_GUT_minus;
-            mu_TOTAL_GUT_plus = pow(10.0, 0.5) * mu_GUT_plus;
+            mu_TOTAL_GUT_minus = 10.0;//0.000001 * mu_GUT_minus;//pow(10.0, -0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = 1.0e16;//1000000.0 * mu_GUT_plus;//pow(10.0, 0.5) * mu_GUT_plus;
         } else {
-            mu_TOTAL_GUT_minus = pow(10.0, 0.5) * mu_GUT_minus;
-            mu_TOTAL_GUT_plus = pow(10.0, -0.5) * mu_GUT_plus;
+            mu_TOTAL_GUT_minus = 1.0e16;//1000000.0 * mu_GUT_minus;//pow(10.0, 0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = 10.0;//0.000001 * mu_GUT_plus;//pow(10.0, -0.5) * mu_GUT_plus;
         }
 
         std::cout << "General window established for mu variation." << endl;
@@ -1226,16 +1468,12 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
         return {mu_GUT_minus, mu_GUT_plus, mu_TOTAL_GUT_minus, mu_TOTAL_GUT_plus};
     }
 
-    while ((muminusEWSB) && (muminusNoCCB) && (abs(munewGUTs_minus[6]) > 10.0) && ((munew_mZ2minus > (1.0)))) {
-        lambdaMu = 0.5;
-        Mu_least_Sq_Tol = 1.0e-4;
-        curr_lsq_eval = std::numeric_limits<double>::max();
-        prev_fmu = std::numeric_limits<double>::max();
-        munew_mZ2minus *= 0.99;
+    while ((muminusEWSB) && (muminusNoCCB) && (abs(munewGUTs_minus[6]) > 10.0) && ((munew_mZ2minus > (5.0)))) {
         int numStepsDone = 0;
-        // std::cout << "New mZ = " << sqrt(munew_mZ2minus) << endl;
+        bigmustep = mustep * ((2.0 * sqrt(munew_mZ2minus)) + 1.0) / abs(mZ2shift_minus);
+        std::cout << "New mZ = " << sqrt(munew_mZ2minus) << endl;
         // std::cout << "New mu = " << munewGUTs_minus[6] << endl;
-        // std::cout << "---------------------------------------" << endl;
+        // std::cout << "New tanb = " << munewGUTs_minus[43] << endl;
         vector<double> checkweaksols = solveODEs(munewGUTs_minus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(munewlogQSUSY), munew_mZ2minus);
         muminusEWSB = EWSB_Check(checkweaksols, checkRadCorrs);
@@ -1243,83 +1481,81 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
         if (muminusEWSB == true) {
             muminusEWSB = Hessian_check(checkweaksols, exp(munewlogQSUSY));
         }
-        // if (muminusEWSB == true) {
-        //     muminusEWSB = BFB_check(checkweaksols);
-        // }
         muminusNoCCB = CCB_Check(checkweaksols);
         if (!(muminusEWSB) || !(muminusNoCCB)) {
             break;
         } 
-        vector<double> tree_level_masses = TreeMassCalculator(checkweaksols, exp(mucurrentlogQSUSY), munew_mZ2minus);
-        for (double value : tree_level_masses) {
-            if (value < 0) {
-                muminusNoCCB = false;
-            }
-        }
         if (!(muminusNoCCB)) {
             break;
         } 
+        // std::cout << "Mu step size = " << mustep << endl;
         vector<double> muoldGUTs_minus = munewGUTs_minus;
-        // Finish out convergence with Newton-Raphson now that we have a good enough initial guess
-        while ((numStepsDone < 100) && (curr_lsq_eval > Mu_least_Sq_Tol)) {
-            vector<double> current_derivatives = single_var_deriv_approxes(munewGUTs_minus, munew_mZ2minus, 6, munewlogQSUSY, munewlogQGUT);
-            
-            vector<double> weaksol_minus = solveODEs(munewGUTs_minus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
-            vector<double> RadCorrsMinus = radcorr_calc(weaksol_minus, exp(munewlogQSUSY), munew_mZ2minus);
-            
-            double FMu = (1.0 / 2.0) - (((weaksol_minus[26] + RadCorrsMinus[1] - ((weaksol_minus[25] + RadCorrsMinus[0]) * pow(weaksol_minus[43], 2.0))) / (munew_mZ2minus * (pow(weaksol_minus[43], 2.0) - 1.0))) - (weaksol_minus[6] * weaksol_minus[6] / munew_mZ2minus));
-            double GMu = weaksol_minus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksol_minus[42] / (weaksol_minus[25] + RadCorrsMinus[0] + weaksol_minus[26] + RadCorrsMinus[1] + (2.0 * pow(weaksol_minus[6], 2.0))))));
-
-            double DeltaTanbNum = ((current_derivatives[0] * GMu) - (current_derivatives[2] * FMu));
-            double DeltaDenom = ((current_derivatives[0] * current_derivatives[3]) - (current_derivatives[1] * current_derivatives[2]));
-            double DeltaTanb = DeltaTanbNum / DeltaDenom;
-
-            double DeltaMuNum = ((current_derivatives[3] * FMu) - (current_derivatives[1] * GMu));
-            double DeltaMu = DeltaMuNum / DeltaDenom;
-
-            curr_lsq_eval = pow(DeltaMu, 2.0) + pow(DeltaTanb, 2.0);
-            munewGUTs_minus[43] = munewGUTs_minus[43] - DeltaTanb;
-            munewGUTs_minus[6] = munewGUTs_minus[6] - DeltaMu;
-            munewGUTs_minus[42] = BGUT_original * munewGUTs_minus[6];
-            newmuminus = munewGUTs_minus[6];
-            if ((isnan(munewGUTs_minus[6])) || (isnan(munewGUTs_minus[43])) || (isnan(munewGUTs_minus[42]))) {
-                muminusEWSB = false;
-                break;
-            }
-            numStepsDone++;
+        munewGUTs_minus[6] -= bigmustep;
+        munewGUTs_minus[42] = (munewGUTs_minus[42] / muoldGUTs_minus[6]) * munewGUTs_minus[6];
+        
+        
+        if (!(muminusEWSB)) {
+            munewGUTs_minus[6] = muoldGUTs_minus[6];
+            break;
         }
+        munew_mZ2minus += copysign((2.0 * sqrt(munew_mZ2minus)) + 1.0, mZ2shift_minus);
+        munewGUTs_minus[43] += (tanbshift_minus * ((2.0 * sqrt(munew_mZ2minus)) + 1.0) / abs(mZ2shift_minus));
+        // Now adjust Yukawas for next iteration.
+        if ((munewGUTs_minus[43] < 3.0) || (munewGUTs_minus[43] > 60.0)) {
+            // std::cout << "Yukawas non-perturbative" << endl;
+            muminusEWSB = false;
+        } else {
+            vector<double> oldmZsols = solveODEs(muoldGUTs_minus, current_logQGUT, log(173.2), -1.0e-6);
+            vector<double> newmZsols = solveODEs(munewGUTs_minus, current_logQGUT, log(173.2), -1.0e-6);
+            for (int YukIndx = 7; YukIndx < 16; ++YukIndx) {
+                if ((YukIndx >=7) && (YukIndx < 10)) {
+                    newmZsols[YukIndx] *= sin(atan(oldmZsols[43])) / sin(atan(newmZsols[43]));
+                } else {
+                    newmZsols[YukIndx] *= cos(atan(oldmZsols[43])) / cos(atan(newmZsols[43]));
+                }
+            }
+            vector<double> adjustedYukGUTs = solveODEs(newmZsols, log(173.2), current_logQGUT, 1.0e-6);
+            for (int YukIndex = 7; YukIndex < 16; ++YukIndex) {
+                munewGUTs_minus[YukIndex] = adjustedYukGUTs[YukIndex];
+            }
+        }        
+
         if (!muminusEWSB) {
-            //std::cout << "Failed to converge" << endl;
+            // std::cout << "EWSB issue in convergence loop" << endl;
             munewGUTs_minus[6] = muoldGUTs_minus[6];
             munewGUTs_minus[42] = muoldGUTs_minus[42];
             munewGUTs_minus[43] = muoldGUTs_minus[43];
             break;
         }
-        vector<double> check_valid_solutions = get_F_G_vals(munewGUTs_minus, munew_mZ2minus, current_logQSUSY, current_logQGUT, 6);
-        if ((abs(check_valid_solutions[0]) > 1.0e-2) || (abs(check_valid_solutions[1]) > 1.0e-2)) {
-            //std::cout << "Failed to converge" << endl;
-            muminusEWSB = false;
-            munewGUTs_minus[6] = muoldGUTs_minus[6];
-            munewGUTs_minus[42] = muoldGUTs_minus[42];
-            munewGUTs_minus[43] = muoldGUTs_minus[43];
+        mustep = (boost::math::float_next(abs(munewGUTs_minus[6])) - abs(munewGUTs_minus[6])) * abs(munewGUTs_minus[6]);
+        current_derivatives = single_var_deriv_approxes(munewGUTs_minus, munew_mZ2minus, 6, munewlogQSUSY, munewlogQGUT);
+    
+        mZ2shift_minus = ((((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (-1.0 * mustep))
+                           + (0.5 * mustep * mustep * ((current_derivatives[1] * current_derivatives[2])
+                                                       + (current_derivatives[0] * current_derivatives[0] * current_derivatives[4])
+                                                       + (2.0 * current_derivatives[0] * current_derivatives[5]) + current_derivatives[6])));
+        if (abs(mZ2shift_minus) > 1.0) {
+            mZ2shift_minus = (((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (-1.0 * mustep));
         }
-        if ((munewGUTs_minus[43] < 3.0) || (munewGUTs_minus[43] > 60.0)) {
-            muminusEWSB = false;
+        tanbshift_minus = (current_derivatives[0] * (-1.0) * mustep) + (0.5 * current_derivatives[1] * mustep * mustep);
+        if (abs(tanbshift_minus) > 1.0) {
+            tanbshift_minus = (current_derivatives[0] * (-1.0) * mustep);
         }
+        if ((abs(mZ2shift_minus) > 1.0) || (abs(tanbshift_minus) > 1.0)) {
+            std::cout << "Sensitivity too high, approximating solution" << endl;
+            too_sensitive_flag = true;
+            //mu_GUT_minus = munewGUTs_minus[6] - mustep;
+        } 
     }
-    //std::cout << "mu(total, minus) = " << munewGUTs_minus[6] << endl; 
+    std::cout << "mu(total, minus) = " << munewGUTs_minus[6] << endl; 
     mu_TOTAL_GUT_minus = munewGUTs_minus[6];
 
-    while ((muplusEWSB) && (muplusNoCCB) && (abs(munewGUTs_plus[6]) > 10.0) && ((munew_mZ2plus > (1.0)))) {
-        lambdaMu = 0.5;
-        Mu_least_Sq_Tol = 1.0e-4;
-        curr_lsq_eval = std::numeric_limits<double>::max();
-        prev_fmu = std::numeric_limits<double>::max();
-        munew_mZ2plus *= 1.01;
+    while ((muplusEWSB) && (muplusNoCCB) && (abs(munewGUTs_plus[6]) > 10.0) && ((munew_mZ2plus > (5.0)))) {
         int numStepsDone = 0;
-        //std::cout << "New mZ = " << sqrt(munew_mZ2plus) << endl;
-        //std::cout << "New mu(GUT) = " << munewGUTs_plus[6] << endl;
-        //std::cout << "---------------------------------------" << endl;
+        bigmustep = mustep * ((2.0 * sqrt(munew_mZ2plus)) + 1.0) / abs(mZ2shift_plus);
+        std::cout << "New mZ = " << sqrt(munew_mZ2plus) << endl;
+        // std::cout << "New mu = " << munewGUTs_plus[6] << endl;
+        // std::cout << "New tanb = " << munewGUTs_plus[43] << endl;
         vector<double> checkweaksols = solveODEs(munewGUTs_plus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
         vector<double> checkRadCorrs = radcorr_calc(checkweaksols, exp(munewlogQSUSY), munew_mZ2plus);
         muplusEWSB = EWSB_Check(checkweaksols, checkRadCorrs);
@@ -1327,83 +1563,82 @@ vector<double> DSN_mu_windows(vector<double>& GUT_boundary_conditions, double& c
         if (muplusEWSB == true) {
             muplusEWSB = Hessian_check(checkweaksols, exp(munewlogQSUSY));
         }
-        // if (muplusEWSB == true) {
-        //     muplusEWSB = BFB_check(checkweaksols);
-        // }
         muplusNoCCB = CCB_Check(checkweaksols);
         if (!(muplusEWSB) || !(muplusNoCCB)) {
             break;
         } 
-        vector<double> tree_level_masses = TreeMassCalculator(checkweaksols, exp(mucurrentlogQSUSY), munew_mZ2plus);
-        for (double value : tree_level_masses) {
-            if (value < 0) {
-                muplusNoCCB = false;
-            }
-        }
         if (!(muplusNoCCB)) {
             break;
         } 
+        // std::cout << "Mu step size = " << mustep << endl;
         vector<double> muoldGUTs_plus = munewGUTs_plus;
-        // Finish out convergence with Newton-Raphson now that we have a good enough initial guess
-        while ((numStepsDone < 100) && (curr_lsq_eval > Mu_least_Sq_Tol)) {
-            //std::cout << numStepsDone << " steps done" << endl;
-            vector<double> current_derivatives = single_var_deriv_approxes(munewGUTs_plus, munew_mZ2plus, 6, munewlogQSUSY, munewlogQGUT);
-
-            vector<double> weaksol_plus = solveODEs(munewGUTs_plus, mucurrentlogQGUT, mucurrentlogQSUSY, copysign(1.0e-6, (mucurrentlogQSUSY - mucurrentlogQGUT)));
-            vector<double> RadCorrsplus = radcorr_calc(weaksol_plus, exp(munewlogQSUSY), munew_mZ2plus);
-            
-            double FMu = (1.0 / 2.0) - (((weaksol_plus[26] + RadCorrsplus[1] - ((weaksol_plus[25] + RadCorrsplus[0]) * pow(weaksol_plus[43], 2.0))) / (munew_mZ2plus * (pow(weaksol_plus[43], 2.0) - 1.0))) - (weaksol_plus[6] * weaksol_plus[6] / munew_mZ2plus));
-            double GMu = weaksol_plus[43] - tan(0.5 * (M_PI - asin(2.0 * weaksol_plus[42] / (weaksol_plus[25] + RadCorrsplus[0] + weaksol_plus[26] + RadCorrsplus[1] + (2.0 * pow(weaksol_plus[6], 2.0))))));
-
-            double DeltaTanbNum = ((current_derivatives[0] * GMu) - (current_derivatives[2] * FMu));
-            double DeltaDenom = ((current_derivatives[0] * current_derivatives[3]) - (current_derivatives[1] * current_derivatives[2]));
-            double DeltaTanb = DeltaTanbNum / DeltaDenom;
-
-            double DeltaMuNum = ((current_derivatives[3] * FMu) - (current_derivatives[1] * GMu));
-            double DeltaMu = DeltaMuNum / DeltaDenom;
-
-            curr_lsq_eval = pow(DeltaMu, 2.0) + pow(DeltaTanb, 2.0);
-            //std::cout << curr_lsq_eval << " = current L2" << endl;
-
-            munewGUTs_plus[43] = munewGUTs_plus[43] - DeltaTanb;
-            munewGUTs_plus[6] = munewGUTs_plus[6] - DeltaMu;
-            munewGUTs_plus[42] = BGUT_original * munewGUTs_plus[6];
-            
-            if ((isnan(munewGUTs_plus[6])) || (isnan(munewGUTs_plus[42])) || (isnan(munewGUTs_plus[43]))) {
-                muplusEWSB = false;
-                break;
-            }
-            numStepsDone++;
+        munewGUTs_plus[6] += bigmustep;
+        munewGUTs_plus[42] = (munewGUTs_plus[42] / muoldGUTs_plus[6]) * munewGUTs_plus[6];
+        
+        
+        if (!(muplusEWSB)) {
+            munewGUTs_plus[6] = muoldGUTs_plus[6];
+            break;
         }
+        munew_mZ2plus += copysign((2.0 * sqrt(munew_mZ2plus)) + 1.0, mZ2shift_plus);
+        munewGUTs_plus[43] += (tanbshift_plus * ((2.0 * sqrt(munew_mZ2plus)) + 1.0) / abs(mZ2shift_plus));
+        // Now adjust Yukawas for next iteration.
+        if ((munewGUTs_plus[43] < 3.0) || (munewGUTs_plus[43] > 60.0)) {
+            // std::cout << "Yukawas non-perturbative" << endl;
+            muplusEWSB = false;
+        } else {
+            vector<double> oldmZsols = solveODEs(muoldGUTs_plus, current_logQGUT, log(173.2), -1.0e-6);
+            vector<double> newmZsols = solveODEs(munewGUTs_plus, current_logQGUT, log(173.2), -1.0e-6);
+            for (int YukIndx = 7; YukIndx < 16; ++YukIndx) {
+                if ((YukIndx >=7) && (YukIndx < 10)) {
+                    newmZsols[YukIndx] *= sin(atan(oldmZsols[43])) / sin(atan(newmZsols[43]));
+                } else {
+                    newmZsols[YukIndx] *= cos(atan(oldmZsols[43])) / cos(atan(newmZsols[43]));
+                }
+            }
+            vector<double> adjustedYukGUTs = solveODEs(newmZsols, log(173.2), current_logQGUT, 1.0e-6);
+            for (int YukIndex = 7; YukIndex < 16; ++YukIndex) {
+                munewGUTs_plus[YukIndex] = adjustedYukGUTs[YukIndex];
+            }
+        }        
+
         if (!muplusEWSB) {
-            //std::cout << "Failed to converge" << endl;
+            // std::cout << "EWSB issue in convergence loop" << endl;
             munewGUTs_plus[6] = muoldGUTs_plus[6];
             munewGUTs_plus[42] = muoldGUTs_plus[42];
             munewGUTs_plus[43] = muoldGUTs_plus[43];
             break;
-        }   
-        vector<double> check_valid_solutions = get_F_G_vals(munewGUTs_plus, munew_mZ2plus, current_logQSUSY, current_logQGUT, 6);
-        if ((abs(check_valid_solutions[0]) > 1.0e-2) || (abs(check_valid_solutions[1]) > 1.0e-2)) {
-            //std::cout << "Failed to converge" << endl;
-            muplusEWSB = false;
-            munewGUTs_plus[6] = muoldGUTs_plus[6];
-            munewGUTs_plus[42] = muoldGUTs_plus[42];
-            munewGUTs_plus[43] = muoldGUTs_plus[43];
         }
-        if ((munewGUTs_plus[43] < 3.0) || (munewGUTs_plus[43] > 60.0)) {
-            muplusEWSB = false;
-        }         
+        mustep = (boost::math::float_next(abs(munewGUTs_plus[6])) - abs(munewGUTs_plus[6])) * abs(munewGUTs_plus[6]);
+        current_derivatives = single_var_deriv_approxes(munewGUTs_plus, munew_mZ2plus, 6, munewlogQSUSY, munewlogQGUT);
+    
+        mZ2shift_plus = ((((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (mustep))
+                           + (0.5 * mustep * mustep * ((current_derivatives[1] * current_derivatives[2])
+                                                       + (current_derivatives[0] * current_derivatives[0] * current_derivatives[4])
+                                                       + (2.0 * current_derivatives[0] * current_derivatives[5]) + current_derivatives[6])));
+        if (abs(mZ2shift_plus) > 1.0) {
+            mZ2shift_plus = (((current_derivatives[0] * current_derivatives[2]) + current_derivatives[3]) * (mustep));
+        }
+        tanbshift_plus = (current_derivatives[0] * mustep) + (0.5 * current_derivatives[1] * mustep * mustep);
+        if (abs(tanbshift_plus) > 1.0) {
+            tanbshift_plus = (current_derivatives[0] * mustep);
+        }
+        if ((abs(mZ2shift_plus) > 1.0) || (abs(tanbshift_plus) > 1.0)) {
+            std::cout << "Sensitivity too high, approximating solution" << endl;
+            too_sensitive_flag = true;
+            //mu_GUT_plus = munewGUTs_plus[6] + mustep;
+        } 
     }
-    //std::cout << "mu(total, plus) = " << munewGUTs_plus[6] << endl; 
+    std::cout << "mu(total, plus) = " << munewGUTs_plus[6] << endl; 
     mu_TOTAL_GUT_plus = munewGUTs_plus[6];
 
     if ((abs(mu_TOTAL_GUT_minus - mu_GUT_minus) < 1.0e-12) && (abs(mu_TOTAL_GUT_plus - mu_GUT_plus) < 1.0e-12)) {
         if (abs(mu_GUT_minus) <= abs(mu_GUT_plus)) {
-            mu_TOTAL_GUT_minus = pow(10.0, -0.5) * mu_GUT_minus;
-            mu_TOTAL_GUT_plus = pow(10.0, 0.5) * mu_GUT_plus;
+            mu_TOTAL_GUT_minus = 10.0;//0.000001 * mu_GUT_minus;//pow(10.0, -0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = 1.0e16;//1000000.0 * mu_GUT_plus;//pow(10.0, 0.5) * mu_GUT_plus;
         } else {
-            mu_TOTAL_GUT_minus = pow(10.0, 0.5) * mu_GUT_minus;
-            mu_TOTAL_GUT_plus = pow(10.0, -0.5) * mu_GUT_plus;
+            mu_TOTAL_GUT_minus = 1.0e16;//1000000.0 * mu_GUT_minus;//pow(10.0, 0.5) * mu_GUT_minus;
+            mu_TOTAL_GUT_plus = 10.0;//0.000001 * mu_GUT_plus;//pow(10.0, -0.5) * mu_GUT_plus;
         }
 
         std::cout << "General window established for mu variation." << endl;

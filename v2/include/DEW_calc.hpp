@@ -64,9 +64,9 @@ inline double sigmadd_2loop(const double& myQ, const double& mu_wk, const double
                             const double& mHd_sq_wk, const double& at_wk, const double& ac_wk, const double& au_wk, const double& ab_wk, const double& as_wk, const double& ad_wk, const double& atau_wk,
                             const double& amu_wk, const double& ae_wk, const double& m_stop_1sq, const double& m_stop_2sq, const double& mymt, const double& vHiggs_wk);
 
-inline double dew_funcu(const double& inp, const double& beta, const double& Hrad);
+inline double dew_funcu(const double& inp, const double& tangentbeta);
 
-inline double dew_funcd(const double& inp, const double& beta, const double& Hrad);
+inline double dew_funcd(const double& inp, const double& tangentbeta);
 
 
 std::vector<LabeledValue> DEW_calc(std::vector<double> weak_boundary_conditions, double myQ);
