@@ -136,7 +136,6 @@ void terminalUI() {
 
     while (userContinue) {
         clearScreen();
-        bool DEWprogcheck = true;
 
         /******************************************************************
          ********************* PRECISION SELECTION ************************

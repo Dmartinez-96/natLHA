@@ -4,6 +4,7 @@
 #define DHS_CALC_HPP
 
 #include <vector>
+#include <string>
 
 struct LabeledValueHS {
     double value;

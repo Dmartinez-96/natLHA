@@ -12,13 +12,11 @@
 #include <limits>
 #include <regex>
 #include <cstdlib>
+#include <filesystem>
 #include "mZ_numsolver.hpp"
 #include "terminal_UI.hpp"
 #include "MSSM_RGE_solver.hpp"
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
-#include "DEW_calc.hpp"
-#include "DBG_calc.hpp"
-#include "DHS_calc.hpp"
 #include "DSN_calc.hpp"
 #include "radcorr_calc.hpp"
 #include "slhaea.h"
@@ -28,6 +26,7 @@
 
 using namespace std;
 using namespace SLHAea;
+namespace fs = std::filesystem;
 
 void clearScreen() {
     #ifdef _WIN32
@@ -119,8 +118,7 @@ double getRenormalizationScale(const Coll& slha, const string& blockName) {
 void terminalUI() {
     std::cout << fixed << setprecision(9);
     bool userContinue = true;
-    std::cout << "Welcome to DEW4SLHA, a program for computing the naturalness\n"
-         << "measures Delta_EW, Delta_BG, and Delta_HS in the MSSM\n"
+    std::cout << "Welcome to DSN4SLHA, a program for computing the naturalness measure Delta_SN in the MSSM\n"
          << "from a SUSY Les Houches Accord (SLHA) file.\n\n"
          << "To use this program, you may select a\n"
          << "MSSM SLHA file from your choice of spectrum generator (e.g.,\n"
@@ -128,107 +126,17 @@ void terminalUI() {
          << "If multiple renormalization scales are present in the SLHA file,\n"
          << "then the first renormalization scale present in the SLHA file,\n"
          << "from top to bottom, is read in.\n\n"
-         << "Delta_EW, Delta_BG, and Delta_HS will be evaluated at the\n"
-         << " renormalization scale given by the geometric mean of the stop masses\n"
-         << " as provided in the SLHA file to minimize logarithmic contributions.\n\n"
-         << "Supported models for the local solvers are MSSM EFT models for\n"
-         << "Delta_EW and Delta_HS, but only the CMSSM, NUHM(1,2,3,4),\n"
-         << "pMSSM-19, and pMSSM-30 for Delta_BG.\n\n"
+         << "Delta_SN will be evaluated at the\n"
+         << "renormalization scale given by the geometric mean of the stop masses\n"
+         << "as calculated at tree level from the SLHA file to minimize logarithmic contributions.\n\n"
+         << "Supported models for the Delta_SN solver are MSSM EFT models.\n\n"
          << "Press Enter to begin." << endl;
     string input;
     getline(cin, input); // User reads intro and presses enter
 
     while (userContinue) {
         clearScreen();
-        bool DEWprogcheck = true;
-        /******************************************************************
-         ********************* CALCULATION SELECTION **********************
-        ******************************************************************/
-        std::cout << "##############################################################\n";
-        std::cout << "DEW4SLHA calculates the electroweak naturalness measure\n";
-        std::cout << "Delta_EW by default.\n\n";
-
-        // Check if user wants to compute Delta_HS as well
-
-        bool checkcompDHS = true;
-        bool DHScalc = false;
-        while (checkcompDHS) {
-            std::cout << "##############################################################\n";
-            std::cout << "Would you like to also calculate the high-scale naturalness measure Delta_HS?\n";
-            std::cout << "Enter Y for yes or N for no: ";
-            string dhsCheckInp;
-            getline(cin, dhsCheckInp);
-
-            // Convert to lowercase to normalize
-            transform(dhsCheckInp.begin(), dhsCheckInp.end(), dhsCheckInp.begin(),
-                      [](unsigned char c) { return tolower(c); });
-            if (dhsCheckInp == "n" || dhsCheckInp == "no") {
-                DHScalc = false;
-                checkcompDHS = false;
-            } else if (dhsCheckInp == "y" || dhsCheckInp == "yes") {
-                DHScalc = true;
-                checkcompDHS = false;
-            } else {
-                std::cout << "Invalid input, please try again.\n\n";
-                // Sleep for 1 second
-                this_thread::sleep_for(chrono::seconds(1));
-            }
-        }
-
-        // Check if user wants to compute Delta_BG as well
-
-        bool checkcompDBG = true;
-        bool DBGcalc = false;
-        while (checkcompDBG) {
-            std::cout << "\n##############################################################\n";
-            std::cout << "Would you like to also calculate the Barbieri-Giudice naturalness measure Delta_BG?\n";
-            std::cout << "Enter Y for yes or N for no: ";
-            string dbgCheckInp;
-            getline(cin, dbgCheckInp);
-
-            // Convert to lowercase to normalize
-            transform(dbgCheckInp.begin(), dbgCheckInp.end(), dbgCheckInp.begin(),
-                      [](unsigned char c) { return tolower(c); });
-            if (dbgCheckInp == "n" || dbgCheckInp == "no") {
-                DBGcalc = false;
-                checkcompDBG = false;
-            } else if (dbgCheckInp == "y" || dbgCheckInp == "yes") {
-                DBGcalc = true;
-                checkcompDBG = false;
-            } else {
-                std::cout << "Invalid input, please try again.\n\n";
-                // Sleep for 1 second
-                this_thread::sleep_for(chrono::seconds(1));
-            }
-        }
         
-        // Check if user wants to compute Delta_SN as well
-
-        bool checkcompDSN = true;
-        bool DSNcalc = false;
-        while (checkcompDSN) {
-            std::cout << "\n##############################################################\n";
-            std::cout << "Would you like to also calculate the stringy naturalness measure Delta_SN?\n";
-            std::cout << "Enter Y for yes or N for no: ";
-            string dsnCheckInp;
-            getline(cin, dsnCheckInp);
-
-            // Convert to lowercase to normalize
-            transform(dsnCheckInp.begin(), dsnCheckInp.end(), dsnCheckInp.begin(),
-                      [](unsigned char c) { return tolower(c); });
-            if (dsnCheckInp == "n" || dsnCheckInp == "no") {
-                DSNcalc = false;
-                checkcompDSN = false;
-            } else if (dsnCheckInp == "y" || dsnCheckInp == "yes") {
-                DSNcalc = true;
-                checkcompDSN = false;
-            } else {
-                std::cout << "Invalid input, please try again.\n\n";
-                // Sleep for 1 second
-                this_thread::sleep_for(chrono::seconds(1));
-            }
-        }
-
         /******************************************************************
          ********************* PRECISION SELECTION ************************
         ******************************************************************/
@@ -262,99 +170,53 @@ void terminalUI() {
         std::cout << fixed << setprecision(printPrec);
         
         /******************************************************************
-         ********************* DBG MODEL SELECTION ************************
-        ******************************************************************/
-        std::cout << "\n##############################################################\n";
-        int modinp = 0;
-        int precinp = 0;
-        if (DBGcalc) {
-            std::cout << "For Delta_BG, the ``fundamental parameters'' vary from model to model.\n"
-                << "For this reason, prior to entering the directory of your SLHA file, please\n"
-                << "enter the model number below corresponding to your SLHA file.\n\n"
-                << "Model numbers: \n"
-                << "1: CMSSM/mSUGRA\n"
-                << "2: NUHM1\n"
-                << "3: NUHM2\n"
-                << "4: NUHM3\n"
-                << "5: NUHM4\n"
-                << "6: pMSSM-19\n\n";
-            while (true) {
-                std::cout << "From the list above, input the number of the model your SLHA file corresponds to: "; 
-                if ((!(cin >> modinp)) || (modinp < 1 || modinp > 6)) {
-                    std::cout << "Invalid model number selected, please try again.\n\n";
-                    this_thread::sleep_for(chrono::seconds(1));
-                } else {
-                    break;
-                }
-            }
-            std::cout << "\n####################################################\n"
-                    << "Please select the level of precision you want for the Delta_BG calculation.\n"
-                    << "Below are the options: \n"
-                    << "1: High precision, slowest calculation.\n"
-                    << "2: Medium precision, twice as fast as high precision mode.\n"
-                    << "3: Lowest precision, four times as fast as high precision mode.\n\n";
-
-            while (true) {
-                std::cout << "From the list above, input the number corresponding to the precision you want: ";
-                if (!(cin >> precinp) || (precinp < 1 || precinp > 3)) {
-                    std::cout << "Invalid Delta_BG precision setting selected, please try again.\n\n";
-                    
-                    this_thread::sleep_for(chrono::seconds(1));
-                } else {
-                    break; 
-                }
-            }
-        }
-        
-        /******************************************************************
          ********************** DSN Configuration *************************
         ******************************************************************/
        
         int DSNcalcSelect = 0;
         int nF_input = 0;
         int nD_input = 0;
-        if (DSNcalc) {
-            std::cout << "\n####################################################\n"
-                    << "Please select the level of precision you want for the Delta_SN calculation.\n"
-                    << "Below are the options: \n"
-                    << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
+        std::cout << "\n####################################################\n"
+                << "Please select the level of precision you want for the Delta_SN calculation.\n"
+                << "Below are the options: \n"
+                << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
+                << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+        while (true) {
+            std::cout << "From the list above, input the number corresponding to the precision you want: ";
+            if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 3)) {
+                std::cout << "Invalid Delta_SN precision setting selected, please try again.\n\n";
+                
+                this_thread::sleep_for(chrono::seconds(1));
+                std::cout << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
                     << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
-            while (true) {
-                std::cout << "From the list above, input the number corresponding to the precision you want: ";
-                if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 3)) {
-                    std::cout << "Invalid Delta_SN precision setting selected, please try again.\n\n";
-                    
-                    this_thread::sleep_for(chrono::seconds(1));
-                    std::cout << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
-                        << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
-                    
-                } else {
-                    break; 
-                }
-            }            
-            std::cout << "\n####################################################\n";
-            while (true) {
-                std::cout << "Please input the number of F-type SUSY breaking fields as an integer: ";
-                if (!(cin >> nF_input) || (nF_input < 0) || (isnan(nF_input))) {
-                    std::cout << "Invalid number of F-type fields input, please try again.\n\n";
-                    
-                    this_thread::sleep_for(chrono::seconds(1));
-                } else {
-                    break; 
-                }
-            }                
-            std::cout << "\n####################################################\n";
-            while (true) {
-                std::cout << "Please input the number of D-type SUSY breaking fields as an integer: ";
-                if (!(cin >> nD_input) || (nD_input < 0) || (isnan(nD_input))) {
-                    std::cout << "Invalid number of D-type fields input, please try again.\n\n";
-                    
-                    this_thread::sleep_for(chrono::seconds(1));
-                } else {
-                    break; 
-                }
-            }       
-        }
+                
+            } else {
+                break; 
+            }
+        }            
+        std::cout << "\n####################################################\n";
+        while (true) {
+            std::cout << "Please input the number of F-type SUSY breaking fields as an integer: ";
+            if (!(cin >> nF_input) || (nF_input < 0) || (isnan(nF_input))) {
+                std::cout << "Invalid number of F-type fields input, please try again.\n\n";
+                
+                this_thread::sleep_for(chrono::seconds(1));
+            } else {
+                break; 
+            }
+        }                
+        std::cout << "\n####################################################\n";
+        while (true) {
+            std::cout << "Please input the number of D-type SUSY breaking fields as an integer: ";
+            if (!(cin >> nD_input) || (nD_input < 0) || (isnan(nD_input))) {
+                std::cout << "Invalid number of D-type fields input, please try again.\n\n";
+                
+                this_thread::sleep_for(chrono::seconds(1));
+            } else {
+                break; 
+            }
+        }       
+        
 
         std::cout << "\n########## Configuration Complete ##########\n";
         this_thread::sleep_for(chrono::milliseconds(1500));
@@ -599,19 +461,13 @@ void terminalUI() {
         }
         double currentmZ2 = ((2.0 * ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)))
                              - (2.0 * muQsq));
-        cout << "first mZ: " << sqrt(currentmZ2) << endl;
         double getmZ2_value = getmZ2(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
-        // cout << "mZ value from routine = " << copysign(sqrt(abs(getmZ2_value)), getmZ2_value) << endl;
 
         // Now we calculate the value of b=B*mu coming from this SLHA point. 
         double BmuSLHA = sin(2.0 * beta) * (mHusq + first_radcorrs[0] + mHdsq + first_radcorrs[1] + (2.0 * muQsq)) / 2.0;
         first_SUSY_BCs[42] = BmuSLHA;
         std::cout << "Weak scale parameters established." << endl;
         this_thread::sleep_for(chrono::seconds(1));
-        // std::cout << "First weak scale BCs: " << endl;
-        // for (double value : first_SUSY_BCs) {
-        //     cout << value << endl;
-        // }
 
         /******************************************************************
          ******************** ESTABLISH GUT VALUES ************************
@@ -630,116 +486,31 @@ void terminalUI() {
             curr_iter_lsq = pow((1.0 - (new_QGUT / curr_iter_QGUT)), 2.0);
             curr_iter_QGUT = new_QGUT;
         }
-        std::cout << "GUT scale = " << curr_iter_QGUT << endl;
-        std::cout << "GUT BCs: " << endl;
-        for (double value : first_GUT_BCs) {
-            std::cout << value << endl;
-        }
-
-        /******************************************************************
-         ********************* COMPUTE DEW VALUES *************************
-         ******************************************************************/
-
-        std::cout << "\n########## Computing Delta_EW... ##########\n" << endl;
-        vector<LabeledValue> dewlist = DEW_calc(first_SUSY_BCs, SLHAQSUSY);
-        std::cout << "\n########## Delta_EW Results ##########\n";
-        this_thread::sleep_for(chrono::milliseconds(1500));
-        std::cout << "Given the submitted SLHA file, your value for the electroweak naturalness measure"
-             << ", Delta_EW, is: " << dewlist[0].value;
-        this_thread::sleep_for(chrono::milliseconds(250));
-        std::cout << "\nThe ordered, signed contributions to Delta_EW are as follows (decr. order):\n";
-        for (size_t i = 0; i < dewlist.size(); ++i) {
-            std::cout << (i + 1) << ": " << dewlist[i].value << ", " << dewlist[i].label << endl;
-            this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / dewlist.size())));
-        }
         
-        string continueinput;
-        std::cout << "\n##### Press Enter to continue... #####";
-        getline(cin, continueinput); // User presses enter to continue.
-
-        /******************************************************************
-         ********************* COMPUTE DHS VALUES *************************
-         ******************************************************************/
-
-        // Perform Delta_HS calculation if user requested it
-        if (DHScalc) {
-            std::cout << "\n########## Computing Delta_HS... ##########\n" << endl;
-            vector<LabeledValueHS> dhslist = DHS_calc(first_GUT_BCs[26], first_SUSY_BCs[26] - first_GUT_BCs[26],
-                                                      first_GUT_BCs[25], first_SUSY_BCs[25] - first_GUT_BCs[25],
-                                                      pow(first_GUT_BCs[6], 2.0),
-                                                      pow(first_SUSY_BCs[6], 2.0) - pow(first_GUT_BCs[6], 2.0),
-                                                      91.1876 * 91.1876, first_SUSY_BCs[43] * first_SUSY_BCs[43], first_radcorrs[0], first_radcorrs[1]);
-
-            this_thread::sleep_for(chrono::seconds(1));
-            std::cout << "\n########## Delta_HS Results ##########\n";
-            this_thread::sleep_for(chrono::seconds(1));
-            std::cout << "Your value for the high-scale naturalness measure, Delta_HS, is: "
-                 << dhslist[0].value;
-            this_thread::sleep_for(chrono::milliseconds(250));
-            std::cout << "\nThe ordered, signed contributions to Delta_HS are as follows (decr. order):\n";
-            for (size_t i = 0; i < dhslist.size(); ++i) {
-                std::cout << (i + 1) << ": " << dhslist[i].value << ", " << dhslist[i].label << endl;
-                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / dhslist.size())));
-            }
-        
-            string continueinputHS;
-            std::cout << "\n##### Press Enter to continue... #####";
-            getline(cin, continueinputHS); // User presses enter to continue.
-        }
-
-        /******************************************************************
-         ********************* COMPUTE DBG VALUES *************************
-         ******************************************************************/
-
-        if (DBGcalc) {
-            double logQSUSY = log(SLHAQSUSY);
-            std::cout << "\n########## Computing Delta_BG... ##########\n" << endl;
-            std::cout << "(This can take a while...)\n";
-            vector<LabeledValueBG> myDBGlist = DBG_calc(modinp, precinp, curr_iter_QGUT,
-                                                        logQSUSY, tanb, first_GUT_BCs, currentmZ2);
-            this_thread::sleep_for(chrono::seconds(1));
-            std::cout << "\n########## Delta_BG Results ##########\n";
-            this_thread::sleep_for(chrono::seconds(1));
-            std::cout << "Your value for the Barbieri-Giudice naturalness measure, Delta_BG, is: "
-                 << myDBGlist[0].value;
-            this_thread::sleep_for(chrono::milliseconds(250));
-            std::cout << "\nThe ordered, signed contributions to Delta_BG are as follows (decr. order):\n";
-            for (size_t i = 0; i < myDBGlist.size(); ++i) {
-                std::cout << (i + 1) << ": " << myDBGlist[i].value << ", " << myDBGlist[i].label << endl;
-                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDBGlist.size())));
-            }
-        
-            string continueinputBG;
-            std::cout << "\n##### Press Enter to continue... #####";
-            getline(cin, continueinputBG); // User presses enter to continue.
-        
-        }
-     
         /******************************************************************
          ********************* COMPUTE DSN VALUES *************************
          ******************************************************************/
 
-        if (DSNcalc) {
-            double logQSUSY = log(SLHAQSUSY);
-            std::vector<DSNLabeledValue> myDSNlist = DSN_calc(DSNcalcSelect, first_SUSY_BCs, getmZ2_value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
-            double totalDSN = 0.0;
-            for (const auto& item : myDSNlist) {
-                totalDSN += item.value;
-            }
-            std::cout << "\n########## Delta_SN Results ##########\n";
-            std::cout << "Your value for the stringy naturalness measure, Delta_SN, is: "
-                 << totalDSN;
-            this_thread::sleep_for(chrono::milliseconds(250));
-            std::cout << "\nThe ordered contributions to Delta_SN are as follows (decr. order):\n";
-            for (size_t i = 0; i < myDSNlist.size(); ++i) {
-                std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
-                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
-            }
-        
-            string continueinputSN;
-            std::cout << "\n##### Press Enter to continue... #####";
-            getline(cin, continueinputSN); // User presses enter to continue.
+        double logQSUSY = log(SLHAQSUSY);
+        std::vector<DSNLabeledValue> myDSNlist = DSN_calc(DSNcalcSelect, first_SUSY_BCs, getmZ2_value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
+        double totalDSN = 0.0;
+        for (const auto& item : myDSNlist) {
+            totalDSN += item.value;
         }
+        std::cout << "\n########## Delta_SN Results ##########\n";
+        std::cout << "Your value for the stringy naturalness measure, Delta_SN, is: "
+                << totalDSN;
+        this_thread::sleep_for(chrono::milliseconds(250));
+        std::cout << "\nThe ordered contributions to Delta_SN are as follows (decr. order):\n";
+        for (size_t i = 0; i < myDSNlist.size(); ++i) {
+            std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+            this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+        }
+    
+        string continueinputSN;
+        std::cout << "\n##### Press Enter to continue... #####";
+        getline(cin, continueinputSN); // User presses enter to continue.
+        
         
         // Try again?
         string checkcontinue;

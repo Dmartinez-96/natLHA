@@ -4,6 +4,7 @@
 #define DEW_CALC_HPP
 
 #include <vector>
+#include <string>
 
 //Functions
 
