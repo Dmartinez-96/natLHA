@@ -382,7 +382,6 @@ void terminalUI() {
                 std::cout << "The input file cannot be found.\n"
                     << "Please try checking your spelling and try again.\n";
             }
-            
         }
         this_thread::sleep_for(chrono::milliseconds(500));
         clearScreen();
@@ -599,17 +598,12 @@ void terminalUI() {
         double currentmZ2 = ((2.0 * ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)))
                              - (2.0 * muQsq));
         double getmZ2_value = getmZ2(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
-        // cout << "mZ value from routine = " << copysign(sqrt(abs(getmZ2_value)), getmZ2_value) << endl;
 
         // Now we calculate the value of b=B*mu coming from this SLHA point. 
         double BmuSLHA = sin(2.0 * beta) * (mHusq + first_radcorrs[0] + mHdsq + first_radcorrs[1] + (2.0 * muQsq)) / 2.0;
         first_SUSY_BCs[42] = BmuSLHA;
         std::cout << "Weak scale parameters established." << endl;
         this_thread::sleep_for(chrono::seconds(1));
-        // std::cout << "First weak scale BCs: " << endl;
-        // for (double value : first_SUSY_BCs) {
-        //     cout << value << endl;
-        // }
 
         /******************************************************************
          ******************** ESTABLISH GUT VALUES ************************
