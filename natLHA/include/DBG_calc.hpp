@@ -4,6 +4,7 @@
 #define DBG_CALC_HPP
 
 #include <vector>
+#include <string>
 
 struct LabeledValueBG {
     double value;
