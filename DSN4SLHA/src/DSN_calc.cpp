@@ -11,7 +11,6 @@
 #include "DSN_calc.hpp"
 #include "MSSM_RGE_solver.hpp"
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
-#include "MSSM_RGE_solver_with_U3Q3finder.hpp"
 #include "mZ_numsolver.hpp"
 #include "radcorr_calc.hpp"
 #include "tree_mass_calc.hpp"
