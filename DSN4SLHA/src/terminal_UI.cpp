@@ -233,17 +233,26 @@ void terminalUI() {
         while (fileCheck) {
             std::cout << "Enter the full directory for your SLHA file: ";
             getline(cin, direc);
-            
-            // Attempt to open the file to check if it exists
-            ifstream testFile(direc);
-            if (testFile.good()) {
-                fileCheck = false;
-                testFile.close(); 
+
+            fs::path filePath(direc);
+
+            // Check if the path exists and is a file
+            if (fs::exists(filePath) && fs::is_regular_file(filePath)) {
+                std::ifstream testFile(direc);
+                if (testFile.good()) {
+                    fileCheck = false;
+                    testFile.close();
+                } else {
+                    std::cout << "The input file cannot be opened.\n"
+                            << "Please check your permissions and try again.\n";
+                }
+            } else if (fs::exists(filePath) && fs::is_directory(filePath)) {
+                std::cout << "The path you entered is a directory, not a file.\n"
+                        << "Please enter a valid file path.\n";
             } else {
                 std::cout << "The input file cannot be found.\n"
-                    << "Please try checking your spelling and try again.\n";
-            }
-            
+                        << "Please try checking your spelling and try again.\n";
+            }            
         }
         this_thread::sleep_for(chrono::milliseconds(500));
         clearScreen();
