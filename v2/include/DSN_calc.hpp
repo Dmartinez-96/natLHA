@@ -6,8 +6,13 @@
 #include <vector>
 #include <string>
 
-double DSN_calc(int precselno, std::vector<double> GUT_boundary_conditions,
-                double& current_mZ2, double& current_logQSUSY,
-                double& current_logQGUT, int& nF, int& nD);
+struct DSNLabeledValue {
+    double value;
+    std::string label;
+};
+
+std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<double> Wk_boundary_conditions,
+                                      double& current_mZ2, double& current_logQSUSY,
+                                      double& current_logQGUT, int& nF, int& nD);
 
 #endif

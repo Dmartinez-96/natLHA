@@ -345,7 +345,7 @@ bool Hessian_check(vector<double> weak_boundary_conditions, double myQ) {
             OriginCheck = false;
     }
     if (OriginCheck == false) {
-        std::cout << "Origin failed to destabilize at loop-level" << endl;
+        // std::cout << "Origin failed to destabilize at loop-level" << endl;
     }
     return OriginCheck;
 }

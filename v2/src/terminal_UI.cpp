@@ -317,18 +317,16 @@ void terminalUI() {
             std::cout << "\n####################################################\n"
                     << "Please select the level of precision you want for the Delta_SN calculation.\n"
                     << "Below are the options: \n"
-                    << "1: High precision, Monte Carlo routine for hypervolume density measure \n"
-                    << "2: Lower precision, full DSN P_mu + soft terms hypervolume density measure\n"
-                    << "3: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+                    << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
+                    << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
             while (true) {
                 std::cout << "From the list above, input the number corresponding to the precision you want: ";
                 if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 3)) {
                     std::cout << "Invalid Delta_SN precision setting selected, please try again.\n\n";
                     
                     this_thread::sleep_for(chrono::seconds(1));
-                    std::cout << "1: High precision, Monte Carlo routine for hypervolume density measure \n"
-                        << "2: Lower precision, full DSN P_mu + soft terms hypervolume density measure\n"
-                        << "3: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+                    std::cout << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
+                        << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
                     
                 } else {
                     break; 
@@ -723,8 +721,24 @@ void terminalUI() {
 
         if (DSNcalc) {
             double logQSUSY = log(SLHAQSUSY);
-            double myDSN = DSN_calc(DSNcalcSelect, first_GUT_BCs, getmZ2_value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
-            cout << "Delta_SN = " << myDSN << endl;
+            std::vector<DSNLabeledValue> myDSNlist = DSN_calc(DSNcalcSelect, first_SUSY_BCs, getmZ2_value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
+            double totalDSN = 0.0;
+            for (const auto& item : myDSNlist) {
+                totalDSN += item.value;
+            }
+            std::cout << "\n########## Delta_SN Results ##########\n";
+            std::cout << "Your value for the stringy naturalness measure, Delta_SN, is: "
+                 << totalDSN;
+            this_thread::sleep_for(chrono::milliseconds(250));
+            std::cout << "\nThe ordered contributions to Delta_SN are as follows (decr. order):\n";
+            for (size_t i = 0; i < myDSNlist.size(); ++i) {
+                std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+            }
+        
+            string continueinputSN;
+            std::cout << "\n##### Press Enter to continue... #####";
+            getline(cin, continueinputSN); // User presses enter to continue.
         }
         break;
     }
