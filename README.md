@@ -133,3 +133,13 @@ Lastly, the user can either choose to try again with a new SLHA file from the be
 ![endprog](Readme_images/try_again_check.png "DEW4SLHA prompts user to see if they want to try again with a new file")
 
 # FURTHER INSTRUCTIONS AND INFORMATION CAN BE FOUND AT [dew4slha.com](https://dew4slha.com/).
+
+## Acknowledgments
+
+This software makes use of several third-party libraries:
+
+- **Boost Libraries** (Boost Software License): [Boost website](https://www.boost.org/)
+- **Eigen Libraries** (LGPL3+ License): [Eigen website](https://eigen.tuxfamily.org/)
+- **GNU Scientific Library (GSL)** (GNU General Public License): [GSL website](https://www.gnu.org/software/gsl/)
+
+Special thanks to the developers of these libraries for their invaluable contributions to the open source community.
