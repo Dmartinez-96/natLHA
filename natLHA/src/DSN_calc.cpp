@@ -2377,13 +2377,12 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<double> Wk_boun
         // Total normalization
         DSN_higgsino = abs(log10(abs(muwindows[3] / muwindows[2])));
         DSN_higgsino /= abs(muwindows[3] - muwindows[2]);
-        if ((abs(DSN_higgsino - newterm) < numeric_limits<double>::epsilon()) || (isnan(newterm)) || (newterm == 0.0) || isinf(newterm) || (isnan(DSN_higgsino)) || (DSN_higgsino == 0.0) || isinf(DSN_higgsino)) {
-            newterm = abs(log10(1.0 + (numeric_limits<double>::epsilon() * abs(Wk_boundary_conditions[6]))))\
-                / abs(numeric_limits<double>::epsilon() * abs(Wk_boundary_conditions[6]));
-            DSN_higgsino = 1.0 / abs(((pow(10.0, 0.5) - pow(10.0, -0.5))) * abs(Wk_boundary_conditions[6]));
+        if ((abs(DSN_higgsino - newterm) < numeric_limits<double>::epsilon()) || (isnan(DSN_higgsino - newterm)) || (DSN_higgsino - newterm == 0.0) || isinf(DSN_higgsino - newterm)) {
+            newterm = abs(log10(abs(boost::math::float_next(Wk_boundary_conditions[6]) / boost::math::float_prior(Wk_boundary_conditions[6]))) / abs(boost::math::float_next(Wk_boundary_conditions[6]) - boost::math::float_prior(Wk_boundary_conditions[6])));
+            DSN_higgsino = abs(log10(abs(boost::math::float_next(boost::math::float_next(Wk_boundary_conditions[6])) / boost::math::float_prior(boost::math::float_prior(Wk_boundary_conditions[6])))) / abs(boost::math::float_next(boost::math::float_next(Wk_boundary_conditions[6])) - boost::math::float_prior(boost::math::float_prior(Wk_boundary_conditions[6]))));
         }
         DSN += abs(log10(abs(DSN_higgsino)) - log10(abs(newterm)));
-        DSN_mu = abs(log10(abs(DSN_soft_num / DSN_soft_denom)) - log10(abs(newterm)));
+        DSN_mu = abs(log10(abs(DSN_higgsino)) - log10(abs(newterm)));
 
         // Create return list
         DSNlabeledlist = {{DSN_mu, "mu"}};
