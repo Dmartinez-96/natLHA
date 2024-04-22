@@ -38,16 +38,16 @@ std::string getCurrentTimeFormatted() {
     return buffer;
 }
 
-void saveResults(const std::vector<std::pair<double, std::string>>& dewlist, const std::string& directory, const std::string& filename) {
+void saveDHSResults(const std::vector<LabeledValueHS>& dhslist, const std::string& directory, const std::string& filename, const int& printprec) {
     std::ofstream outFile(directory + "/" + filename, std::ios::out);
-    outFile << "Given the submitted SLHA file, " /* << direc */ << ", your value for the electroweak\n"
-            << "naturalness measure, Delta_EW, is: " /* << std::format("{:.8f}", dewlist[0].first) */ << std::endl;
-    outFile << "\nThe ordered contributions to Delta_EW are as follows (decr. order): \n\n";
-    for (size_t i = 0; i < dewlist.size(); i++) {
-        outFile << i + 1 << ": " << /* std::format("{:.8f}", dewlist[i].first) */ dewlist[i].first << ", " << dewlist[i].second << std::endl;
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the high-scale\n"
+            << "naturalness measure, Delta_HS, is: " << std::fixed << std::setprecision(printprec) << dhslist[0].value << std::endl;
+    outFile << "\nThe ordered contributions to Delta_HS are as follows (decr. order): \n\n";
+    for (const auto& item : dhslist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
     }
     outFile.close();
-    std::cout << "\nThese results have been saved to the directory \n" << fs::current_path() << '/' << directory << " as " << filename << ".\n";
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
 }
 
 void clearScreen() {
@@ -496,10 +496,47 @@ void terminalUI() {
             std::cout << (i + 1) << ": " << dhslist[i].value << ", " << dhslist[i].label << endl;
             this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / dhslist.size())));
         }
-    
-        string continueinputHS;
-        std::cout << "\n##### Press Enter to continue... #####";
-        getline(cin, continueinputHS); // User presses enter to continue.
+
+        bool checkDHSSaveBool = true;
+        string saveDHSinput;
+        while (checkDHSSaveBool) {
+            std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/DHS4SLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
+            std::getline(std::cin, saveDHSinput);
+
+            std::string DHStimeStr = getCurrentTimeFormatted();
+
+            if (saveDHSinput == "Y" || saveDHSinput == "y" || saveDHSinput == "Yes" || saveDHSinput == "yes") {
+                std::string DHSpath = "DHS4SLHA_results/DHS";
+                if (!fs::exists("DHS4SLHA_results")) fs::create_directory("DHS4SLHA_results");
+                if (!fs::exists(DHSpath)) fs::create_directory(DHSpath);
+
+                std::cout << "\nThe default file name is 'current_system_time_DHS_contrib_list.txt', e.g., " << DHStimeStr << "_DHS_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                std::getline(std::cin, saveDHSinput);
+
+                if (saveDHSinput == "Y" || saveDHSinput == "y" || saveDHSinput == "Yes" || saveDHSinput == "yes") {
+                    saveDHSResults(dhslist, DHSpath, DHStimeStr + "_DHS_contrib_list.txt", printPrec);
+                    checkDHSSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else if (saveDHSinput == "N" || saveDHSinput == "n" || saveDHSinput == "No" || saveDHSinput == "no") {
+                    std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DHS_list' without the quotes): ";
+                    std::string newDHSFileName;
+                    std::getline(std::cin, newDHSFileName);
+                    saveDHSResults(dhslist, DHSpath, newDHSFileName + ".txt", printPrec);
+                    checkDHSSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else {
+                    std::cout << "Invalid user input.\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+            } else {
+                std::cout << "\nOutput not saved.\n";
+                checkDHSSaveBool = false;
+                std::cout << "##### Press Enter to continue... #####\n";
+                std::cin.get();
+            }
+        }
         
         // Try again?
         string checkcontinue;

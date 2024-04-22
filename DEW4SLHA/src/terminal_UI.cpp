@@ -38,16 +38,16 @@ std::string getCurrentTimeFormatted() {
     return buffer;
 }
 
-void saveResults(const std::vector<std::pair<double, std::string>>& dewlist, const std::string& directory, const std::string& filename) {
+void saveDEWResults(const std::vector<LabeledValue>& dewlist, const std::string& directory, const std::string& filename, const int& printprec) {
     std::ofstream outFile(directory + "/" + filename, std::ios::out);
-    outFile << "Given the submitted SLHA file, " /* << direc */ << ", your value for the electroweak\n"
-            << "naturalness measure, Delta_EW, is: " /* << std::format("{:.8f}", dewlist[0].first) */ << std::endl;
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the electroweak\n"
+            << "naturalness measure, Delta_EW, is: " << std::fixed << std::setprecision(printprec) << dewlist[0].value << std::endl;
     outFile << "\nThe ordered contributions to Delta_EW are as follows (decr. order): \n\n";
-    for (size_t i = 0; i < dewlist.size(); i++) {
-        outFile << i + 1 << ": " << /* std::format("{:.8f}", dewlist[i].first) */ dewlist[i].first << ", " << dewlist[i].second << std::endl;
+    for (const auto& item : dewlist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
     }
     outFile.close();
-    std::cout << "\nThese results have been saved to the directory \n" << fs::current_path() << '/' << directory << " as " << filename << ".\n";
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
 }
 
 void clearScreen() {
@@ -422,7 +422,6 @@ void terminalUI() {
         vector<RGEStruct> SUSYscale_struct = solveODEstoMSUSY(dummyrun, log(1.0e12), -1.0e-6, tempT_target, 91.1876 * 91.1876);
 
         double SLHAQSUSY = exp(SUSYscale_struct[0].SUSYscale_eval);
-        std::cout << "Q(SUSY) = " << SLHAQSUSY << endl;
         vector<double> first_SUSY_BCs = solveODEs(mySLHABCs, log(SLHA_scale), log(SLHAQSUSY), copysign(1.0e-6, (SLHAQSUSY - SLHA_scale)));
         vector<double> first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
         tanb = first_SUSY_BCs[43];
@@ -486,9 +485,47 @@ void terminalUI() {
             this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / dewlist.size())));
         }
         
-        string continueinput;
-        std::cout << "\n##### Press Enter to continue... #####";
-        getline(cin, continueinput); // User presses enter to continue.
+        // Save DEW results?
+        bool checkSaveBool = true;
+        string saveinput;
+        while (checkSaveBool) {
+            std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/DEW4SLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
+            std::getline(std::cin, saveinput);
+
+            std::string timeStr = getCurrentTimeFormatted();
+
+            if (saveinput == "Y" || saveinput == "y" || saveinput == "Yes" || saveinput == "yes") {
+                std::string path = "DEW4SLHA_results/DEW";
+                if (!fs::exists("DEW4SLHA_results")) fs::create_directory("DEW4SLHA_results");
+                if (!fs::exists(path)) fs::create_directory(path);
+
+                std::cout << "\nThe default file name is 'current_system_time_DEW_contrib_list.txt', e.g., " << timeStr << "_DEW_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                std::getline(std::cin, saveinput);
+
+                if (saveinput == "Y" || saveinput == "y" || saveinput == "Yes" || saveinput == "yes") {
+                    saveDEWResults(dewlist, path, timeStr + "_DEW_contrib_list.txt", printPrec);
+                    checkSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else if (saveinput == "N" || saveinput == "n" || saveinput == "No" || saveinput == "no") {
+                    std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DEW_list' without the quotes): ";
+                    std::string newFileName;
+                    std::getline(std::cin, newFileName);
+                    saveDEWResults(dewlist, path, newFileName + ".txt", printPrec);
+                    checkSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else {
+                    std::cout << "Invalid user input.\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+            } else {
+                std::cout << "\nOutput not saved.\n";
+                checkSaveBool = false;
+                std::cout << "##### Press Enter to continue... #####\n";
+                std::cin.get();
+            }
+        }
         
         // Try again?
         string checkcontinue;

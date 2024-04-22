@@ -38,16 +38,16 @@ std::string getCurrentTimeFormatted() {
     return buffer;
 }
 
-void saveResults(const std::vector<std::pair<double, std::string>>& dewlist, const std::string& directory, const std::string& filename) {
+void saveDBGResults(const std::vector<LabeledValueBG>& dbglist, const std::string& directory, const std::string& filename, const int& printprec) {
     std::ofstream outFile(directory + "/" + filename, std::ios::out);
-    outFile << "Given the submitted SLHA file, " /* << direc */ << ", your value for the electroweak\n"
-            << "naturalness measure, Delta_EW, is: " /* << std::format("{:.8f}", dewlist[0].first) */ << std::endl;
-    outFile << "\nThe ordered contributions to Delta_EW are as follows (decr. order): \n\n";
-    for (size_t i = 0; i < dewlist.size(); i++) {
-        outFile << i + 1 << ": " << /* std::format("{:.8f}", dewlist[i].first) */ dewlist[i].first << ", " << dewlist[i].second << std::endl;
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the Barbieri-Giudice\n"
+            << "naturalness measure, Delta_BG, is: " << std::fixed << std::setprecision(printprec) << dbglist[0].value << std::endl;
+    outFile << "\nThe ordered contributions to Delta_BG are as follows (decr. order): \n\n";
+    for (const auto& item : dbglist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
     }
     outFile.close();
-    std::cout << "\nThese results have been saved to the directory \n" << fs::current_path() << '/' << directory << " as " << filename << ".\n";
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
 }
 
 void clearScreen() {
@@ -538,10 +538,48 @@ void terminalUI() {
             std::cout << (i + 1) << ": " << myDBGlist[i].value << ", " << myDBGlist[i].label << endl;
             this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDBGlist.size())));
         }
-    
-        string continueinputBG;
-        std::cout << "\n##### Press Enter to continue... #####";
-        getline(cin, continueinputBG); // User presses enter to continue.
+
+        bool checkDBGSaveBool = true;
+        string saveDBGinput;
+        while (checkDBGSaveBool) {
+            std::cout << "\nWould you like to save these DBG results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/DBG4SLHA_results/DBG)?\nEnter Y to save the result or N to continue: ";
+            std::getline(std::cin, saveDBGinput);
+
+            std::string DBGtimeStr = getCurrentTimeFormatted();
+
+            if (saveDBGinput == "Y" || saveDBGinput == "y" || saveDBGinput == "Yes" || saveDBGinput == "yes") {
+                std::string DBGpath = "DBG4SLHA_results/DBG";
+                if (!fs::exists("DBG4SLHA_results")) fs::create_directory("DBG4SLHA_results");
+                if (!fs::exists(DBGpath)) fs::create_directory(DBGpath);
+
+                std::cout << "\nThe default file name is 'current_system_time_DBG_contrib_list.txt', e.g., " << DBGtimeStr << "_DBG_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                std::getline(std::cin, saveDBGinput);
+
+                if (saveDBGinput == "Y" || saveDBGinput == "y" || saveDBGinput == "Yes" || saveDBGinput == "yes") {
+                    saveDBGResults(myDBGlist, DBGpath, DBGtimeStr + "_DBG_contrib_list.txt", printPrec);
+                    checkDBGSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else if (saveDBGinput == "N" || saveDBGinput == "n" || saveDBGinput == "No" || saveDBGinput == "no") {
+                    std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DBG_list' without the quotes): ";
+                    std::string newDBGFileName;
+                    std::getline(std::cin, newDBGFileName);
+                    saveDBGResults(myDBGlist, DBGpath, newDBGFileName + ".txt", printPrec);
+                    checkDBGSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else {
+                    std::cout << "Invalid user input.\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+            } else {
+                std::cout << "\nOutput not saved.\n";
+                checkDBGSaveBool = false;
+                std::cout << "##### Press Enter to continue... #####\n";
+                std::cin.get();
+            }
+        }
+
         // Try again?
         string checkcontinue;
         std::cout << "Would you like to try again with a new SLHA file? Enter Y to try again or N to stop: ";
