@@ -490,11 +490,6 @@ void terminalUI() {
             curr_iter_lsq = pow((1.0 - (new_QGUT / curr_iter_QGUT)), 2.0);
             curr_iter_QGUT = new_QGUT;
         }
-        std::cout << "GUT scale = " << curr_iter_QGUT << endl;
-        std::cout << "GUT BCs: " << endl;
-        for (double value : first_GUT_BCs) {
-            std::cout << value << endl;
-        }
         
         string continueinput;
         std::cout << "\n##### Press Enter to continue... #####";
