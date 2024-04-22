@@ -118,7 +118,7 @@ double getRenormalizationScale(const Coll& slha, const string& blockName) {
 void terminalUI() {
     std::cout << fixed << setprecision(9);
     bool userContinue = true;
-    std::cout << "Welcome to DHS4SLHA, a program for computing the naturalness measure Delta_HS in the MSSM\n"
+    std::cout << "Welcome to DHS4SLHA, a program for computing the naturalness measure Delta_HS (high-scale naturalness) in the MSSM\n"
          << "from a SUSY Les Houches Accord (SLHA) file.\n\n"
          << "To use this program, you may select a\n"
          << "MSSM SLHA file from your choice of spectrum generator (e.g.,\n"

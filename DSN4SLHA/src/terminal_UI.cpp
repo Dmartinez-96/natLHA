@@ -118,7 +118,7 @@ double getRenormalizationScale(const Coll& slha, const string& blockName) {
 void terminalUI() {
     std::cout << fixed << setprecision(9);
     bool userContinue = true;
-    std::cout << "Welcome to DSN4SLHA, a program for computing the naturalness measure Delta_SN in the MSSM\n"
+    std::cout << "Welcome to DSN4SLHA, a program for computing the naturalness measure Delta_SN (stringy naturalness) in the MSSM\n"
          << "from a SUSY Les Houches Accord (SLHA) file.\n\n"
          << "To use this program, you may select a\n"
          << "MSSM SLHA file from your choice of spectrum generator (e.g.,\n"
@@ -406,7 +406,6 @@ void terminalUI() {
             mE1sq = getDoubleMatValue("MSE2", 1, 1);
         }
         double SLHA_scale = getRenormalizationScale(input, "GAUGE");
-        std::cout << "Q(SLHA) = " << SLHA_scale << endl;
         std::cout << "SLHA parameters read in." << endl;
         /* Use 2-loop MSSM RGEs to evolve results to a renormalization scale of 
            Q = sqrt(mst1 * mst2) if the submitted SLHA file is not currently at that scale.
@@ -440,7 +439,6 @@ void terminalUI() {
         vector<RGEStruct> SUSYscale_struct = solveODEstoMSUSY(dummyrun, log(1.0e12), -1.0e-6, tempT_target, 91.1876 * 91.1876);
 
         double SLHAQSUSY = exp(SUSYscale_struct[0].SUSYscale_eval);
-        std::cout << "Q(SUSY) = " << SLHAQSUSY << endl;
         vector<double> first_SUSY_BCs = solveODEs(mySLHABCs, log(SLHA_scale), log(SLHAQSUSY), copysign(1.0e-6, (SLHAQSUSY - SLHA_scale)));
         vector<double> first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
         tanb = first_SUSY_BCs[43];

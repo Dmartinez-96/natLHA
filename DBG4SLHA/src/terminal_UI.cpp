@@ -119,7 +119,7 @@ void terminalUI() {
     std::cout << fixed << setprecision(9);
     bool userContinue = true;
     std::cout << "Welcome to DBG4SLHA, a program for computing the naturalness "
-         << "measure Delta_BG in the MSSM\n"
+         << "measure Delta_BG (Barbieri-Giudice naturalness) in the MSSM\n"
          << "from a SUSY Les Houches Accord (SLHA) file.\n\n"
          << "To use this program, you may select a\n"
          << "MSSM SLHA file from your choice of spectrum generator (e.g.,\n"

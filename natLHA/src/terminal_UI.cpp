@@ -119,8 +119,9 @@ double getRenormalizationScale(const Coll& slha, const string& blockName) {
 void terminalUI() {
     std::cout << fixed << setprecision(9);
     bool userContinue = true;
-    std::cout << "Welcome to DEW4SLHA, a program for computing the naturalness\n"
-         << "measures Delta_EW, Delta_BG, and Delta_HS in the MSSM\n"
+    std::cout << "Welcome to natLHA, a computational software suite for computing the naturalness\n"
+         << "measures Delta_EW (electroweak naturalness), Delta_BG (Barbieri-Giudice naturalness),\n"
+         << "Delta_HS (high-scale naturalness), and Delta_SN (stringy naturalness) in the MSSM\n"
          << "from a SUSY Les Houches Accord (SLHA) file.\n\n"
          << "To use this program, you may select a\n"
          << "MSSM SLHA file from your choice of spectrum generator (e.g.,\n"
@@ -128,12 +129,12 @@ void terminalUI() {
          << "If multiple renormalization scales are present in the SLHA file,\n"
          << "then the first renormalization scale present in the SLHA file,\n"
          << "from top to bottom, is read in.\n\n"
-         << "Delta_EW, Delta_BG, and Delta_HS will be evaluated at the\n"
-         << " renormalization scale given by the geometric mean of the stop masses\n"
-         << " as provided in the SLHA file to minimize logarithmic contributions.\n\n"
+         << "All naturalness measures will be evaluated at the\n"
+         << "renormalization scale given by the geometric mean of the stop masses\n"
+         << "as calculated at tree level from the SLHA file to minimize logarithmic contributions.\n\n"
          << "Supported models for the local solvers are MSSM EFT models for\n"
-         << "Delta_EW and Delta_HS, but only the CMSSM, NUHM(1,2,3,4),\n"
-         << "pMSSM-19, and pMSSM-30 for Delta_BG.\n\n"
+         << "Delta_EW, Delta_SN, and Delta_HS, but only the CMSSM, NUHM(1,2,3,4),\n"
+         << "and pMSSM-19 for Delta_BG.\n\n"
          << "Press Enter to begin." << endl;
     string input;
     getline(cin, input); // User reads intro and presses enter
@@ -145,7 +146,7 @@ void terminalUI() {
          ********************* CALCULATION SELECTION **********************
         ******************************************************************/
         std::cout << "##############################################################\n";
-        std::cout << "DEW4SLHA calculates the electroweak naturalness measure\n";
+        std::cout << "natLHA calculates the electroweak naturalness measure\n";
         std::cout << "Delta_EW by default.\n\n";
 
         // Check if user wants to compute Delta_HS as well
@@ -544,7 +545,6 @@ void terminalUI() {
             mE1sq = getDoubleMatValue("MSE2", 1, 1);
         }
         double SLHA_scale = getRenormalizationScale(input, "GAUGE");
-        std::cout << "Q(SLHA) = " << SLHA_scale << endl;
         std::cout << "SLHA parameters read in." << endl;
         /* Use 2-loop MSSM RGEs to evolve results to a renormalization scale of 
            Q = sqrt(mst1 * mst2) if the submitted SLHA file is not currently at that scale.
@@ -578,7 +578,6 @@ void terminalUI() {
         vector<RGEStruct> SUSYscale_struct = solveODEstoMSUSY(dummyrun, log(1.0e12), -1.0e-6, tempT_target, 91.1876 * 91.1876);
 
         double SLHAQSUSY = exp(SUSYscale_struct[0].SUSYscale_eval);
-        std::cout << "Q(SUSY) = " << SLHAQSUSY << endl;
         vector<double> first_SUSY_BCs = solveODEs(mySLHABCs, log(SLHA_scale), log(SLHAQSUSY), copysign(1.0e-6, (SLHAQSUSY - SLHA_scale)));
         vector<double> first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
         tanb = first_SUSY_BCs[43];
@@ -599,7 +598,6 @@ void terminalUI() {
         }
         double currentmZ2 = ((2.0 * ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)))
                              - (2.0 * muQsq));
-        cout << "first mZ: " << sqrt(currentmZ2) << endl;
         double getmZ2_value = getmZ2(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
         // cout << "mZ value from routine = " << copysign(sqrt(abs(getmZ2_value)), getmZ2_value) << endl;
 
@@ -629,11 +627,6 @@ void terminalUI() {
             new_QGUT = log(exp(curr_iter_QGUT) * exp((first_GUT_BCs[1] - first_GUT_BCs[0]) / (currbetag1g2GUT[0] - currbetag1g2GUT[1])));
             curr_iter_lsq = pow((1.0 - (new_QGUT / curr_iter_QGUT)), 2.0);
             curr_iter_QGUT = new_QGUT;
-        }
-        std::cout << "GUT scale = " << curr_iter_QGUT << endl;
-        std::cout << "GUT BCs: " << endl;
-        for (double value : first_GUT_BCs) {
-            std::cout << value << endl;
         }
 
         /******************************************************************
