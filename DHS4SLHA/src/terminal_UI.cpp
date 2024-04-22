@@ -740,7 +740,30 @@ void terminalUI() {
             std::cout << "\n##### Press Enter to continue... #####";
             getline(cin, continueinputSN); // User presses enter to continue.
         }
-        break;
+        
+        // Try again?
+        string checkcontinue;
+        std::cout << "Would you like to try again with a new SLHA file? Enter Y to try again or N to stop: ";
+        getline(cin, checkcontinue);
+        std::transform(checkcontinue.begin(), checkcontinue.end(), checkcontinue.begin(),
+                       [](unsigned char c){ return std::tolower(c); });
+        if (checkcontinue == "y" || checkcontinue == "yes") {
+            userContinue = true;
+            std::cout << "\nReturning to configuration screen.\n";
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        } else if (checkcontinue == "n" || checkcontinue == "no") {
+            userContinue = false;
+            std::cout << "\nThank you for using natLHA.\n";
+            break; 
+        } else {
+            userContinue = true;
+            std::cout << "\nInvalid user input. Returning to configuration screen.\n";
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+
+        if (!userContinue) {
+            break;
+        }
     }
 }
 
