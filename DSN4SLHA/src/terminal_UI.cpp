@@ -243,8 +243,6 @@ void terminalUI() {
         std::cout << "\n########## Configuration Complete ##########\n";
         this_thread::sleep_for(chrono::milliseconds(1500));
         clearScreen();
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
             
         /******************************************************************
          ************************ SLHA READ-IN ****************************
@@ -539,7 +537,7 @@ void terminalUI() {
         bool checkDSNSaveBool = true;
         string saveDSNinput;
         while (checkDSNSaveBool) {
-            std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
+            std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
             std::getline(std::cin, saveDSNinput);
 
             std::string DSNtimeStr = getCurrentTimeFormatted();

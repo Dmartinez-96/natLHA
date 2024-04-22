@@ -714,7 +714,7 @@ void terminalUI() {
         bool checkSaveBool = true;
         string saveinput;
         while (checkSaveBool) {
-            std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
+            std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
             std::getline(std::cin, saveinput);
 
             std::string timeStr = getCurrentTimeFormatted();
@@ -780,7 +780,7 @@ void terminalUI() {
             bool checkDHSSaveBool = true;
             string saveDHSinput;
             while (checkDHSSaveBool) {
-                std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
+                std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
                 std::getline(std::cin, saveDHSinput);
 
                 std::string DHStimeStr = getCurrentTimeFormatted();
@@ -844,7 +844,7 @@ void terminalUI() {
             bool checkDBGSaveBool = true;
             string saveDBGinput;
             while (checkDBGSaveBool) {
-                std::cout << "\nWould you like to save these DBG results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DBG)?\nEnter Y to save the result or N to continue: ";
+                std::cout << "\nWould you like to save these DBG results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DBG)?\nEnter Y to save the result or N to continue: ";
                 std::getline(std::cin, saveDBGinput);
 
                 std::string DBGtimeStr = getCurrentTimeFormatted();
@@ -907,7 +907,7 @@ void terminalUI() {
             bool checkDSNSaveBool = true;
             string saveDSNinput;
             while (checkDSNSaveBool) {
-                std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
+                std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
                 std::getline(std::cin, saveDSNinput);
 
                 std::string DSNtimeStr = getCurrentTimeFormatted();

@@ -194,8 +194,6 @@ void terminalUI() {
         std::cout << "\n########## Configuration Complete ##########\n";
         this_thread::sleep_for(chrono::milliseconds(1500));
         clearScreen();
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
             
         /******************************************************************
          ************************ SLHA READ-IN ****************************
@@ -489,7 +487,7 @@ void terminalUI() {
         bool checkSaveBool = true;
         string saveinput;
         while (checkSaveBool) {
-            std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/DEW4SLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
+            std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DEW4SLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
             std::getline(std::cin, saveinput);
 
             std::string timeStr = getCurrentTimeFormatted();

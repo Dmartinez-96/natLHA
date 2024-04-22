@@ -194,8 +194,6 @@ void terminalUI() {
         std::cout << "\n########## Configuration Complete ##########\n";
         this_thread::sleep_for(chrono::milliseconds(1500));
         clearScreen();
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
             
         /******************************************************************
          ************************ SLHA READ-IN ****************************
@@ -500,7 +498,7 @@ void terminalUI() {
         bool checkDHSSaveBool = true;
         string saveDHSinput;
         while (checkDHSSaveBool) {
-            std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/DHS4SLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
+            std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DHS4SLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
             std::getline(std::cin, saveDHSinput);
 
             std::string DHStimeStr = getCurrentTimeFormatted();
