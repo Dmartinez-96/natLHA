@@ -13,6 +13,7 @@
 #include <regex>
 #include <cstdlib>
 #include <filesystem>
+#include <ctime>
 #include "mZ_numsolver.hpp"
 #include "terminal_UI.hpp"
 #include "MSSM_RGE_solver.hpp"
@@ -27,6 +28,27 @@
 using namespace std;
 using namespace SLHAea;
 namespace fs = std::filesystem;
+
+std::string getCurrentTimeFormatted() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm now_tm = *std::localtime(&now_time);
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d_%H-%M-%S", &now_tm);
+    return buffer;
+}
+
+void saveResults(const std::vector<std::pair<double, std::string>>& dewlist, const std::string& directory, const std::string& filename) {
+    std::ofstream outFile(directory + "/" + filename, std::ios::out);
+    outFile << "Given the submitted SLHA file, " /* << direc */ << ", your value for the electroweak\n"
+            << "naturalness measure, Delta_EW, is: " /* << std::format("{:.8f}", dewlist[0].first) */ << std::endl;
+    outFile << "\nThe ordered contributions to Delta_EW are as follows (decr. order): \n\n";
+    for (size_t i = 0; i < dewlist.size(); i++) {
+        outFile << i + 1 << ": " << /* std::format("{:.8f}", dewlist[i].first) */ dewlist[i].first << ", " << dewlist[i].second << std::endl;
+    }
+    outFile.close();
+    std::cout << "\nThese results have been saved to the directory \n" << fs::current_path() << '/' << directory << " as " << filename << ".\n";
+}
 
 void clearScreen() {
     #ifdef _WIN32

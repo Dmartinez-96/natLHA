@@ -12,6 +12,7 @@
 #include <limits>
 #include <regex>
 #include <cstdlib>
+#include <filesystem>
 #include <ctime>
 #include "mZ_numsolver.hpp"
 #include "terminal_UI.hpp"
@@ -30,6 +31,63 @@
 using namespace std;
 using namespace SLHAea;
 namespace fs = std::filesystem;
+
+std::string getCurrentTimeFormatted() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+    std::tm now_tm = *std::localtime(&now_time);
+    char buffer[20];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d_%H-%M-%S", &now_tm);
+    return buffer;
+}
+
+void saveDEWResults(const std::vector<LabeledValue>& dewlist, const std::string& directory, const std::string& filename, const int& printprec) {
+    std::ofstream outFile(directory + "/" + filename, std::ios::out);
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the electroweak\n"
+            << "naturalness measure, Delta_EW, is: " << std::fixed << std::setprecision(printprec) << dewlist[0].value << std::endl;
+    outFile << "\nThe ordered contributions to Delta_EW are as follows (decr. order): \n\n";
+    for (const auto& item : dewlist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+    }
+    outFile.close();
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
+}
+
+void saveDHSResults(const std::vector<LabeledValueHS>& dhslist, const std::string& directory, const std::string& filename, const int& printprec) {
+    std::ofstream outFile(directory + "/" + filename, std::ios::out);
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the high-scale\n"
+            << "naturalness measure, Delta_HS, is: " << std::fixed << std::setprecision(printprec) << dhslist[0].value << std::endl;
+    outFile << "\nThe ordered contributions to Delta_HS are as follows (decr. order): \n\n";
+    for (const auto& item : dhslist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+    }
+    outFile.close();
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
+}
+
+void saveDBGResults(const std::vector<LabeledValueBG>& dbglist, const std::string& directory, const std::string& filename, const int& printprec) {
+    std::ofstream outFile(directory + "/" + filename, std::ios::out);
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the Barbieri-Giudice\n"
+            << "naturalness measure, Delta_BG, is: " << std::fixed << std::setprecision(printprec) << dbglist[0].value << std::endl;
+    outFile << "\nThe ordered contributions to Delta_BG are as follows (decr. order): \n\n";
+    for (const auto& item : dbglist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+    }
+    outFile.close();
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
+}
+
+void saveDSNResults(const std::vector<DSNLabeledValue>& dsnlist, const std::string& directory, const std::string& filename, const int& printprec) {
+    std::ofstream outFile(directory + "/" + filename, std::ios::out);
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the stringy\n"
+            << "naturalness measure, Delta_SN, is: " << std::fixed << std::setprecision(printprec) << dsnlist[0].value << std::endl;
+    outFile << "\nThe ordered contributions to Delta_SN are as follows (decr. order): \n\n";
+    for (const auto& item : dsnlist) {
+        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+    }
+    outFile.close();
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
+}
 
 void clearScreen() {
     #ifdef _WIN32
@@ -652,9 +710,47 @@ void terminalUI() {
             this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / dewlist.size())));
         }
         
-        string continueinput;
-        std::cout << "\n##### Press Enter to continue... #####";
-        getline(cin, continueinput); // User presses enter to continue.
+        // Save DEW results?
+        bool checkSaveBool = true;
+        string saveinput;
+        while (checkSaveBool) {
+            std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
+            std::getline(std::cin, saveinput);
+
+            std::string timeStr = getCurrentTimeFormatted();
+
+            if (saveinput == "Y" || saveinput == "y" || saveinput == "Yes" || saveinput == "yes") {
+                std::string path = "natLHA_results/DEW";
+                if (!fs::exists("natLHA_results")) fs::create_directory("natLHA_results");
+                if (!fs::exists(path)) fs::create_directory(path);
+
+                std::cout << "\nThe default file name is 'current_system_time_DEW_contrib_list.txt', e.g., " << timeStr << "_DEW_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                std::getline(std::cin, saveinput);
+
+                if (saveinput == "Y" || saveinput == "y" || saveinput == "Yes" || saveinput == "yes") {
+                    saveDEWResults(dewlist, path, timeStr + "_DEW_contrib_list.txt", printPrec);
+                    checkSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else if (saveinput == "N" || saveinput == "n" || saveinput == "No" || saveinput == "no") {
+                    std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DEW_list' without the quotes): ";
+                    std::string newFileName;
+                    std::getline(std::cin, newFileName);
+                    saveDEWResults(dewlist, path, newFileName + ".txt", printPrec);
+                    checkSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                } else {
+                    std::cout << "Invalid user input.\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                }
+            } else {
+                std::cout << "\nOutput not saved.\n";
+                checkSaveBool = false;
+                std::cout << "##### Press Enter to continue... #####\n";
+                std::cin.get();
+            }
+        }
 
         /******************************************************************
          ********************* COMPUTE DHS VALUES *************************
@@ -680,10 +776,47 @@ void terminalUI() {
                 std::cout << (i + 1) << ": " << dhslist[i].value << ", " << dhslist[i].label << endl;
                 this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / dhslist.size())));
             }
-        
-            string continueinputHS;
-            std::cout << "\n##### Press Enter to continue... #####";
-            getline(cin, continueinputHS); // User presses enter to continue.
+
+            bool checkDHSSaveBool = true;
+            string saveDHSinput;
+            while (checkDHSSaveBool) {
+                std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
+                std::getline(std::cin, saveDHSinput);
+
+                std::string DHStimeStr = getCurrentTimeFormatted();
+
+                if (saveDHSinput == "Y" || saveDHSinput == "y" || saveDHSinput == "Yes" || saveDHSinput == "yes") {
+                    std::string DHSpath = "natLHA_results/DHS";
+                    if (!fs::exists("natLHA_results")) fs::create_directory("natLHA_results");
+                    if (!fs::exists(DHSpath)) fs::create_directory(DHSpath);
+
+                    std::cout << "\nThe default file name is 'current_system_time_DHS_contrib_list.txt', e.g., " << DHStimeStr << "_DHS_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                    std::getline(std::cin, saveDHSinput);
+
+                    if (saveDHSinput == "Y" || saveDHSinput == "y" || saveDHSinput == "Yes" || saveDHSinput == "yes") {
+                        saveDHSResults(dhslist, DHSpath, DHStimeStr + "_DHS_contrib_list.txt", printPrec);
+                        checkDHSSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else if (saveDHSinput == "N" || saveDHSinput == "n" || saveDHSinput == "No" || saveDHSinput == "no") {
+                        std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DHS_list' without the quotes): ";
+                        std::string newDHSFileName;
+                        std::getline(std::cin, newDHSFileName);
+                        saveDHSResults(dhslist, DHSpath, newDHSFileName + ".txt", printPrec);
+                        checkDHSSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else {
+                        std::cout << "Invalid user input.\n";
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+                } else {
+                    std::cout << "\nOutput not saved.\n";
+                    checkDHSSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                }
+            }
         }
 
         /******************************************************************
@@ -707,11 +840,47 @@ void terminalUI() {
                 std::cout << (i + 1) << ": " << myDBGlist[i].value << ", " << myDBGlist[i].label << endl;
                 this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDBGlist.size())));
             }
-        
-            string continueinputBG;
-            std::cout << "\n##### Press Enter to continue... #####";
-            getline(cin, continueinputBG); // User presses enter to continue.
-        
+
+            bool checkDBGSaveBool = true;
+            string saveDBGinput;
+            while (checkDBGSaveBool) {
+                std::cout << "\nWould you like to save these DBG results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DBG)?\nEnter Y to save the result or N to continue: ";
+                std::getline(std::cin, saveDBGinput);
+
+                std::string DBGtimeStr = getCurrentTimeFormatted();
+
+                if (saveDBGinput == "Y" || saveDBGinput == "y" || saveDBGinput == "Yes" || saveDBGinput == "yes") {
+                    std::string DBGpath = "natLHA_results/DBG";
+                    if (!fs::exists("natLHA_results")) fs::create_directory("natLHA_results");
+                    if (!fs::exists(DBGpath)) fs::create_directory(DBGpath);
+
+                    std::cout << "\nThe default file name is 'current_system_time_DBG_contrib_list.txt', e.g., " << DBGtimeStr << "_DBG_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                    std::getline(std::cin, saveDBGinput);
+
+                    if (saveDBGinput == "Y" || saveDBGinput == "y" || saveDBGinput == "Yes" || saveDBGinput == "yes") {
+                        saveDBGResults(myDBGlist, DBGpath, DBGtimeStr + "_DBG_contrib_list.txt", printPrec);
+                        checkDBGSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else if (saveDBGinput == "N" || saveDBGinput == "n" || saveDBGinput == "No" || saveDBGinput == "no") {
+                        std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DBG_list' without the quotes): ";
+                        std::string newDBGFileName;
+                        std::getline(std::cin, newDBGFileName);
+                        saveDBGResults(myDBGlist, DBGpath, newDBGFileName + ".txt", printPrec);
+                        checkDBGSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else {
+                        std::cout << "Invalid user input.\n";
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+                } else {
+                    std::cout << "\nOutput not saved.\n";
+                    checkDBGSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                }
+            }
         }
      
         /******************************************************************
@@ -734,11 +903,49 @@ void terminalUI() {
                 std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
                 this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
             }
-        
-            string continueinputSN;
-            std::cout << "\n##### Press Enter to continue... #####";
-            getline(cin, continueinputSN); // User presses enter to continue.
+
+            bool checkDSNSaveBool = true;
+            string saveDSNinput;
+            while (checkDSNSaveBool) {
+                std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path() << "/natLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
+                std::getline(std::cin, saveDSNinput);
+
+                std::string DSNtimeStr = getCurrentTimeFormatted();
+
+                if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
+                    std::string DSNpath = "natLHA_results/DSN";
+                    if (!fs::exists("natLHA_results")) fs::create_directory("natLHA_results");
+                    if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
+
+                    std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                    std::getline(std::cin, saveDSNinput);
+
+                    if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
+                        saveDSNResults(myDSNlist, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
+                        checkDSNSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else if (saveDSNinput == "N" || saveDSNinput == "n" || saveDSNinput == "No" || saveDSNinput == "no") {
+                        std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DSN_list' without the quotes): ";
+                        std::string newDSNFileName;
+                        std::getline(std::cin, newDSNFileName);
+                        saveDSNResults(myDSNlist, DSNpath, newDSNFileName + ".txt", printPrec);
+                        checkDSNSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else {
+                        std::cout << "Invalid user input.\n";
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+                } else {
+                    std::cout << "\nOutput not saved.\n";
+                    checkDSNSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                }
+            }
         }
+
         
         // Try again?
         string checkcontinue;
