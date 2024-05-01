@@ -391,12 +391,12 @@ vector<high_prec_float> single_var_deriv_approxes(vector<high_prec_float>& origi
     vector<high_prec_float> evaluated_derivs = {first_derivative_calc(h_p, tanb_p_minusminus, tanb_p_minus, tanb_p_plus, tanb_p_plusplus),
                                        first_derivative_calc(h_tanb, tanb_t_minusminus, tanb_t_minus, tanb_t_plus, tanb_t_plusplus),//second_derivative_calc(h_p, wk_tanb, tanb_p_minusminus, tanb_p_minus, tanb_p_plus, tanb_p_plusplus),
                                        first_derivative_calc(h_tanb, mZ2_tanb_minusminus, mZ2_tanb_minus, mZ2_tanb_plus, mZ2_tanb_plusplus),
-                                       first_derivative_calc(h_p, mZ2_p_minusminus, mZ2_p_minus, mZ2_p_plus, mZ2_p_plusplus),
-                                       second_derivative_calc(h_tanb, fixed_mZ2_val, mZ2_tanb_minusminus, mZ2_tanb_minus, mZ2_tanb_plus, mZ2_tanb_plusplus),
-                                       mixed_second_derivative_calc(h_p, h_tanb, mZ2_p_minusminus_tanb_minusminus, mZ2_p_minusminus_tanb_minus, mZ2_p_minusminus_tanb_plus, mZ2_p_minusminus_tanb_plusplus,
-                                                                    mZ2_p_minus_tanb_minusminus, mZ2_p_minus_tanb_minus, mZ2_p_minus_tanb_plus, mZ2_p_minus_tanb_plusplus, mZ2_p_plus_tanb_minusminus, mZ2_p_plus_tanb_minus,
-                                                                    mZ2_p_plus_tanb_plus, mZ2_p_plus_tanb_plusplus, mZ2_p_plusplus_tanb_minusminus, mZ2_p_plusplus_tanb_minus, mZ2_p_plusplus_tanb_plus, mZ2_p_plusplus_tanb_plusplus),
-                                       second_derivative_calc(h_p, fixed_mZ2_val, mZ2_p_minusminus, mZ2_p_minus, mZ2_p_plus, mZ2_p_plusplus)};
+                                       first_derivative_calc(h_p, mZ2_p_minusminus, mZ2_p_minus, mZ2_p_plus, mZ2_p_plusplus)};//,
+                                    //    second_derivative_calc(h_tanb, fixed_mZ2_val, mZ2_tanb_minusminus, mZ2_tanb_minus, mZ2_tanb_plus, mZ2_tanb_plusplus),
+                                    //    mixed_second_derivative_calc(h_p, h_tanb, mZ2_p_minusminus_tanb_minusminus, mZ2_p_minusminus_tanb_minus, mZ2_p_minusminus_tanb_plus, mZ2_p_minusminus_tanb_plusplus,
+                                    //                                 mZ2_p_minus_tanb_minusminus, mZ2_p_minus_tanb_minus, mZ2_p_minus_tanb_plus, mZ2_p_minus_tanb_plusplus, mZ2_p_plus_tanb_minusminus, mZ2_p_plus_tanb_minus,
+                                    //                                 mZ2_p_plus_tanb_plus, mZ2_p_plus_tanb_plusplus, mZ2_p_plusplus_tanb_minusminus, mZ2_p_plusplus_tanb_minus, mZ2_p_plusplus_tanb_plus, mZ2_p_plusplus_tanb_plusplus),
+                                    //    second_derivative_calc(h_p, fixed_mZ2_val, mZ2_p_minusminus, mZ2_p_minus, mZ2_p_plus, mZ2_p_plusplus)};
     return evaluated_derivs;
 }
 
@@ -425,7 +425,7 @@ vector<high_prec_float> DSN_B_windows(vector<high_prec_float> Wk_boundary_condit
 
     // First compute width of ABDS window
     high_prec_float lambdaB = 0.5;
-    high_prec_float B_least_Sq_tol = 1.0e-4;
+    high_prec_float B_least_Sq_tol = 1.0e-8;
     high_prec_float prev_fB = std::numeric_limits<high_prec_float>::max();
     high_prec_float curr_lsq_eval = std::numeric_limits<high_prec_float>::max();
     vector<high_prec_float> current_derivatives = single_var_deriv_approxes(Bnewweaks_minus, Bnew_mZ2minus, 42, BnewlogQSUSY);
@@ -434,8 +434,8 @@ vector<high_prec_float> DSN_B_windows(vector<high_prec_float> Wk_boundary_condit
             BminusEWSB = false;
         }
     }
-    int max_iter = 100;
-    high_prec_float tol = 1.0e-4;
+    int max_iter = 1000;
+    high_prec_float tol = 1.0e-8;
     while ((BminusEWSB) && (BminusNoCCB) && (abs(Bnewweaks_minus[6]) > 25.0) && ((Bnew_mZ2minus > (45.5938 * 45.5938)) && (Bnew_mZ2minus < (364.7504 * 364.7504)))) {
         vector<high_prec_float> checkweaksols = Bnewweaks_minus;
         vector<high_prec_float> checkRadCorrs = radcorr_calc(checkweaksols, exp(BnewlogQSUSY), Bnew_mZ2minus);
@@ -668,8 +668,8 @@ vector<high_prec_float> DSN_specific_windows(vector<high_prec_float>& Wk_boundar
             piminusEWSB = false;
         }
     }
-    int max_iter = 100;
-    high_prec_float tol = 1.0e-4;
+    int max_iter = 1000;
+    high_prec_float tol = 1.0e-8;
     while ((piminusEWSB) && (piminusNoCCB) && (abs(pinewweaks_minus[6]) > 25.0) && ((pinew_mZ2minus > (45.5938 * 45.5938)) && (pinew_mZ2minus < (364.7504 * 364.7504)))) {
         vector<high_prec_float> checkweaksols = pinewweaks_minus;
         vector<high_prec_float> checkRadCorrs = radcorr_calc(checkweaksols, exp(pinewlogQSUSY), pinew_mZ2minus);
@@ -842,7 +842,7 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
 
     // First compute width of ABDS window
     high_prec_float lambdaMu = 0.5;
-    high_prec_float Mu_least_Sq_tol = 1.0e-4;
+    high_prec_float Mu_least_Sq_tol = 1.0e-8;
     high_prec_float prev_fmu = std::numeric_limits<high_prec_float>::max();
     high_prec_float curr_lsq_eval = std::numeric_limits<high_prec_float>::max();
     vector<high_prec_float> current_derivatives = single_var_deriv_approxes(munewweaks_minus, munew_mZ2minus, 6, munewlogQSUSY);
@@ -852,8 +852,8 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
             muminusEWSB = false;
         }
     }
-    int max_iter = 100;
-    high_prec_float tol = 1.0e-4;
+    int max_iter = 1000;
+    high_prec_float tol = 1.0e-8;
     while ((muminusEWSB) && (muminusNoCCB) && (abs(munewweaks_minus[6]) > 25.0) && ((munew_mZ2minus > (45.5938 * 45.5938)) && (munew_mZ2minus < (364.7504 * 364.7504)))) {
         vector<high_prec_float> checkweaksols = munewweaks_minus;
         vector<high_prec_float> checkRadCorrs = radcorr_calc(checkweaksols, exp(munewlogQSUSY), munew_mZ2minus);
@@ -1004,28 +1004,31 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
     return {mu_weak_minus, mu_weak_plus};//, mu_TOTAL_weak_minus, mu_TOTAL_weak_plus};
 }
 
+high_prec_float Nsoft_term_calc(high_prec_float nPower, std::vector<high_prec_float> softvec) {
+    high_prec_float Ncontrib = high_prec_float(0.0);
+    high_prec_float MPlanck = high_prec_float(12208900000000000000);
+    high_prec_float prefactor = high_prec_float(1.0) / ((nPower + high_prec_float(1.0)) * pow(MPlanck, (nPower + high_prec_float(1.0))));
+    for (const auto& value : softvec) {
+        Ncontrib += pow(value, high_prec_float(2.0));
+    }
+    Ncontrib = pow(Ncontrib, (nPower + high_prec_float(1.0)));
+    Ncontrib *= prefactor;
+    return Ncontrib;
+}
+
 std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float> Wk_boundary_conditions,
                                       high_prec_float& current_mZ2, high_prec_float& current_logQSUSY,
                                       high_prec_float& current_logQGUT, int& nF, int& nD) {
-    high_prec_float DSN, DSN_soft_num, DSN_soft_denom, DSN_higgsino, newterm;
-    high_prec_float DSN_mu, DSN_mHu, DSN_mHd, DSN_M1, DSN_M2, DSN_M3, DSN_mQ1, DSN_mQ2, DSN_mQ3, DSN_mL1, DSN_mL2, DSN_mL3, DSN_mU1, DSN_mU2, DSN_mU3, DSN_mD1, DSN_mD2, DSN_mD3, DSN_mE1, DSN_mE2, DSN_mE3, DSN_at, DSN_ac, DSN_au, DSN_ab, DSN_as, DSN_ad, DSN_atau, DSN_amu, DSN_ae, DSN_B;
-    DSN = 0.0;
+    high_prec_float Nmu, NmHu, NmHd, NM1, NM2, NM3, NmQ1, NmQ2, NmQ3, NmL1, NmL2, NmL3, NmU1, NmU2, NmU3, NmD1, NmD2, NmD3, NmE1, NmE2, NmE3, Nat, Nac, Nau, Nab, Nas, Nad, Natau, Namu, Nae, NB;
     vector<DSNLabeledValue> DSNlabeledlist, unsortedDSNlabeledlist;
-    high_prec_float t_target = log(500.0);
     std::cout << "This may take a while...\n\nProgress:\n-----------------------------------------------\n" << endl;
     if ((precselno == 1)) {
+        vector<high_prec_float> minussofts, plussofts;
         // Compute mu windows around original point
         vector<high_prec_float> muinitwkBCs = Wk_boundary_conditions;
-        vector<high_prec_float> muwindows;
-        if (abs(boost::math::float_next(Wk_boundary_conditions[6]) - Wk_boundary_conditions[6]) >= 1.0) {
-            muwindows = {boost::math::float_prior(Wk_boundary_conditions[6]), boost::math::float_next(Wk_boundary_conditions[6])};
-        } else {
-            muwindows = DSN_mu_windows(muinitwkBCs, current_mZ2, current_logQSUSY);
-        }
-        DSN_higgsino = abs(log10(abs(muwindows[1] / muwindows[0])));
-        newterm = DSN_higgsino;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mu = high_prec_float(1.0) / abs(newterm);
+        vector<high_prec_float> muwindows = DSN_mu_windows(muinitwkBCs, current_mZ2, current_logQSUSY);
+        std::cout << "muwindows: [" << muwindows[0] << ", " << muwindows[1] << "]" << endl;
+        Nmu = abs(log10(abs(muwindows[1] / muwindows[0])));
 
         // Now do same thing with mHu^2(GUT)
         vector<high_prec_float> mHu2initwkBCs = Wk_boundary_conditions;
@@ -1036,11 +1039,24 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mHu2windows = DSN_specific_windows(mHu2initwkBCs, current_mZ2, current_logQSUSY, 25);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mHu2windows[1])), mHu2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mHu2windows[0])), mHu2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mHu = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(mHu2windows[0])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(mHu2windows[1])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        if (signum(mHu2windows[0]) != signum(mHu2windows[1])) {
+            vector<high_prec_float> tempsofts = minussofts;
+            tempsofts[12] = high_prec_float(0.0);
+            NmHu = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), tempsofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)))\
+                + abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), tempsofts)));
+        } else {
+            NmHu = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        }
 
         // Now do same thing with mHd^2(GUT)
         vector<high_prec_float> mHd2initwkBCs = Wk_boundary_conditions;
@@ -1051,11 +1067,24 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mHd2windows = DSN_specific_windows(mHd2initwkBCs, current_mZ2, current_logQSUSY, 26);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mHd2windows[1])), mHd2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mHd2windows[0])), mHd2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mHd = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(mHd2windows[0])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(mHd2windows[1])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        if (signum(mHu2windows[0]) != signum(mHu2windows[1])) {
+            vector<high_prec_float> tempsofts = minussofts;
+            tempsofts[13] = high_prec_float(0.0);
+            NmHd = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), tempsofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)))\
+                + abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), tempsofts)));
+        } else {
+            NmHd = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        }
 
         // Now do same thing with M1
         vector<high_prec_float> M1initwkBCs = Wk_boundary_conditions;
@@ -1065,11 +1094,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             M1windows = DSN_specific_windows(M1initwkBCs, current_mZ2, current_logQSUSY, 3);
         }
-        DSN_soft_num = soft_prob_calc(M1windows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(M1windows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_M1 = high_prec_float(1.0) / abs(newterm);
+        minussofts = {M1windows[0], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {M1windows[1], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NM1 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
 
         // Now do same thing with M2
         vector<high_prec_float> M2initwkBCs = Wk_boundary_conditions;
@@ -1079,11 +1114,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             M2windows = DSN_specific_windows(M2initwkBCs, current_mZ2, current_logQSUSY, 4);
         }
-        DSN_soft_num = soft_prob_calc(M2windows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(M2windows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_M2 = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], M2windows[0], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], M2windows[1], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NM2 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
 
         // Now do same thing with M3
         vector<high_prec_float> M3initwkBCs = Wk_boundary_conditions;
@@ -1093,11 +1134,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             M3windows = DSN_specific_windows(M3initwkBCs, current_mZ2, current_logQSUSY, 5);
         }
-        DSN_soft_num = soft_prob_calc(M3windows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(M3windows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_M3 = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], M3windows[0], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], M3windows[1], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NM3 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
 
         // Now do same thing with mQ3
         vector<high_prec_float> MQ3initwkBCs = Wk_boundary_conditions;
@@ -1108,11 +1155,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             MQ3windows = DSN_specific_windows(MQ3initwkBCs, current_mZ2, current_logQSUSY, 29);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(MQ3windows[1])), MQ3windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(MQ3windows[0])), MQ3windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mQ3 = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(MQ3windows[0])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(MQ3windows[1])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmQ3 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
 
         // Now do same thing with mQ2
         vector<high_prec_float> MQ2initwkBCs = Wk_boundary_conditions;
@@ -1123,11 +1176,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             MQ2windows = DSN_specific_windows(MQ2initwkBCs, current_mZ2, current_logQSUSY, 28);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(MQ2windows[1])), MQ2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(MQ2windows[0])), MQ2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mQ2 = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(MQ2windows[0])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(MQ2windows[1])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmQ2 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
 
         // Now do same thing with mQ1
         vector<high_prec_float> MQ1initwkBCs = Wk_boundary_conditions;
@@ -1138,11 +1197,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             MQ1windows = DSN_specific_windows(MQ1initwkBCs, current_mZ2, current_logQSUSY, 27);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(MQ1windows[1])), MQ1windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(MQ1windows[0])), MQ1windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mQ1 = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(MQ1windows[0])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(MQ1windows[1])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmQ1 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
 
         // Now do same thing with mL3
         vector<high_prec_float> mL3initwkBCs = Wk_boundary_conditions;
@@ -1153,12 +1218,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mL3windows = DSN_specific_windows(mL3initwkBCs, current_mZ2, current_logQSUSY, 32);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mL3windows[1])), mL3windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mL3windows[0])), mL3windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mL3 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(mL3windows[0])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(mL3windows[1])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmL3 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mL2
         vector<high_prec_float> mL2initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mL2windows;
@@ -1168,12 +1239,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mL2windows = DSN_specific_windows(mL2initwkBCs, current_mZ2, current_logQSUSY, 31);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mL2windows[1])), mL2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mL2windows[0])), mL2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mL2 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(mL2windows[0])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(mL2windows[1])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmL2 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mL1
         vector<high_prec_float> mL1initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mL1windows;
@@ -1183,12 +1260,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mL1windows = DSN_specific_windows(mL1initwkBCs, current_mZ2, current_logQSUSY, 30);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mL1windows[1])), mL1windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mL1windows[0])), mL1windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mL1 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(mL1windows[0])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(mL1windows[1])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmL1 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mU3
         vector<high_prec_float> mU3initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mU3windows;
@@ -1198,12 +1281,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mU3windows = DSN_specific_windows(mU3initwkBCs, current_mZ2, current_logQSUSY, 35);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mU3windows[1])), mU3windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mU3windows[0])), mU3windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mU3 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(mU3windows[0])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(mU3windows[1])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmU3 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mU2
         vector<high_prec_float> mU2initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mU2windows;
@@ -1213,12 +1302,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mU2windows = DSN_specific_windows(mU2initwkBCs, current_mZ2, current_logQSUSY, 34);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mU2windows[1])), mU2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mU2windows[0])), mU2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mU2 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(mU2windows[0])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(mU2windows[1])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmU2 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mU1
         vector<high_prec_float> mU1initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mU1windows;
@@ -1228,12 +1323,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mU1windows = DSN_specific_windows(mU1initwkBCs, current_mZ2, current_logQSUSY, 33);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mU1windows[1])), mU1windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mU1windows[0])), mU1windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mU1 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(mU1windows[0])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(mU1windows[1])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmU1 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mD3
         vector<high_prec_float> mD3initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mD3windows;
@@ -1243,12 +1344,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mD3windows = DSN_specific_windows(mD3initwkBCs, current_mZ2, current_logQSUSY, 38);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mD3windows[1])), mD3windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mD3windows[0])), mD3windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mD3 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(mD3windows[0])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(mD3windows[1])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmD3 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mD2
         vector<high_prec_float> mD2initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mD2windows;
@@ -1258,12 +1365,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mD2windows = DSN_specific_windows(mD2initwkBCs, current_mZ2, current_logQSUSY, 37);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mD2windows[1])), mD2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mD2windows[0])), mD2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mD2 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(mD2windows[0])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(mD2windows[1])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmD2 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mD1
         vector<high_prec_float> mD1initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mD1windows;
@@ -1273,12 +1386,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mD1windows = DSN_specific_windows(mD1initwkBCs, current_mZ2, current_logQSUSY, 36);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mD1windows[1])), mD1windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mD1windows[0])), mD1windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mD1 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(mD1windows[0])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(mD1windows[1])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmD1 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mE3
         vector<high_prec_float> mE3initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mE3windows;
@@ -1288,12 +1407,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mE3windows = DSN_specific_windows(mE3initwkBCs, current_mZ2, current_logQSUSY, 41);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mE3windows[1])), mE3windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mE3windows[0])), mE3windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mE3 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(mE3windows[0])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(mE3windows[1])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmE3 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mE2
         vector<high_prec_float> mE2initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mE2windows;
@@ -1303,12 +1428,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mE2windows = DSN_specific_windows(mE2initwkBCs, current_mZ2, current_logQSUSY, 40);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mE2windows[1])), mE2windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mE2windows[0])), mE2windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mE2 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(mE2windows[0])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(mE2windows[1])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmE2 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with mE1
         vector<high_prec_float> mE1initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mE1windows;
@@ -1318,12 +1449,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             mE1windows = DSN_specific_windows(mE1initwkBCs, current_mZ2, current_logQSUSY, 39);
         }
-        DSN_soft_num = soft_prob_calc(copysign(sqrt(abs(mE1windows[1])), mE1windows[1]), (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(copysign(sqrt(abs(mE1windows[0])), mE1windows[0]), (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mE1 = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(mE1windows[0])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(mE1windows[1])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        NmE1 = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with at
         vector<high_prec_float> atinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> atwindows;
@@ -1332,12 +1469,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             atwindows = DSN_specific_windows(atinitwkBCs, current_mZ2, current_logQSUSY, 16);
         }
-        DSN_soft_num = soft_prob_calc(atwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(atwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_at = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], atwindows[0], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], atwindows[1], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nat = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with ac
         vector<high_prec_float> acinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> acwindows;
@@ -1346,12 +1489,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             acwindows = DSN_specific_windows(acinitwkBCs, current_mZ2, current_logQSUSY, 17);
         }
-        DSN_soft_num = soft_prob_calc(acwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(acwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_ac = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], acwindows[0], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], acwindows[1], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nac = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with au    
         vector<high_prec_float> auinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> auwindows;
@@ -1360,12 +1509,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             auwindows = DSN_specific_windows(auinitwkBCs, current_mZ2, current_logQSUSY, 18);
         }
-        DSN_soft_num = soft_prob_calc(auwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(auwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_au = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], auwindows[0],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], auwindows[1],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nau = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with ab
         vector<high_prec_float> abinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> abwindows;
@@ -1374,12 +1529,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             abwindows = DSN_specific_windows(abinitwkBCs, current_mZ2, current_logQSUSY, 19);
         }
-        DSN_soft_num = soft_prob_calc(abwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(abwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_ab = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      abwindows[0], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     abwindows[1], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nab = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with as
         vector<high_prec_float> asinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> aswindows;
@@ -1388,12 +1549,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             aswindows = DSN_specific_windows(asinitwkBCs, current_mZ2, current_logQSUSY, 20);
         }
-        DSN_soft_num = soft_prob_calc(aswindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(aswindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_as = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], aswindows[0], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], aswindows[1], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nas = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with ad    
         vector<high_prec_float> adinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> adwindows;
@@ -1402,12 +1569,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             adwindows = DSN_specific_windows(adinitwkBCs, current_mZ2, current_logQSUSY, 21);
         }
-        DSN_soft_num = soft_prob_calc(adwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(adwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_ad = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], adwindows[0], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], adwindows[1], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nad = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with atau
         vector<high_prec_float> atauinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> atauwindows;
@@ -1416,11 +1589,17 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             atauwindows = DSN_specific_windows(atauinitwkBCs, current_mZ2, current_logQSUSY, 22);
         }
-        DSN_soft_num = soft_prob_calc(atauwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(atauwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_atau = high_prec_float(1.0) / abs(newterm);
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], atauwindows[0], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], atauwindows[1], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Natau = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
         
         // Now do same thing with amu
         vector<high_prec_float> amuinitwkBCs = Wk_boundary_conditions;
@@ -1430,12 +1609,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             amuwindows = DSN_specific_windows(amuinitwkBCs, current_mZ2, current_logQSUSY, 23);
         }
-        DSN_soft_num = soft_prob_calc(amuwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(amuwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_amu = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], amuwindows[0], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], amuwindows[1], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Namu = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with ae    
         vector<high_prec_float> aeinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> aewindows;
@@ -1444,12 +1629,18 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             aewindows = DSN_specific_windows(aeinitwkBCs, current_mZ2, current_logQSUSY, 24);
         }
-        DSN_soft_num = soft_prob_calc(aewindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(aewindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_ae = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], aewindows[0],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], aewindows[1],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        Nae = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Now do same thing with B = b/mu;
         vector<high_prec_float> BinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> Bwindows;
@@ -1458,57 +1649,60 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         } else {
             Bwindows = DSN_specific_windows(BinitwkBCs, current_mZ2, current_logQSUSY, 42);
         }
-        DSN_soft_num = soft_prob_calc(Bwindows[1], (2.0 * nF) + (1.0 * nD) - 1.0)\
-            - soft_prob_calc(Bwindows[0], (2.0 * nF) + (1.0 * nD) - 1.0);
-        newterm = DSN_soft_num;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_B = high_prec_float(1.0) / abs(newterm);
-
+        minussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                      Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                      sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                      sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                      sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Bwindows[0]};
+        plussofts = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                     Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                     sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                     sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                     sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Bwindows[1]};
+        NB = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
+        
         // Create return list
-        unsortedDSNlabeledlist = {{DSN_mu, "mu"},
-                                  {DSN_mHu, "mHu"},
-                                  {DSN_mHd, "mHd"},
-                                  {DSN_M1, "M1"},
-                                  {DSN_M2, "M2"},
-                                  {DSN_M3, "M3"},
-                                  {DSN_mQ3, "mQ3"},
-                                  {DSN_mQ2, "mQ2"},
-                                  {DSN_mQ1, "mQ1"},
-                                  {DSN_mL3, "mL3"},
-                                  {DSN_mL2, "mL2"},
-                                  {DSN_mL1, "mL1"},
-                                  {DSN_mU3, "mU3"},
-                                  {DSN_mU2, "mU2"},
-                                  {DSN_mU1, "mU1"},
-                                  {DSN_mD3, "mD3"},
-                                  {DSN_mD2, "mD2"},
-                                  {DSN_mD1, "mD1"},
-                                  {DSN_mE3, "mE3"},
-                                  {DSN_mE2, "mE2"},
-                                  {DSN_mE1, "mE1"},
-                                  {DSN_at, "a_t"},
-                                  {DSN_ac, "a_c"},
-                                  {DSN_au, "a_u"},
-                                  {DSN_ab, "a_b"},
-                                  {DSN_as, "a_s"},
-                                  {DSN_ad, "a_d"},
-                                  {DSN_atau, "a_tau"},
-                                  {DSN_amu, "a_mu"},
-                                  {DSN_ae, "a_e"},
-                                  {DSN_B, "B"}};
+        unsortedDSNlabeledlist = {{Nmu, "mu"},
+                                  {NmHu, "mHu"},
+                                  {NmHd, "mHd"},
+                                  {NM1, "M1"},
+                                  {NM2, "M2"},
+                                  {NM3, "M3"},
+                                  {NmQ3, "mQ3"},
+                                  {NmQ2, "mQ2"},
+                                  {NmQ1, "mQ1"},
+                                  {NmL3, "mL3"},
+                                  {NmL2, "mL2"},
+                                  {NmL1, "mL1"},
+                                  {NmU3, "mU3"},
+                                  {NmU2, "mU2"},
+                                  {NmU1, "mU1"},
+                                  {NmD3, "mD3"},
+                                  {NmD2, "mD2"},
+                                  {NmD1, "mD1"},
+                                  {NmE3, "mE3"},
+                                  {NmE2, "mE2"},
+                                  {NmE1, "mE1"},
+                                  {Nat, "a_t"},
+                                  {Nac, "a_c"},
+                                  {Nau, "a_u"},
+                                  {Nab, "a_b"},
+                                  {Nas, "a_s"},
+                                  {Nad, "a_d"},
+                                  {Natau, "a_tau"},
+                                  {Namu, "a_mu"},
+                                  {Nae, "a_e"},
+                                  {NB, "B"}};
         DSNlabeledlist = sortAndReturnDSN(unsortedDSNlabeledlist);
     } else {
         // Compute mu windows around original point
         vector<high_prec_float> muinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> muwindows = DSN_mu_windows(muinitwkBCs, current_mZ2, current_logQSUSY);
         std::cout << "muwindows: [" << muwindows[0] << ", " << muwindows[1] << "]" << endl;
-        DSN_higgsino = abs(log10(abs(muwindows[1] / muwindows[0])));
-        newterm = DSN_higgsino;
-        DSN += high_prec_float(1.0) / abs(newterm);
-        DSN_mu = high_prec_float(1.0) / abs(newterm);
+        Nmu = abs(log10(abs(muwindows[1] / muwindows[0])));
 
         // Create return list
-        DSNlabeledlist = {{DSN_mu, "mu"}};
+        DSNlabeledlist = {{Nmu, "mu"}};
     }    
 
     return DSNlabeledlist;
