@@ -5,14 +5,17 @@
 
 #include <vector>
 #include <string>
+#include <boost/multiprecision/mpfr.hpp>
+using namespace boost::multiprecision;
+typedef number<mpfr_float_backend<50>> high_prec_float;
 
 struct DSNLabeledValue {
-    double value;
+    high_prec_float value;
     std::string label;
 };
 
-std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<double> Wk_boundary_conditions,
-                                      double& current_mZ2, double& current_logQSUSY,
-                                      double& current_logQGUT, int& nF, int& nD);
+std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float> Wk_boundary_conditions,
+                                      high_prec_float& current_mZ2, high_prec_float& current_logQSUSY,
+                                      high_prec_float& current_logQGUT, int& nF, int& nD);
 
 #endif

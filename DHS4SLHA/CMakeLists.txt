@@ -7,7 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find Eigen, Boost, and GSL.
 find_package(Boost 1.74 REQUIRED)
 find_package(Eigen3 3.4 REQUIRED NO_MODULE)
-find_package(GSL 2.7.1 REQUIRED)
+find_package(GSL 2.5 REQUIRED)
+find_library(MPFR_LIBRARY NAMES mpfr)
+find_library(GMP_LIBRARY NAMES gmp)
 
 # Source files
 set(SOURCE_FILES
@@ -28,4 +30,4 @@ add_executable(DHS4SLHA ${SOURCE_FILES})
 target_include_directories(DHS4SLHA PRIVATE include ${Boost_INCLUDE_DIRS})
 
 # Link libraries
-target_link_libraries(DHS4SLHA Eigen3::Eigen GSL::gsl GSL::gslcblas)
+target_link_libraries(DHS4SLHA Eigen3::Eigen GSL::gsl GSL::gslcblas ${MPFR_LIBRARY} ${GMP_LIBRARY})
