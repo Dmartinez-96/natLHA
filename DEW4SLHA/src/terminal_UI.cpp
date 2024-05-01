@@ -420,8 +420,10 @@ void terminalUI() {
                      mL3sq, mU1sq, mU2sq, mU3sq, mD1sq, mD2sq, mD3sq,
                      mE1sq, mE2sq, mE3sq, 0.0, tanb};
         std::vector<double> mySLHABCs_dbl;
+        // std::cout << "SLHA BCs: " << std::endl;
         for (const auto& value : mySLHABCs) {
             mySLHABCs_dbl.push_back(double(value));
+            // std::cout << value << std::endl;
         }
         std::vector<double> dummyrun = solveODEs(mySLHABCs_dbl, log(SLHA_scale_dbl), log(1.0e12), std::copysign(1.0e-6, (log(1.0e12 / SLHA_scale_dbl))));
         // SUSY scale equal to Q = sqrt(mt1(Q) * mt2(Q))
@@ -435,9 +437,10 @@ void terminalUI() {
         for (const auto& value : first_SUSY_BCs_dbl) {
             first_SUSY_BCs.push_back(high_prec_float(value));
         }
-        for (const auto& value : first_SUSY_BCs) {
-            std::cout << value << endl;
-        }
+        // std::cout << "SUSY BCs: " << std::endl;
+        // for (const auto& value : first_SUSY_BCs) {
+        //     std::cout << value << endl;
+        // }
         std::vector<high_prec_float> first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, high_prec_float(91.1876 * 91.1876));
         // std::cout << "Sigma_u = " << first_radcorrs[0] << std::endl << "Sigma_d = " << first_radcorrs[1] << std::endl;
         tanb = first_SUSY_BCs[43];
@@ -498,7 +501,10 @@ void terminalUI() {
             curr_iter_QGUT_dbl = double(curr_iter_QGUT);
         }
         // std::cout << "Tuned GUT scale = " << exp(curr_iter_QGUT) << std::endl;
-
+        // std::cout << "GUT parameters:" << std::endl;
+        for (const auto& value : first_GUT_BCs) {
+            std::cout << value << std::endl;
+        }
         /******************************************************************
          ********************* COMPUTE DEW VALUES *************************
          ******************************************************************/

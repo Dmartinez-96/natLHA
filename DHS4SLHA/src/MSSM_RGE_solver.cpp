@@ -2440,7 +2440,7 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
                         + (32.0 * std::pow(g3_val, 2.0) * std::pow(g2_val, 2.0)
                         * (std::pow(M3_val, 2.0) + std::pow(M2_val, 2.0)
                             + (M2_val * M3_val)))
-                        + ((32 / 45) * std::pow(g3_val, 2.0)
+                        + ((32.0 / 45.0) * std::pow(g3_val, 2.0)
                         * std::pow(g1_val, 2.0)
                         * (std::pow(M3_val, 2.0) + std::pow(M1_val, 2.0)
                             + (M3_val * M1_val)))
@@ -2448,10 +2448,10 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
                         + ((2.0 / 5.0) * std::pow(g2_val, 2.0) * std::pow(g1_val, 2.0)
                         * (std::pow(M1_val, 2.0) + std::pow(M2_val, 2.0)
                             + (M1_val * M2_val)))
-                        + ((199 / 75) * std::pow(g1_val, 4.0) * std::pow(M1_val, 2.0))
+                        + ((199.0 / 75.0) * std::pow(g1_val, 4.0) * std::pow(M1_val, 2.0))
                         + ((16.0 / 3.0) * std::pow(g3_val, 2.0) * sigma3)
                         + (3.0 * std::pow(g2_val, 2.0) * sigma2)
-                        + ((1 / 15) * std::pow(g1_val, 2.0) * sigma1));
+                        + ((1.0 / 15.0) * std::pow(g1_val, 2.0) * sigma1));
 
     double dmQ2_sq_dt_2l = (((-8.0)* (mQ2_sq_val + mHu_sq_val + mU2_sq_val)
                         * std::pow(yc_val, 4.0))
@@ -2537,7 +2537,7 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
                         + (32.0 * std::pow(g3_val, 2.0) * std::pow(g2_val, 2.0)
                         * (std::pow(M3_val, 2.0) + std::pow(M2_val, 2.0)
                             + (M2_val * M3_val)))
-                        + ((32 / 45) * std::pow(g3_val, 2.0)
+                        + ((32.0 / 45.0) * std::pow(g3_val, 2.0)
                         * std::pow(g1_val, 2.0)
                         * (std::pow(M3_val, 2.0) + std::pow(M1_val, 2.0)
                             + (M3_val * M1_val)))
@@ -2545,10 +2545,10 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
                         + ((2.0 / 5.0) * std::pow(g2_val, 2.0) * std::pow(g1_val, 2.0)
                         * (std::pow(M1_val, 2.0) + std::pow(M2_val, 2.0)
                             + (M1_val * M2_val)))
-                        + ((199 / 75) * std::pow(g1_val, 4.0) * std::pow(M1_val, 2.0))
+                        + ((199.0 / 75.0) * std::pow(g1_val, 4.0) * std::pow(M1_val, 2.0))
                         + ((16.0 / 3.0) * std::pow(g3_val, 2.0) * sigma3)
                         + (3.0 * std::pow(g2_val, 2.0) * sigma2)
-                        + ((1 / 15) * std::pow(g1_val, 2.0) * sigma1));
+                        + ((1.0 / 15.0) * std::pow(g1_val, 2.0) * sigma1));
 
     double dmQ1_sq_dt_2l = (((-8.0)* (mQ1_sq_val + mHu_sq_val + mU1_sq_val)
                         * std::pow(yu_val, 4.0))
@@ -2634,7 +2634,7 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
                         + (32.0 * std::pow(g3_val, 2.0) * std::pow(g2_val, 2.0)
                         * (std::pow(M3_val, 2.0) + std::pow(M2_val, 2.0)
                             + (M2_val * M3_val)))
-                        + ((32 / 45) * std::pow(g3_val, 2.0)
+                        + ((32.0 / 45.0) * std::pow(g3_val, 2.0)
                         * std::pow(g1_val, 2.0)
                         * (std::pow(M3_val, 2.0) + std::pow(M1_val, 2.0)
                             + (M3_val * M1_val)))
@@ -2642,10 +2642,10 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
                         + ((2.0 / 5.0) * std::pow(g2_val, 2.0) * std::pow(g1_val, 2.0)
                         * (std::pow(M1_val, 2.0) + std::pow(M2_val, 2.0)
                             + (M1_val * M2_val)))
-                        + ((199 / 75) * std::pow(g1_val, 4.0) * std::pow(M1_val, 2.0))
+                        + ((199.0 / 75.0) * std::pow(g1_val, 4.0) * std::pow(M1_val, 2.0))
                         + ((16.0 / 3.0) * std::pow(g3_val, 2.0) * sigma3)
                         + (3.0 * std::pow(g2_val, 2.0) * sigma2)
-                        + ((1 / 15) * std::pow(g1_val, 2.0) * sigma1));
+                        + ((1.0 / 15.0) * std::pow(g1_val, 2.0) * sigma1));
 
         // Left leptons
     double dmL3_sq_dt_2l = (((-8.0)* (mL3_sq_val + mHd_sq_val + mE3_sq_val)
