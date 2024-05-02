@@ -103,12 +103,12 @@ high_prec_float mixed_second_derivative_calc(high_prec_float pStep, high_prec_fl
 
 high_prec_float calculate_approx_mZ2(vector<high_prec_float> weak_solutions, high_prec_float explogQSUSY, high_prec_float mZ2Value) {
     vector<high_prec_float> calculateRadCorrs = radcorr_calc(weak_solutions, explogQSUSY, mZ2Value);
-    return mZ2Value - (2.0 * ((((weak_solutions[26] + calculateRadCorrs[1] - ((weak_solutions[25] + calculateRadCorrs[0]) * weak_solutions[43] * weak_solutions[43]))) / ((weak_solutions[43] * weak_solutions[43]) - 1.0)) - (weak_solutions[6] * weak_solutions[6])));
+    return high_prec_float(1.0) - ((high_prec_float(2.0) / mZ2Value) * ((((weak_solutions[26] + calculateRadCorrs[1] - ((weak_solutions[25] + calculateRadCorrs[0]) * weak_solutions[43] * weak_solutions[43]))) / ((weak_solutions[43] * weak_solutions[43]) - 1.0)) - (weak_solutions[6] * weak_solutions[6])));
 }
 
 high_prec_float calculate_approx_tanb(vector<high_prec_float> weak_solutions, high_prec_float explogQSUSY, high_prec_float mZ2Value) {
     vector<high_prec_float> calculateRadCorrs = radcorr_calc(weak_solutions, explogQSUSY, mZ2Value);
-    return weak_solutions[43] - tan(0.5 * (M_PI - asin(abs(2.0 * weak_solutions[42] / (weak_solutions[25] + weak_solutions[26] + calculateRadCorrs[0] + calculateRadCorrs[1] + (2.0 * weak_solutions[6] * weak_solutions[6]))))));
+    return high_prec_float(1.0) - tan(0.5 * (M_PI - asin(abs(2.0 * weak_solutions[42] / (weak_solutions[25] + weak_solutions[26] + calculateRadCorrs[0] + calculateRadCorrs[1] + (2.0 * weak_solutions[6] * weak_solutions[6])))))) / weak_solutions[43];
 }
 
 vector<high_prec_float> single_var_deriv_approxes(vector<high_prec_float>& original_weak_conditions, high_prec_float& fixed_mZ2_val, int idx_to_shift, high_prec_float& logQSUSYval) {
@@ -434,7 +434,7 @@ vector<high_prec_float> DSN_B_windows(vector<high_prec_float> Wk_boundary_condit
             BminusEWSB = false;
         }
     }
-    int max_iter = 1000;
+    int max_iter = 2500;
     high_prec_float tol = 1.0e-8;
     while ((BminusEWSB) && (BminusNoCCB) && (abs(Bnewweaks_minus[6]) > 25.0) && ((Bnew_mZ2minus > (45.5938 * 45.5938)) && (Bnew_mZ2minus < (364.7504 * 364.7504)))) {
         vector<high_prec_float> checkweaksols = Bnewweaks_minus;
@@ -668,7 +668,7 @@ vector<high_prec_float> DSN_specific_windows(vector<high_prec_float>& Wk_boundar
             piminusEWSB = false;
         }
     }
-    int max_iter = 1000;
+    int max_iter = 2500;
     high_prec_float tol = 1.0e-8;
     while ((piminusEWSB) && (piminusNoCCB) && (abs(pinewweaks_minus[6]) > 25.0) && ((pinew_mZ2minus > (45.5938 * 45.5938)) && (pinew_mZ2minus < (364.7504 * 364.7504)))) {
         vector<high_prec_float> checkweaksols = pinewweaks_minus;
@@ -852,7 +852,7 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
             muminusEWSB = false;
         }
     }
-    int max_iter = 1000;
+    int max_iter = 2500;
     high_prec_float tol = 1.0e-8;
     while ((muminusEWSB) && (muminusNoCCB) && (abs(munewweaks_minus[6]) > 25.0) && ((munew_mZ2minus > (45.5938 * 45.5938)) && (munew_mZ2minus < (364.7504 * 364.7504)))) {
         vector<high_prec_float> checkweaksols = munewweaks_minus;
@@ -1006,7 +1006,7 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
 
 high_prec_float Nsoft_term_calc(high_prec_float nPower, std::vector<high_prec_float> softvec) {
     high_prec_float Ncontrib = high_prec_float(0.0);
-    high_prec_float MPlanck = high_prec_float(12208900000000000000);
+    high_prec_float MPlanck = high_prec_float(1.22089e19);
     high_prec_float prefactor = high_prec_float(1.0) / ((nPower + high_prec_float(1.0)) * pow(MPlanck, (nPower + high_prec_float(1.0))));
     for (const auto& value : softvec) {
         Ncontrib += pow(value, high_prec_float(2.0));
