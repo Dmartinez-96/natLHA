@@ -24,6 +24,7 @@ set(SOURCE_FILES
     src/DSN_calc.cpp
     src/tree_mass_calc.cpp
     src/EWSB_loop.cpp
+    src/other_derivs.cpp
 )
 
 # Executable

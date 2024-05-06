@@ -82,10 +82,14 @@ void saveDBGResults(const std::vector<LabeledValueBG>& dbglist, const std::strin
 void saveDSNResults(const std::vector<DSNLabeledValue>& dsnlist, const high_prec_float& totalNvac, const std::string& directory, const std::string& filename, const int& printprec) {
     std::ofstream outFile(directory + "/" + filename, std::ios::out);
     outFile << "Given the submitted SLHA file, " << directory << ", your value for the stringy\n"
-            << "naturalness measure, Delta_SN ~ 1 / N_vac, is: " << std::fixed << std::setprecision(printprec) << totalNvac << std::endl;
+            << "naturalness measure, Delta_SN ~ 1 / N_vac, is: " << std::fixed << std::setprecision(printprec) << high_prec_float(1.0) / totalNvac << std::endl;
     outFile << "\nThe ordered contributions to N_vac are as follows (decr. order): \n\n";
     for (const auto& item : dsnlist) {
-        outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+        if (item.value < 1.0e-3) {
+            outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << std::scientific << item.value << std::endl;
+        } else {
+            outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+        }
     }
     outFile.close();
     std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
@@ -932,9 +936,14 @@ void terminalUI() {
             this_thread::sleep_for(chrono::milliseconds(250));
             std::cout << "\nThe ordered contributions to N_vac are as follows (decr. order):\n";
             for (size_t i = 0; i < myDSNlist.size(); ++i) {
+            if (myDSNlist[i].value < 1.0e-3) {
+                std::cout << (i + 1) << ": " << std::scientific << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+            } else {
                 std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
                 this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
             }
+        }
 
             bool checkDSNSaveBool = true;
             string saveDSNinput;
