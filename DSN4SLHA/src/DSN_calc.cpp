@@ -1220,13 +1220,25 @@ high_prec_float Nsoft_term_calc(high_prec_float nPower, std::vector<high_prec_fl
     return Ncontrib;
 }
 
+high_prec_float dNsoft_term_calc(high_prec_float nPower, std::vector<high_prec_float> softvec, int termIndex) {
+    high_prec_float dNcontrib = high_prec_float(0.0);
+    high_prec_float MPlanck = (high_prec_float(1.0) / sqrt(high_prec_float(8.0) * high_prec_float(M_PI))) * high_prec_float(1.22089e19);
+    high_prec_float prefactor = high_prec_float(2.0) / (pow(MPlanck, (nPower + high_prec_float(1.0))));
+    for (const auto& value : softvec) {
+        dNcontrib += pow(value, high_prec_float(2.0));
+    }
+    dNcontrib = prefactor * pow(dNcontrib, nPower) * abs(softvec[termIndex]);
+    return dNcontrib;
+}
+
 std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float> Wk_boundary_conditions,
                                       high_prec_float& current_mZ2, high_prec_float& current_logQSUSY,
                                       high_prec_float& current_logQGUT, int& nF, int& nD) {
-    high_prec_float Nmu, NmHu, NmHd, NM1, NM2, NM3, NmQ1, NmQ2, NmQ3, NmL1, NmL2, NmL3, NmU1, NmU2, NmU3, NmD1, NmD2, NmD3, NmE1, NmE2, NmE3, Nat, Nac, Nau, Nab, Nas, Nad, Natau, Namu, Nae, NB;
     vector<DSNLabeledValue> DSNlabeledlist, unsortedDSNlabeledlist;
-    std::cout << "This may take a while...\n\nProgress:\n-----------------------------------------------\n" << endl;
     if ((precselno == 1)) {
+        high_prec_float backupvalue_coeff = high_prec_float(2.0) / (high_prec_float(100.0) * (high_prec_float(3.5) * high_prec_float(911876.0) / high_prec_float(10000.0)));
+        std::cout << "This may take a while...\n\nProgress:\n-----------------------------------------------\n" << endl;
+        high_prec_float Nmu, NmHu, NmHd, NM1, NM2, NM3, NmQ1, NmQ2, NmQ3, NmL1, NmL2, NmL3, NmU1, NmU2, NmU3, NmD1, NmD2, NmD3, NmE1, NmE2, NmE3, Nat, Nac, Nau, Nab, Nas, Nad, Natau, Namu, Nae, NB;
         vector<high_prec_float> minussofts, plussofts;
         // Compute mu windows around original point
         vector<high_prec_float> muinitwkBCs = Wk_boundary_conditions;
@@ -1234,7 +1246,7 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
         std::cout << "muwindows: [" << muwindows[0] << ", " << muwindows[1] << "]" << endl;
         Nmu = abs(log10(abs(muwindows[1] / muwindows[0])));
 
-        // Now do same thing with mHu^2(GUT)
+        // Now do same thing with mHu^2
         vector<high_prec_float> mHu2initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mHu2windows;
         if (abs(boost::math::float_next(Wk_boundary_conditions[25]) - Wk_boundary_conditions[25]) >= 1.0) {
@@ -1269,7 +1281,7 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
             NmHu = abs((Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), plussofts) - Nsoft_term_calc(high_prec_float((2.0 * nF) + (1.0 * nD) - 1.0), minussofts)));
         }
 
-        // Now do same thing with mHd^2(GUT)
+        // Now do same thing with mHd^2
         vector<high_prec_float> mHd2initwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> mHd2windows;
         if (abs(boost::math::float_next(Wk_boundary_conditions[26]) - Wk_boundary_conditions[26]) >= 1.0) {
@@ -2191,7 +2203,8 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
                                   {Nae, "a_e"},
                                   {NB, "B"}};
         DSNlabeledlist = sortAndReturnDSN(unsortedDSNlabeledlist);
-    } else {
+    } else if (precselno == 2) {
+        high_prec_float Nmu;
         // Compute mu windows around original point
         vector<high_prec_float> muinitwkBCs = Wk_boundary_conditions;
         vector<high_prec_float> muwindows = DSN_mu_windows(muinitwkBCs, current_mZ2, current_logQSUSY);
@@ -2200,7 +2213,175 @@ std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float
 
         // Create return list
         DSNlabeledlist = {{Nmu, "mu"}};
-    }    
+    } else {
+        high_prec_float dNmu, dNmHu, dNmHd, dNM1, dNM2, dNM3, dNmQ1, dNmQ2, dNmQ3, dNmL1, dNmL2, dNmL3, dNmU1, dNmU2, dNmU3, dNmD1, dNmD2, dNmD3, dNmE1, dNmE2, dNmE3, dNat, dNac, dNau, dNab, dNas, dNad, dNatau, dNamu, dNae, dNB;
+        // Compute differential densities at current point
+        vector<high_prec_float> softvec;
+        /*
+        Order of soft vectors:
+        (0: M1
+         1: M2
+         2: M3
+         3: at
+         4: ac
+         5: au
+         6: ab
+         7: as
+         8: ad
+         9: atau
+         10: amu
+         11: ae
+         12: mHu
+         13: mHd
+         14: mQ1
+         15: mQ2
+         16: mQ3
+         17: mL1
+         18: mL2
+         19: mL3
+         20: mU1
+         21: mU2
+         22: mU3
+         23: mD1
+         24: mD2
+         25: mD3
+         26: mE1
+         27: mE2
+         28: mE3
+         29: B
+        */
+        softvec = {Wk_boundary_conditions[3], Wk_boundary_conditions[4], Wk_boundary_conditions[5], Wk_boundary_conditions[16], Wk_boundary_conditions[17], Wk_boundary_conditions[18],
+                   Wk_boundary_conditions[19], Wk_boundary_conditions[20], Wk_boundary_conditions[21], Wk_boundary_conditions[22], Wk_boundary_conditions[23], Wk_boundary_conditions[24],
+                   sqrt(abs(Wk_boundary_conditions[25])), sqrt(abs(Wk_boundary_conditions[26])), sqrt(abs(Wk_boundary_conditions[27])), sqrt(abs(Wk_boundary_conditions[28])), sqrt(abs(Wk_boundary_conditions[29])), sqrt(abs(Wk_boundary_conditions[30])),
+                   sqrt(abs(Wk_boundary_conditions[31])), sqrt(abs(Wk_boundary_conditions[32])), sqrt(abs(Wk_boundary_conditions[33])), sqrt(abs(Wk_boundary_conditions[34])), sqrt(abs(Wk_boundary_conditions[35])), sqrt(abs(Wk_boundary_conditions[36])),
+                   sqrt(abs(Wk_boundary_conditions[37])), sqrt(abs(Wk_boundary_conditions[38])), sqrt(abs(Wk_boundary_conditions[39])), sqrt(abs(Wk_boundary_conditions[40])), sqrt(abs(Wk_boundary_conditions[41])), Wk_boundary_conditions[42] / Wk_boundary_conditions[6]};
+        // Compute mu windows around original point
+        dNmu = high_prec_float(1.0) / (log(high_prec_float(10.0)) * abs(Wk_boundary_conditions[6]));
+
+        // Now do same thing with mHu^2
+        dNmHu = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 12);
+        
+        // Now do same thing with mHd^2
+        dNmHd = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 13);
+        
+        // Now do same thing with M1
+        dNM1 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 0);
+        
+        // Now do same thing with M2
+        dNM2 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 1);
+        
+        // Now do same thing with M3
+        dNM3 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 2);
+        
+        // Now do same thing with mQ3
+        dNmQ3 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 16);
+        
+        // Now do same thing with mQ2
+        dNmQ2 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 15);
+        
+        // Now do same thing with mQ1
+        dNmQ1 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 14);
+        
+        // Now do same thing with mL3
+        dNmL3 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 19);
+        
+        // Now do same thing with mL2
+        dNmL2 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 18);
+        
+        // Now do same thing with mL1
+        dNmL1 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 17);
+        
+        // Now do same thing with mU3
+        dNmU3 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 22);
+        
+        // Now do same thing with mU2
+        dNmU2 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 21);
+        
+        // Now do same thing with mU1
+        dNmU1 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 20);
+        
+        // Now do same thing with mD3
+        dNmD3 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 25);
+        
+        // Now do same thing with mD2
+        dNmD2 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 24);
+        
+        // Now do same thing with mD1
+        dNmD1 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 23);
+        
+        // Now do same thing with mE3
+        dNmE3 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 28);
+        
+        // Now do same thing with mE2
+        dNmE2 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 27);
+        
+        // Now do same thing with mE1
+        dNmE1 = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 26);
+        
+        // Now do same thing with at
+        dNat = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 3);
+        
+        // Now do same thing with ac
+        dNac = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 4);
+        
+        // Now do same thing with au    
+        dNau = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 5);
+        
+        // Now do same thing with ab
+        dNab = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 6);
+        
+        // Now do same thing with as
+        dNas = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 7);
+        
+        // Now do same thing with ad    
+        dNad = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 8);
+                
+        // Now do same thing with atau
+        dNatau = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 9);
+        
+        // Now do same thing with amu
+        dNamu = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 10);
+        
+        // Now do same thing with ae    
+        dNae = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 11);
+                
+        // Now do same thing with B = b/mu;
+        dNB = dNsoft_term_calc(high_prec_float(((2.0 * nF) + (1.0 * nD) - 1.0)), softvec, 29);
+                
+        // Create return list
+        unsortedDSNlabeledlist = {{dNmu, "mu"},
+                                  {dNmHu, "mHu"},
+                                  {dNmHd, "mHd"},
+                                  {dNM1, "M1"},
+                                  {dNM2, "M2"},
+                                  {dNM3, "M3"},
+                                  {dNmQ3, "mQ3"},
+                                  {dNmQ2, "mQ2"},
+                                  {dNmQ1, "mQ1"},
+                                  {dNmL3, "mL3"},
+                                  {dNmL2, "mL2"},
+                                  {dNmL1, "mL1"},
+                                  {dNmU3, "mU3"},
+                                  {dNmU2, "mU2"},
+                                  {dNmU1, "mU1"},
+                                  {dNmD3, "mD3"},
+                                  {dNmD2, "mD2"},
+                                  {dNmD1, "mD1"},
+                                  {dNmE3, "mE3"},
+                                  {dNmE2, "mE2"},
+                                  {dNmE1, "mE1"},
+                                  {dNat, "a_t"},
+                                  {dNac, "a_c"},
+                                  {dNau, "a_u"},
+                                  {dNab, "a_b"},
+                                  {dNas, "a_s"},
+                                  {dNad, "a_d"},
+                                  {dNatau, "a_tau"},
+                                  {dNamu, "a_mu"},
+                                  {dNae, "a_e"},
+                                  {dNB, "B"}};
+        DSNlabeledlist = sortAndReturnDSN(unsortedDSNlabeledlist);
+    }
 
     return DSNlabeledlist;
 }

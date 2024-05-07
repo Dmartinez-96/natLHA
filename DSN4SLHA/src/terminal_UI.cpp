@@ -56,6 +56,22 @@ void saveDSNResults(const std::vector<DSNLabeledValue>& dsnlist, const high_prec
     std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
 }
 
+void savedeltaSNResults(const std::vector<DSNLabeledValue>& dsnlist, const high_prec_float& totalNvac, const std::string& directory, const std::string& filename, const int& printprec) {
+    std::ofstream outFile(directory + "/" + filename, std::ios::out);
+    outFile << "Given the submitted SLHA file, " << directory << ", your value for the differential stringy\n"
+            << "naturalness measure, delta_SN ~ 1 / dN_vac, is: " << std::fixed << std::setprecision(printprec) << high_prec_float(1.0) / totalNvac << std::endl;
+    outFile << "\nThe ordered contributions to N_vac are as follows (decr. order): \n\n";
+    for (const auto& item : dsnlist) {
+        if (item.value < 1.0e-3) {
+            outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << std::scientific << item.value << std::endl;
+        } else {
+            outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << item.value << std::endl;
+        }
+    }
+    outFile.close();
+    std::cout << "\nThese results have been saved to the directory \n" << directory << " as " << filename << ".\n";
+}
+
 void clearScreen() {
     #ifdef _WIN32
     system("cls");
@@ -207,43 +223,47 @@ void terminalUI() {
         std::cout << "\n####################################################\n"
                 << "Please select the level of precision you want for the Delta_SN calculation.\n"
                 << "Below are the options: \n"
-                << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
-                << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+                << "1: Full DSN P_mu + soft terms integrated density measure\n"
+                << "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
+                << "3: Differential ABDS density at current BM point.\n\n";
         while (true) {
             std::cout << "From the list above, input the number corresponding to the precision you want: ";
-            if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 3)) {
+            if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 4)) {
                 std::cout << "Invalid Delta_SN precision setting selected, please try again.\n\n";
                 
                 this_thread::sleep_for(chrono::seconds(1));
-                std::cout << "1: Full DSN P_mu + soft terms hypervolume density measure\n"
-                    << "2: P_mu (normalized width of ABDS window in mu parameter)\n\n";
+                std::cout << "1: Full DSN P_mu + soft terms integrated density measure\n"
+                    << "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
+                    << "3: Differential ABDS density at current BM point.\n\n";
                 
             } else {
                 break; 
             }
         }            
         std::cout << "\n####################################################\n";
-        while (true) {
-            std::cout << "Please input the number of F-type SUSY breaking fields as an integer: ";
-            if (!(cin >> nF_input) || (nF_input < 0) || (isnan(nF_input))) {
-                std::cout << "Invalid number of F-type fields input, please try again.\n\n";
-                
-                this_thread::sleep_for(chrono::seconds(1));
-            } else {
-                break; 
-            }
-        }                
-        std::cout << "\n####################################################\n";
-        while (true) {
-            std::cout << "Please input the number of D-type SUSY breaking fields as an integer: ";
-            if (!(cin >> nD_input) || (nD_input < 0) || (isnan(nD_input))) {
-                std::cout << "Invalid number of D-type fields input, please try again.\n\n";
-                
-                this_thread::sleep_for(chrono::seconds(1));
-            } else {
-                break; 
-            }
-        }       
+        if ((DSNcalcSelect == 1) || (DSNcalcSelect == 3)) {
+            while (true) {
+                std::cout << "Please input the number of F-type SUSY breaking fields as an integer: ";
+                if (!(cin >> nF_input) || (nF_input < 0) || (isnan(nF_input))) {
+                    std::cout << "Invalid number of F-type fields input, please try again.\n\n";
+                    
+                    this_thread::sleep_for(chrono::seconds(1));
+                } else {
+                    break; 
+                }
+            }                
+            std::cout << "\n####################################################\n";
+            while (true) {
+                std::cout << "Please input the number of D-type SUSY breaking fields as an integer: ";
+                if (!(cin >> nD_input) || (nD_input < 0) || (isnan(nD_input))) {
+                    std::cout << "Invalid number of D-type fields input, please try again.\n\n";
+                    
+                    this_thread::sleep_for(chrono::seconds(1));
+                } else {
+                    break; 
+                }
+            }       
+        }
         
 
         std::cout << "\n########## Configuration Complete ##########\n";
@@ -562,61 +582,120 @@ void terminalUI() {
             totalN += item.value;
         }
         high_prec_float totalDSN = high_prec_float(1.0) / totalN;
-        std::cout << "\n########## Delta_SN Results ##########\n";
-        std::cout << "Your value for the stringy naturalness measure, Delta_SN ~ 1 / N_vac, is: "
-                << totalDSN;
-        this_thread::sleep_for(chrono::milliseconds(250));
-        std::cout << "\nThe ordered contributions to N_vac are as follows (decr. order):\n";
-        for (size_t i = 0; i < myDSNlist.size(); ++i) {
-            if (myDSNlist[i].value < 1.0e-3) {
-                std::cout << (i + 1) << ": " << std::scientific << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
-                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
-            } else {
-                std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
-                this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+        if ((DSNcalcSelect == 1) || (DSNcalcSelect == 2)) {
+            std::cout << "\n########## Delta_SN Results ##########\n";
+            std::cout << "Your value for the stringy naturalness measure, Delta_SN ~ 1 / N_vac, is: "
+                    << totalDSN;
+            this_thread::sleep_for(chrono::milliseconds(250));
+            std::cout << "\nThe ordered contributions to N_vac are as follows (decr. order):\n";
+            for (size_t i = 0; i < myDSNlist.size(); ++i) {
+                if (myDSNlist[i].value < 1.0e-3) {
+                    std::cout << (i + 1) << ": " << std::scientific << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+                    this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+                } else {
+                    std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+                    this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+                }
             }
-        }
 
-        bool checkDSNSaveBool = true;
-        string saveDSNinput;
-        while (checkDSNSaveBool) {
-            std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
-            std::getline(std::cin, saveDSNinput);
-
-            std::string DSNtimeStr = getCurrentTimeFormatted();
-
-            if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
-                std::string DSNpath = "DSN4SLHA_results/DSN";
-                if (!fs::exists("DSN4SLHA_results")) fs::create_directory("DSN4SLHA_results");
-                if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
-
-                std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+            bool checkDSNSaveBool = true;
+            string saveDSNinput;
+            while (checkDSNSaveBool) {
+                std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
                 std::getline(std::cin, saveDSNinput);
 
+                std::string DSNtimeStr = getCurrentTimeFormatted();
+
                 if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
-                    saveDSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
-                    checkDSNSaveBool = false;
-                    std::cout << "##### Press Enter to continue... #####\n";
-                    std::cin.get();
-                } else if (saveDSNinput == "N" || saveDSNinput == "n" || saveDSNinput == "No" || saveDSNinput == "no") {
-                    std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DSN_list' without the quotes): ";
-                    std::string newDSNFileName;
-                    std::getline(std::cin, newDSNFileName);
-                    saveDSNResults(myDSNlist, totalN, DSNpath, newDSNFileName + ".txt", printPrec);
-                    checkDSNSaveBool = false;
-                    std::cout << "##### Press Enter to continue... #####\n";
-                    std::cin.get();
+                    std::string DSNpath = "DSN4SLHA_results/DSN";
+                    if (!fs::exists("DSN4SLHA_results")) fs::create_directory("DSN4SLHA_results");
+                    if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
+
+                    std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                    std::getline(std::cin, saveDSNinput);
+
+                    if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
+                        saveDSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
+                        checkDSNSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else if (saveDSNinput == "N" || saveDSNinput == "n" || saveDSNinput == "No" || saveDSNinput == "no") {
+                        std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DSN_list' without the quotes): ";
+                        std::string newDSNFileName;
+                        std::getline(std::cin, newDSNFileName);
+                        saveDSNResults(myDSNlist, totalN, DSNpath, newDSNFileName + ".txt", printPrec);
+                        checkDSNSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else {
+                        std::cout << "Invalid user input.\n";
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
                 } else {
-                    std::cout << "Invalid user input.\n";
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                    std::cout << "\nOutput not saved.\n";
+                    checkDSNSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
                 }
-            } else {
-                std::cout << "\nOutput not saved.\n";
-                checkDSNSaveBool = false;
-                std::cout << "##### Press Enter to continue... #####\n";
-                std::cin.get();
+            }
+        } else if ((DSNcalcSelect == 3)) {
+            std::cout << "\n########## delta_SN Results ##########\n";
+            std::cout << "Your value for the differential stringy naturalness measure, delta_SN ~ 1 / dN_vac, is: "
+                << totalDSN;
+            this_thread::sleep_for(chrono::milliseconds(250));
+            std::cout << "\nThe ordered contributions to dN_vac are as follows (decr. order):\n";
+            for (size_t i = 0; i < myDSNlist.size(); ++i) {
+                if (myDSNlist[i].value < 1.0e-3) {
+                    std::cout << (i + 1) << ": " << std::scientific << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+                    this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+                } else {
+                    std::cout << (i + 1) << ": " << myDSNlist[i].value << ", " << myDSNlist[i].label << endl;
+                    this_thread::sleep_for(chrono::milliseconds(static_cast<int>(1000 / myDSNlist.size())));
+                }
+            }
+
+            bool checkDSNSaveBool = true;
+            string saveDSNinput;
+            while (checkDSNSaveBool) {
+                std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
+                std::getline(std::cin, saveDSNinput);
+
+                std::string DSNtimeStr = getCurrentTimeFormatted();
+
+                if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
+                    std::string DSNpath = "DSN4SLHA_results/DSN";
+                    if (!fs::exists("DSN4SLHA_results")) fs::create_directory("DSN4SLHA_results");
+                    if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
+
+                    std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                    std::getline(std::cin, saveDSNinput);
+
+                    if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
+                        saveDSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
+                        checkDSNSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else if (saveDSNinput == "N" || saveDSNinput == "n" || saveDSNinput == "No" || saveDSNinput == "no") {
+                        std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_deltaSN_list' without the quotes): ";
+                        std::string newDSNFileName;
+                        std::getline(std::cin, newDSNFileName);
+                        savedeltaSNResults(myDSNlist, totalN, DSNpath, newDSNFileName + ".txt", printPrec);
+                        checkDSNSaveBool = false;
+                        std::cout << "##### Press Enter to continue... #####\n";
+                        std::cin.get();
+                    } else {
+                        std::cout << "Invalid user input.\n";
+                        std::this_thread::sleep_for(std::chrono::seconds(1));
+                    }
+                } else {
+                    std::cout << "\nOutput not saved.\n";
+                    checkDSNSaveBool = false;
+                    std::cout << "##### Press Enter to continue... #####\n";
+                    std::cin.get();
+                }
             }
         }
+        
         
         
         // Try again?
