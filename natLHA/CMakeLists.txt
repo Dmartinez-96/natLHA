@@ -4,12 +4,16 @@ project(natLHA)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find packages
-find_package(Boost 1.74 REQUIRED)
+# Prefer the static libraries of all dependencies
+set(Boost_USE_STATIC_LIBS ON)  
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+set(CMAKE_EXE_LINKER_FLAGS "-static")
+
+find_package(Boost 1.74 REQUIRED COMPONENTS system filesystem)  # Specify the required Boost components
 find_package(Eigen3 3.4 REQUIRED NO_MODULE)
 find_package(GSL 2.5 REQUIRED)
-find_library(MPFR_LIBRARY NAMES mpfr)
-find_library(GMP_LIBRARY NAMES gmp)
+find_library(MPFR_LIBRARY NAMES mpfr PATH_SUFFIXES lib)
+find_library(GMP_LIBRARY NAMES gmp PATH_SUFFIXES lib)
 
 # Source files
 set(SOURCE_FILES
@@ -33,5 +37,14 @@ add_executable(natLHA ${SOURCE_FILES})
 # Include directories
 target_include_directories(natLHA PRIVATE include ${Boost_INCLUDE_DIRS})
 
-# Link libraries
-target_link_libraries(natLHA Eigen3::Eigen GSL::gsl GSL::gslcblas ${MPFR_LIBRARY} ${GMP_LIBRARY})
+# Link all libraries statically
+target_link_libraries(natLHA
+    Eigen3::Eigen
+    GSL::gsl GSL::gslcblas
+    ${MPFR_LIBRARY} ${GMP_LIBRARY}
+    ${Boost_LIBRARIES}
+    -static-libgcc -static-libstdc++
+)
+
+# Remove RPATH to avoid system paths in the executable
+set_target_properties(natLHA PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
