@@ -1,3 +1,7 @@
+# The next generation of DEW4SLHA will be called NatLHA. Development of computational routines is in the testing stage, current code may be found in this repository and soon at www.natLHA.com. This README will be updated soon!
+
+---
+
 # DEW4SLHAv1.3
 This program computes the naturalness measures $\Delta_{EW}$ (DEW) and produces an ordered list of contributions to DEW from the one-loop and partial two-loop Higgs minimization conditions using the effective potential method and a user-provided input SLHA file from the user's choice of spectrum generator. For versions later than v1.3, the program also computes the naturalness measures $\Delta_{HS}$ and $\Delta_{BG}$ for the user-input SLHA file. This documentation is for v1.3.
 
