@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <limits>
 #include <boost/math/special_functions/next.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include "DBG_calc.hpp"
@@ -14,6 +15,35 @@
 
 using namespace boost::multiprecision;
 typedef number<mpfr_float_backend<50>> high_prec_float;
+
+/// x advanced by one DOUBLE-precision ULP, so that `dblNext(x) - x` is exactly that ULP.
+///
+/// This is the right ULP for sizing the finite-difference steps in this file, and
+/// boost::math::float_next is not. float_next advances by one ULP of `high_prec_float`, which is
+/// mpfr_float_backend<50> -- roughly 1e-50 relative. The steps below are sized as
+/// h = (C * ulp)^(1/n), but the function being differentiated is evaluated in DOUBLE:
+/// deriv_mZ_step_calc converts its boundary conditions to vector<double> and hands them to
+/// solveODEs. Estimating the MPFR ULP as 1e-50 relative, at a reference scale of 5000 that
+/// choice gives
+///     8-point  1.263e-05  relative 2.53e-09   (fine, far above double resolution)
+///     4-point  8.913e-10  relative 1.78e-13   (only ~800 double ULPs, at the noise floor)
+///     2-point  5.313e-16  relative 1.06e-19   (BELOW double epsilon, 2.22e-16)
+/// For the 2-point rule x + h == x exactly in double, making f(+h) and f(-h) bit-identical and
+/// the central difference identically zero. Measured on the arXiv:2111.03096 benchmark with
+/// MPFR-sized steps: Delta_BG = -5253.40158787 at precision 1, -5234.93148081 at precision 2,
+/// and exactly 0 at precision 3, where all six of its contributions were 0. The agreement
+/// between precisions 1 and 2 to 0.35 percent was luck near the noise floor, not accuracy.
+///
+/// Sizing from the double ULP gives relative steps of 1.66e-05, 1.32e-06 and 2.99e-08 for the
+/// 8-, 4- and 2-point rules at that same scale -- all far above double epsilon. The reference is
+/// max(|x|, 1.0) rather than |x| so a parameter passing through zero cannot collapse the step to
+/// a denormal.
+static high_prec_float dblNext(const high_prec_float & x) {
+    const double xd = double(x);
+    const double ref = std::max(std::abs(xd), 1.0);
+    const double ulp = std::nextafter(ref, std::numeric_limits<double>::infinity()) - ref;
+    return x + high_prec_float(ulp);
+}
 
 high_prec_float deriv_mZ_step_calc(high_prec_float RGE_scale_init_val, high_prec_float RGE_scale_final_val, vector<high_prec_float> BCs_to_run) {
     vector<double> BCs_to_run_dbl;
@@ -162,33 +192,33 @@ vector<high_prec_float> stepsize_generator(int& modselno, int& precselno, vector
         high_prec_float maxTrilin = abs(*maxA0It);
         high_prec_float Absmu0value = abs(inputGUT_BCs[6]);
         if (precselno == 1) {
-            high_prec_float hm0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 9.0));
+            high_prec_float hm0 = pow(((2625.0 / 16.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 9.0));
 
-            high_prec_float hmhf = pow(((2625.0 / 16.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
+            high_prec_float hmhf = pow(((2625.0 / 16.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
 
-            high_prec_float hA0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 9.0));
+            high_prec_float hA0 = pow(((2625.0 / 16.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 9.0));
             
-            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 9.0));
+            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 9.0));
             
             stepsizes = {hm0, hmhf, hA0, hmu0};
         } else if (precselno == 2) {
-            high_prec_float hm0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 5.0));
+            high_prec_float hm0 = pow(((45.0 / 4.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 5.0));
 
-            high_prec_float hmhf = pow(((45.0 / 4.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
+            high_prec_float hmhf = pow(((45.0 / 4.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
 
-            high_prec_float hA0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 5.0));
+            high_prec_float hA0 = pow(((45.0 / 4.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 5.0));
             
-            high_prec_float hmu0 = pow(((45.0 / 4.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 5.0));
+            high_prec_float hmu0 = pow(((45.0 / 4.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 5.0));
             
             stepsizes = {hm0, hmhf, hA0, hmu0};
         } else {
-            high_prec_float hm0 = pow(((3.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 3.0));
+            high_prec_float hm0 = pow(((3.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 3.0));
 
-            high_prec_float hmhf = pow(((3.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
+            high_prec_float hmhf = pow(((3.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
 
-            high_prec_float hA0 = pow(((3.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 3.0));
+            high_prec_float hA0 = pow(((3.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 3.0));
             
-            high_prec_float hmu0 = pow(((3.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 3.0));
+            high_prec_float hmu0 = pow(((3.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 3.0));
             
             stepsizes = {hm0, hmhf, hA0, hmu0};
         }
@@ -226,39 +256,39 @@ vector<high_prec_float> stepsize_generator(int& modselno, int& precselno, vector
         high_prec_float maxTrilin = abs(*maxA0It);
         high_prec_float Absmu0value = abs(inputGUT_BCs[6]);
         if (precselno == 1) {
-            high_prec_float hmHud0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxHiggsMass) - maxHiggsMass)), (1.0 / 9.0));
+            high_prec_float hmHud0 = pow(((2625.0 / 16.0) * (dblNext(maxHiggsMass) - maxHiggsMass)), (1.0 / 9.0));
 
-            high_prec_float hm0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 9.0));
+            high_prec_float hm0 = pow(((2625.0 / 16.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 9.0));
 
-            high_prec_float hmhf = pow(((2625.0 / 16.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
+            high_prec_float hmhf = pow(((2625.0 / 16.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
 
-            high_prec_float hA0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 9.0));
+            high_prec_float hA0 = pow(((2625.0 / 16.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 9.0));
             
-            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 9.0));
+            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 9.0));
             
             stepsizes = {hmHud0, hm0, hmhf, hA0, hmu0};
         } else if (precselno == 2) {
-            high_prec_float hmHud0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxHiggsMass) - maxHiggsMass)), (1.0 / 5.0));
+            high_prec_float hmHud0 = pow(((45.0 / 4.0) * (dblNext(maxHiggsMass) - maxHiggsMass)), (1.0 / 5.0));
 
-            high_prec_float hm0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 5.0));
+            high_prec_float hm0 = pow(((45.0 / 4.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 5.0));
 
-            high_prec_float hmhf = pow(((45.0 / 4.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
+            high_prec_float hmhf = pow(((45.0 / 4.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
 
-            high_prec_float hA0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 5.0));
+            high_prec_float hA0 = pow(((45.0 / 4.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 5.0));
             
-            high_prec_float hmu0 = pow(((45.0 / 4.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 5.0));
+            high_prec_float hmu0 = pow(((45.0 / 4.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 5.0));
             
             stepsizes = {hmHud0, hm0, hmhf, hA0, hmu0};
         } else {
-            high_prec_float hmHud0 = pow(((3.0) * (boost::math::float_next(maxHiggsMass) - maxHiggsMass)), (1.0 / 3.0));
+            high_prec_float hmHud0 = pow(((3.0) * (dblNext(maxHiggsMass) - maxHiggsMass)), (1.0 / 3.0));
 
-            high_prec_float hm0 = pow(((3.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 3.0));
+            high_prec_float hm0 = pow(((3.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 3.0));
 
-            high_prec_float hmhf = pow(((3.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
+            high_prec_float hmhf = pow(((3.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
 
-            high_prec_float hA0 = pow(((3.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 3.0));
+            high_prec_float hA0 = pow(((3.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 3.0));
             
-            high_prec_float hmu0 = pow(((3.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 3.0));
+            high_prec_float hmu0 = pow(((3.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 3.0));
             
             stepsizes = {hmHud0, hm0, hmhf, hA0, hmu0};
         }
@@ -291,42 +321,42 @@ vector<high_prec_float> stepsize_generator(int& modselno, int& precselno, vector
         high_prec_float maxTrilin = abs(*maxA0It);
         high_prec_float Absmu0value = abs(inputGUT_BCs[6]);
         if (precselno == 1) {
-            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 9.0));
-            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 9.0));
+            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 9.0));
+            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 9.0));
 
-            high_prec_float hm0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 9.0));
+            high_prec_float hm0 = pow(((2625.0 / 16.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 9.0));
 
-            high_prec_float hmhf = pow(((2625.0 / 16.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
+            high_prec_float hmhf = pow(((2625.0 / 16.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
 
-            high_prec_float hA0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 9.0));
+            high_prec_float hA0 = pow(((2625.0 / 16.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 9.0));
             
-            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 9.0));
+            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 9.0));
             
             stepsizes = {hmHu0, hmHd0, hm0, hmhf, hA0, hmu0};
         } else if (precselno == 2) {
-            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 5.0));
-            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 5.0));
+            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 5.0));
+            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 5.0));
 
-            high_prec_float hm0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 5.0));
+            high_prec_float hm0 = pow(((45.0 / 4.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 5.0));
 
-            high_prec_float hmhf = pow(((45.0 / 4.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
+            high_prec_float hmhf = pow(((45.0 / 4.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
 
-            high_prec_float hA0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 5.0));
+            high_prec_float hA0 = pow(((45.0 / 4.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 5.0));
             
-            high_prec_float hmu0 = pow(((45.0 / 4.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 5.0));
+            high_prec_float hmu0 = pow(((45.0 / 4.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 5.0));
             
             stepsizes = {hmHu0, hmHd0, hm0, hmhf, hA0, hmu0};
         } else {
-            high_prec_float hmHu0 = pow(((3.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 3.0));
-            high_prec_float hmHd0 = pow(((3.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 3.0));
+            high_prec_float hmHu0 = pow(((3.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 3.0));
+            high_prec_float hmHd0 = pow(((3.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 3.0));
 
-            high_prec_float hm0 = pow(((3.0) * (boost::math::float_next(maxm0Val) - maxm0Val)), (1.0 / 3.0));
+            high_prec_float hm0 = pow(((3.0) * (dblNext(maxm0Val) - maxm0Val)), (1.0 / 3.0));
 
-            high_prec_float hmhf = pow(((3.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
+            high_prec_float hmhf = pow(((3.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
 
-            high_prec_float hA0 = pow(((3.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 3.0));
+            high_prec_float hA0 = pow(((3.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 3.0));
             
-            high_prec_float hmu0 = pow(((3.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 3.0));
+            high_prec_float hmu0 = pow(((3.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 3.0));
             
             stepsizes = {hmHu0, hmHd0, hm0, hmhf, hA0, hmu0};
         }
@@ -364,42 +394,42 @@ vector<high_prec_float> stepsize_generator(int& modselno, int& precselno, vector
         high_prec_float maxTrilin = abs(*maxA0It);
         high_prec_float Absmu0value = abs(inputGUT_BCs[6]);
         if (precselno == 1) {
-            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 9.0));
-            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 9.0));
+            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 9.0));
+            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 9.0));
 
-            high_prec_float hm012 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm012Val) - maxm012Val)), (1.0 / 9.0));
-            high_prec_float hm03 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm03Val) - maxm03Val)), (1.0 / 9.0));
+            high_prec_float hm012 = pow(((2625.0 / 16.0) * (dblNext(maxm012Val) - maxm012Val)), (1.0 / 9.0));
+            high_prec_float hm03 = pow(((2625.0 / 16.0) * (dblNext(maxm03Val) - maxm03Val)), (1.0 / 9.0));
 
-            high_prec_float hmhf = pow(((2625.0 / 16.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
+            high_prec_float hmhf = pow(((2625.0 / 16.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
 
-            high_prec_float hA0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 9.0));
-            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 9.0));
+            high_prec_float hA0 = pow(((2625.0 / 16.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 9.0));
+            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 9.0));
             
             stepsizes = {hmHu0, hmHd0, hm012, hm03, hmhf, hA0, hmu0};
         } else if (precselno == 2) {
-            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 5.0));
-            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 5.0));
+            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 5.0));
+            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 5.0));
 
-            high_prec_float hm012 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm012Val) - maxm012Val)), (1.0 / 5.0));
-            high_prec_float hm03 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm03Val) - maxm03Val)), (1.0 / 5.0));
+            high_prec_float hm012 = pow(((45.0 / 4.0) * (dblNext(maxm012Val) - maxm012Val)), (1.0 / 5.0));
+            high_prec_float hm03 = pow(((45.0 / 4.0) * (dblNext(maxm03Val) - maxm03Val)), (1.0 / 5.0));
 
-            high_prec_float hmhf = pow(((45.0 / 4.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
+            high_prec_float hmhf = pow(((45.0 / 4.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
 
-            high_prec_float hA0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 5.0));
-            high_prec_float hmu0 = pow(((45.0 / 4.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 5.0));
+            high_prec_float hA0 = pow(((45.0 / 4.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 5.0));
+            high_prec_float hmu0 = pow(((45.0 / 4.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 5.0));
             
             stepsizes = {hmHu0, hmHd0, hm012, hm03, hmhf, hA0, hmu0};
         } else {
-            high_prec_float hmHu0 = pow(((3.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 3.0));
-            high_prec_float hmHd0 = pow(((3.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 3.0));
+            high_prec_float hmHu0 = pow(((3.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 3.0));
+            high_prec_float hmHd0 = pow(((3.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 3.0));
 
-            high_prec_float hm012 = pow(((3.0) * (boost::math::float_next(maxm012Val) - maxm012Val)), (1.0 / 3.0));
-            high_prec_float hm03 = pow(((3.0) * (boost::math::float_next(maxm03Val) - maxm03Val)), (1.0 / 3.0));
+            high_prec_float hm012 = pow(((3.0) * (dblNext(maxm012Val) - maxm012Val)), (1.0 / 3.0));
+            high_prec_float hm03 = pow(((3.0) * (dblNext(maxm03Val) - maxm03Val)), (1.0 / 3.0));
 
-            high_prec_float hmhf = pow(((3.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
+            high_prec_float hmhf = pow(((3.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
 
-            high_prec_float hA0 = pow(((3.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 3.0));
-            high_prec_float hmu0 = pow(((3.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 3.0));
+            high_prec_float hA0 = pow(((3.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 3.0));
+            high_prec_float hmu0 = pow(((3.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 3.0));
             
             stepsizes = {hmHu0, hmHd0, hm012, hm03, hmhf, hA0, hmu0};
         }
@@ -442,45 +472,45 @@ vector<high_prec_float> stepsize_generator(int& modselno, int& precselno, vector
         high_prec_float maxTrilin = abs(*maxA0It);
         high_prec_float Absmu0value = abs(inputGUT_BCs[6]);
         if (precselno == 1) {
-            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 9.0));
-            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 9.0));
+            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 9.0));
+            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 9.0));
 
-            high_prec_float hm01 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm01Val) - maxm01Val)), (1.0 / 9.0));
-            high_prec_float hm02 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm02Val) - maxm02Val)), (1.0 / 9.0));
-            high_prec_float hm03 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxm03Val) - maxm03Val)), (1.0 / 9.0));
+            high_prec_float hm01 = pow(((2625.0 / 16.0) * (dblNext(maxm01Val) - maxm01Val)), (1.0 / 9.0));
+            high_prec_float hm02 = pow(((2625.0 / 16.0) * (dblNext(maxm02Val) - maxm02Val)), (1.0 / 9.0));
+            high_prec_float hm03 = pow(((2625.0 / 16.0) * (dblNext(maxm03Val) - maxm03Val)), (1.0 / 9.0));
 
-            high_prec_float hmhf = pow(((2625.0 / 16.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
+            high_prec_float hmhf = pow(((2625.0 / 16.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 9.0));
 
-            high_prec_float hA0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 9.0));
-            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 9.0));
+            high_prec_float hA0 = pow(((2625.0 / 16.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 9.0));
+            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 9.0));
             
             stepsizes = {hmHu0, hmHd0, hm01, hm02, hm03, hmhf, hA0, hmu0};
         } else if (precselno == 2) {
-            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 5.0));
-            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 5.0));
+            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 5.0));
+            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 5.0));
 
-            high_prec_float hm01 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm01Val) - maxm01Val)), (1.0 / 5.0));
-            high_prec_float hm02 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm02Val) - maxm02Val)), (1.0 / 5.0));
-            high_prec_float hm03 = pow(((45.0 / 4.0) * (boost::math::float_next(maxm03Val) - maxm03Val)), (1.0 / 5.0));
+            high_prec_float hm01 = pow(((45.0 / 4.0) * (dblNext(maxm01Val) - maxm01Val)), (1.0 / 5.0));
+            high_prec_float hm02 = pow(((45.0 / 4.0) * (dblNext(maxm02Val) - maxm02Val)), (1.0 / 5.0));
+            high_prec_float hm03 = pow(((45.0 / 4.0) * (dblNext(maxm03Val) - maxm03Val)), (1.0 / 5.0));
 
-            high_prec_float hmhf = pow(((45.0 / 4.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
+            high_prec_float hmhf = pow(((45.0 / 4.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 5.0));
 
-            high_prec_float hA0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 5.0));
-            high_prec_float hmu0 = pow(((45.0 / 4.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 5.0));
+            high_prec_float hA0 = pow(((45.0 / 4.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 5.0));
+            high_prec_float hmu0 = pow(((45.0 / 4.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 5.0));
             
             stepsizes = {hmHu0, hmHd0, hm01, hm02, hm03, hmhf, hA0, hmu0};
         } else {
-            high_prec_float hmHu0 = pow(((3.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 3.0));
-            high_prec_float hmHd0 = pow(((3.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 3.0));
+            high_prec_float hmHu0 = pow(((3.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 3.0));
+            high_prec_float hmHd0 = pow(((3.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 3.0));
 
-            high_prec_float hm01 = pow(((3.0) * (boost::math::float_next(maxm01Val) - maxm01Val)), (1.0 / 3.0));
-            high_prec_float hm02 = pow(((3.0) * (boost::math::float_next(maxm02Val) - maxm02Val)), (1.0 / 3.0));
-            high_prec_float hm03 = pow(((3.0) * (boost::math::float_next(maxm03Val) - maxm03Val)), (1.0 / 3.0));
+            high_prec_float hm01 = pow(((3.0) * (dblNext(maxm01Val) - maxm01Val)), (1.0 / 3.0));
+            high_prec_float hm02 = pow(((3.0) * (dblNext(maxm02Val) - maxm02Val)), (1.0 / 3.0));
+            high_prec_float hm03 = pow(((3.0) * (dblNext(maxm03Val) - maxm03Val)), (1.0 / 3.0));
 
-            high_prec_float hmhf = pow(((3.0) * (boost::math::float_next(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
+            high_prec_float hmhf = pow(((3.0) * (dblNext(maxGauginoMass) - maxGauginoMass)), (1.0 / 3.0));
 
-            high_prec_float hA0 = pow(((3.0) * (boost::math::float_next(maxTrilin) - maxTrilin)), (1.0 / 3.0));
-            high_prec_float hmu0 = pow(((3.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 3.0));
+            high_prec_float hA0 = pow(((3.0) * (dblNext(maxTrilin) - maxTrilin)), (1.0 / 3.0));
+            high_prec_float hmu0 = pow(((3.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 3.0));
             
             stepsizes = {hmHu0, hmHd0, hm01, hm02, hm03, hmhf, hA0, hmu0};
         }
@@ -527,83 +557,83 @@ vector<high_prec_float> stepsize_generator(int& modselno, int& precselno, vector
         high_prec_float maxLeptTrilin = abs(*maxAe0It);
         high_prec_float Absmu0value = abs(inputGUT_BCs[6]);
         if (precselno == 1) {
-            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 9.0));
-            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 9.0));
+            high_prec_float hmHu0 = pow(((2625.0 / 16.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 9.0));
+            high_prec_float hmHd0 = pow(((2625.0 / 16.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 9.0));
 
-            high_prec_float hmqL12 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxmqL12Val) - maxmqL12Val)), (1.0 / 9.0));
-            high_prec_float hmqL3 = pow(((2625.0 / 16.0) * (boost::math::float_next(mqL3Val) - mqL3Val)), (1.0 / 9.0));
-            high_prec_float hmuR12 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxmuR12Val) - maxmuR12Val)), (1.0 / 9.0));
-            high_prec_float hmuR3 = pow(((2625.0 / 16.0) * (boost::math::float_next(muR3Val) - muR3Val)), (1.0 / 9.0));
-            high_prec_float hmdR12 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxmdR12Val) - maxmdR12Val)), (1.0 / 9.0));
-            high_prec_float hmdR3 = pow(((2625.0 / 16.0) * (boost::math::float_next(mdR3Val) - mdR3Val)), (1.0 / 9.0));
-            high_prec_float hmeL12 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxmeL12Val) - maxmeL12Val)), (1.0 / 9.0));
-            high_prec_float hmeL3 = pow(((2625.0 / 16.0) * (boost::math::float_next(meL3Val) - meL3Val)), (1.0 / 9.0));
-            high_prec_float hmeR12 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxmeR12Val) - maxmeR12Val)), (1.0 / 9.0));
-            high_prec_float hmeR3 = pow(((2625.0 / 16.0) * (boost::math::float_next(meR3Val) - meR3Val)), (1.0 / 9.0));
+            high_prec_float hmqL12 = pow(((2625.0 / 16.0) * (dblNext(maxmqL12Val) - maxmqL12Val)), (1.0 / 9.0));
+            high_prec_float hmqL3 = pow(((2625.0 / 16.0) * (dblNext(mqL3Val) - mqL3Val)), (1.0 / 9.0));
+            high_prec_float hmuR12 = pow(((2625.0 / 16.0) * (dblNext(maxmuR12Val) - maxmuR12Val)), (1.0 / 9.0));
+            high_prec_float hmuR3 = pow(((2625.0 / 16.0) * (dblNext(muR3Val) - muR3Val)), (1.0 / 9.0));
+            high_prec_float hmdR12 = pow(((2625.0 / 16.0) * (dblNext(maxmdR12Val) - maxmdR12Val)), (1.0 / 9.0));
+            high_prec_float hmdR3 = pow(((2625.0 / 16.0) * (dblNext(mdR3Val) - mdR3Val)), (1.0 / 9.0));
+            high_prec_float hmeL12 = pow(((2625.0 / 16.0) * (dblNext(maxmeL12Val) - maxmeL12Val)), (1.0 / 9.0));
+            high_prec_float hmeL3 = pow(((2625.0 / 16.0) * (dblNext(meL3Val) - meL3Val)), (1.0 / 9.0));
+            high_prec_float hmeR12 = pow(((2625.0 / 16.0) * (dblNext(maxmeR12Val) - maxmeR12Val)), (1.0 / 9.0));
+            high_prec_float hmeR3 = pow(((2625.0 / 16.0) * (dblNext(meR3Val) - meR3Val)), (1.0 / 9.0));
 
-            high_prec_float hM1 = pow(((2625.0 / 16.0) * (boost::math::float_next(M1GUTVal) - M1GUTVal)), (1.0 / 9.0));
-            high_prec_float hM2 = pow(((2625.0 / 16.0) * (boost::math::float_next(M2GUTVal) - M2GUTVal)), (1.0 / 9.0));
-            high_prec_float hM3 = pow(((2625.0 / 16.0) * (boost::math::float_next(M3GUTVal) - M3GUTVal)), (1.0 / 9.0));
+            high_prec_float hM1 = pow(((2625.0 / 16.0) * (dblNext(M1GUTVal) - M1GUTVal)), (1.0 / 9.0));
+            high_prec_float hM2 = pow(((2625.0 / 16.0) * (dblNext(M2GUTVal) - M2GUTVal)), (1.0 / 9.0));
+            high_prec_float hM3 = pow(((2625.0 / 16.0) * (dblNext(M3GUTVal) - M3GUTVal)), (1.0 / 9.0));
 
-            high_prec_float hAu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxUpTrilin) - maxUpTrilin)), (1.0 / 9.0));
-            high_prec_float hAd0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxDownTrilin) - maxDownTrilin)), (1.0 / 9.0));
-            high_prec_float hAe0 = pow(((2625.0 / 16.0) * (boost::math::float_next(maxLeptTrilin) - maxLeptTrilin)), (1.0 / 9.0));
+            high_prec_float hAu0 = pow(((2625.0 / 16.0) * (dblNext(maxUpTrilin) - maxUpTrilin)), (1.0 / 9.0));
+            high_prec_float hAd0 = pow(((2625.0 / 16.0) * (dblNext(maxDownTrilin) - maxDownTrilin)), (1.0 / 9.0));
+            high_prec_float hAe0 = pow(((2625.0 / 16.0) * (dblNext(maxLeptTrilin) - maxLeptTrilin)), (1.0 / 9.0));
             
-            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 9.0));
+            high_prec_float hmu0 = pow(((2625.0 / 16.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 9.0));
             
             stepsizes = {hmHu0, hmHd0, hmqL12, hmqL3, hmuR12, hmuR3, hmdR12, hmdR3, hmeL12, hmeL3, hmeR12, hmeR3,
                          hM1, hM2, hM3, hAu0, hAd0, hAe0, hmu0};
         } else if (precselno == 2) {
-            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 5.0));
-            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 5.0));
+            high_prec_float hmHu0 = pow(((45.0 / 4.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 5.0));
+            high_prec_float hmHd0 = pow(((45.0 / 4.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 5.0));
 
-            high_prec_float hmqL12 = pow(((45.0 / 4.0) * (boost::math::float_next(maxmqL12Val) - maxmqL12Val)), (1.0 / 5.0));
-            high_prec_float hmqL3 = pow(((45.0 / 4.0) * (boost::math::float_next(mqL3Val) - mqL3Val)), (1.0 / 5.0));
-            high_prec_float hmuR12 = pow(((45.0 / 4.0) * (boost::math::float_next(maxmuR12Val) - maxmuR12Val)), (1.0 / 5.0));
-            high_prec_float hmuR3 = pow(((45.0 / 4.0) * (boost::math::float_next(muR3Val) - muR3Val)), (1.0 / 5.0));
-            high_prec_float hmdR12 = pow(((45.0 / 4.0) * (boost::math::float_next(maxmdR12Val) - maxmdR12Val)), (1.0 / 5.0));
-            high_prec_float hmdR3 = pow(((45.0 / 4.0) * (boost::math::float_next(mdR3Val) - mdR3Val)), (1.0 / 5.0));
-            high_prec_float hmeL12 = pow(((45.0 / 4.0) * (boost::math::float_next(maxmeL12Val) - maxmeL12Val)), (1.0 / 5.0));
-            high_prec_float hmeL3 = pow(((45.0 / 4.0) * (boost::math::float_next(meL3Val) - meL3Val)), (1.0 / 5.0));
-            high_prec_float hmeR12 = pow(((45.0 / 4.0) * (boost::math::float_next(maxmeR12Val) - maxmeR12Val)), (1.0 / 5.0));
-            high_prec_float hmeR3 = pow(((45.0 / 4.0) * (boost::math::float_next(meR3Val) - meR3Val)), (1.0 / 5.0));
+            high_prec_float hmqL12 = pow(((45.0 / 4.0) * (dblNext(maxmqL12Val) - maxmqL12Val)), (1.0 / 5.0));
+            high_prec_float hmqL3 = pow(((45.0 / 4.0) * (dblNext(mqL3Val) - mqL3Val)), (1.0 / 5.0));
+            high_prec_float hmuR12 = pow(((45.0 / 4.0) * (dblNext(maxmuR12Val) - maxmuR12Val)), (1.0 / 5.0));
+            high_prec_float hmuR3 = pow(((45.0 / 4.0) * (dblNext(muR3Val) - muR3Val)), (1.0 / 5.0));
+            high_prec_float hmdR12 = pow(((45.0 / 4.0) * (dblNext(maxmdR12Val) - maxmdR12Val)), (1.0 / 5.0));
+            high_prec_float hmdR3 = pow(((45.0 / 4.0) * (dblNext(mdR3Val) - mdR3Val)), (1.0 / 5.0));
+            high_prec_float hmeL12 = pow(((45.0 / 4.0) * (dblNext(maxmeL12Val) - maxmeL12Val)), (1.0 / 5.0));
+            high_prec_float hmeL3 = pow(((45.0 / 4.0) * (dblNext(meL3Val) - meL3Val)), (1.0 / 5.0));
+            high_prec_float hmeR12 = pow(((45.0 / 4.0) * (dblNext(maxmeR12Val) - maxmeR12Val)), (1.0 / 5.0));
+            high_prec_float hmeR3 = pow(((45.0 / 4.0) * (dblNext(meR3Val) - meR3Val)), (1.0 / 5.0));
 
-            high_prec_float hM1 = pow(((45.0 / 4.0) * (boost::math::float_next(M1GUTVal) - M1GUTVal)), (1.0 / 5.0));
-            high_prec_float hM2 = pow(((45.0 / 4.0) * (boost::math::float_next(M2GUTVal) - M2GUTVal)), (1.0 / 5.0));
-            high_prec_float hM3 = pow(((45.0 / 4.0) * (boost::math::float_next(M3GUTVal) - M3GUTVal)), (1.0 / 5.0));
+            high_prec_float hM1 = pow(((45.0 / 4.0) * (dblNext(M1GUTVal) - M1GUTVal)), (1.0 / 5.0));
+            high_prec_float hM2 = pow(((45.0 / 4.0) * (dblNext(M2GUTVal) - M2GUTVal)), (1.0 / 5.0));
+            high_prec_float hM3 = pow(((45.0 / 4.0) * (dblNext(M3GUTVal) - M3GUTVal)), (1.0 / 5.0));
 
-            high_prec_float hAu0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxUpTrilin) - maxUpTrilin)), (1.0 / 5.0));
-            high_prec_float hAd0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxDownTrilin) - maxDownTrilin)), (1.0 / 5.0));
-            high_prec_float hAe0 = pow(((45.0 / 4.0) * (boost::math::float_next(maxLeptTrilin) - maxLeptTrilin)), (1.0 / 5.0));
+            high_prec_float hAu0 = pow(((45.0 / 4.0) * (dblNext(maxUpTrilin) - maxUpTrilin)), (1.0 / 5.0));
+            high_prec_float hAd0 = pow(((45.0 / 4.0) * (dblNext(maxDownTrilin) - maxDownTrilin)), (1.0 / 5.0));
+            high_prec_float hAe0 = pow(((45.0 / 4.0) * (dblNext(maxLeptTrilin) - maxLeptTrilin)), (1.0 / 5.0));
             
-            high_prec_float hmu0 = pow(((45.0 / 4.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 5.0));
+            high_prec_float hmu0 = pow(((45.0 / 4.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 5.0));
             
             stepsizes = {hmHu0, hmHd0, hmqL12, hmqL3, hmuR12, hmuR3, hmdR12, hmdR3, hmeL12, hmeL3, hmeR12, hmeR3,
                          hM1, hM2, hM3, hAu0, hAd0, hAe0, hmu0};
         } else {
-            high_prec_float hmHu0 = pow(((3.0) * (boost::math::float_next(mHu0Value) - mHu0Value)), (1.0 / 3.0));
-            high_prec_float hmHd0 = pow(((3.0) * (boost::math::float_next(mHd0Value) - mHd0Value)), (1.0 / 3.0));
+            high_prec_float hmHu0 = pow(((3.0) * (dblNext(mHu0Value) - mHu0Value)), (1.0 / 3.0));
+            high_prec_float hmHd0 = pow(((3.0) * (dblNext(mHd0Value) - mHd0Value)), (1.0 / 3.0));
 
-            high_prec_float hmqL12 = pow(((3.0) * (boost::math::float_next(maxmqL12Val) - maxmqL12Val)), (1.0 / 3.0));
-            high_prec_float hmqL3 = pow(((3.0) * (boost::math::float_next(mqL3Val) - mqL3Val)), (1.0 / 3.0));
-            high_prec_float hmuR12 = pow(((3.0) * (boost::math::float_next(maxmuR12Val) - maxmuR12Val)), (1.0 / 3.0));
-            high_prec_float hmuR3 = pow(((3.0) * (boost::math::float_next(muR3Val) - muR3Val)), (1.0 / 3.0));
-            high_prec_float hmdR12 = pow(((3.0) * (boost::math::float_next(maxmdR12Val) - maxmdR12Val)), (1.0 / 3.0));
-            high_prec_float hmdR3 = pow(((3.0) * (boost::math::float_next(mdR3Val) - mdR3Val)), (1.0 / 3.0));
-            high_prec_float hmeL12 = pow(((3.0) * (boost::math::float_next(maxmeL12Val) - maxmeL12Val)), (1.0 / 3.0));
-            high_prec_float hmeL3 = pow(((3.0) * (boost::math::float_next(meL3Val) - meL3Val)), (1.0 / 3.0));
-            high_prec_float hmeR12 = pow(((3.0) * (boost::math::float_next(maxmeR12Val) - maxmeR12Val)), (1.0 / 3.0));
-            high_prec_float hmeR3 = pow(((3.0) * (boost::math::float_next(meR3Val) - meR3Val)), (1.0 / 3.0));
+            high_prec_float hmqL12 = pow(((3.0) * (dblNext(maxmqL12Val) - maxmqL12Val)), (1.0 / 3.0));
+            high_prec_float hmqL3 = pow(((3.0) * (dblNext(mqL3Val) - mqL3Val)), (1.0 / 3.0));
+            high_prec_float hmuR12 = pow(((3.0) * (dblNext(maxmuR12Val) - maxmuR12Val)), (1.0 / 3.0));
+            high_prec_float hmuR3 = pow(((3.0) * (dblNext(muR3Val) - muR3Val)), (1.0 / 3.0));
+            high_prec_float hmdR12 = pow(((3.0) * (dblNext(maxmdR12Val) - maxmdR12Val)), (1.0 / 3.0));
+            high_prec_float hmdR3 = pow(((3.0) * (dblNext(mdR3Val) - mdR3Val)), (1.0 / 3.0));
+            high_prec_float hmeL12 = pow(((3.0) * (dblNext(maxmeL12Val) - maxmeL12Val)), (1.0 / 3.0));
+            high_prec_float hmeL3 = pow(((3.0) * (dblNext(meL3Val) - meL3Val)), (1.0 / 3.0));
+            high_prec_float hmeR12 = pow(((3.0) * (dblNext(maxmeR12Val) - maxmeR12Val)), (1.0 / 3.0));
+            high_prec_float hmeR3 = pow(((3.0) * (dblNext(meR3Val) - meR3Val)), (1.0 / 3.0));
 
-            high_prec_float hM1 = pow(((3.0) * (boost::math::float_next(M1GUTVal) - M1GUTVal)), (1.0 / 3.0));
-            high_prec_float hM2 = pow(((3.0) * (boost::math::float_next(M2GUTVal) - M2GUTVal)), (1.0 / 3.0));
-            high_prec_float hM3 = pow(((3.0) * (boost::math::float_next(M3GUTVal) - M3GUTVal)), (1.0 / 3.0));
+            high_prec_float hM1 = pow(((3.0) * (dblNext(M1GUTVal) - M1GUTVal)), (1.0 / 3.0));
+            high_prec_float hM2 = pow(((3.0) * (dblNext(M2GUTVal) - M2GUTVal)), (1.0 / 3.0));
+            high_prec_float hM3 = pow(((3.0) * (dblNext(M3GUTVal) - M3GUTVal)), (1.0 / 3.0));
 
-            high_prec_float hAu0 = pow(((3.0) * (boost::math::float_next(maxUpTrilin) - maxUpTrilin)), (1.0 / 3.0));
-            high_prec_float hAd0 = pow(((3.0) * (boost::math::float_next(maxDownTrilin) - maxDownTrilin)), (1.0 / 3.0));
-            high_prec_float hAe0 = pow(((3.0) * (boost::math::float_next(maxLeptTrilin) - maxLeptTrilin)), (1.0 / 3.0));
+            high_prec_float hAu0 = pow(((3.0) * (dblNext(maxUpTrilin) - maxUpTrilin)), (1.0 / 3.0));
+            high_prec_float hAd0 = pow(((3.0) * (dblNext(maxDownTrilin) - maxDownTrilin)), (1.0 / 3.0));
+            high_prec_float hAe0 = pow(((3.0) * (dblNext(maxLeptTrilin) - maxLeptTrilin)), (1.0 / 3.0));
             
-            high_prec_float hmu0 = pow(((3.0) * (boost::math::float_next(Absmu0value) - Absmu0value)), (1.0 / 3.0));
+            high_prec_float hmu0 = pow(((3.0) * (dblNext(Absmu0value) - Absmu0value)), (1.0 / 3.0));
             
             stepsizes = {hmHu0, hmHd0, hmqL12, hmqL3, hmuR12, hmuR3, hmdR12, hmdR3, hmeL12, hmeL3, hmeR12, hmeR3,
                          hM1, hM2, hM3, hAu0, hAd0, hAe0, hmu0};

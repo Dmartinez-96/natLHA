@@ -16,6 +16,7 @@
 #include <ctime>
 #include <boost/multiprecision/mpfr.hpp>
 #include "mZ_numsolver.hpp"
+#include "natlha_api.hpp"
 #include "terminal_UI.hpp"
 #include "MSSM_RGE_solver.hpp"
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
@@ -33,6 +34,65 @@ using namespace SLHAea;
 using namespace boost::multiprecision;
 typedef number<mpfr_float_backend<50>> high_prec_float;  // 50 decimal digits of precision
 namespace fs = std::filesystem;
+
+/// Read one line from stdin, treating end-of-input as fatal.
+///
+/// USE THIS INSTEAD OF getline(cin, ...) FOR EVERY PROMPT. Each prompt in this file sits in a
+/// loop that re-prompts on unrecognised input. At end of input, getline returns immediately
+/// without extracting anything and without modifying the target string, so the loop's
+/// condition is unchanged and it spins forever printing its own error message.
+///
+/// Measured on the file-path prompt by feeding it a short script and letting stdin run out:
+/// 158713 copies of the "cannot be found" message filled a 20 MB output cap in 1.606 s, a
+/// rate near 12.5 MB/s or 0.7 GB per minute. Unbounded, that fills a disk.
+///
+/// End of input is reached by ANY piped or redirected stdin, so for this program it is an
+/// ordinary occurrence rather than an exotic failure. There is no useful recovery, since no
+/// answer to the prompt can ever arrive, so this exits rather than returning a sentinel that
+/// every one of the callers would have to remember to check.
+static std::string promptLine() {
+    std::string line;
+    if (!std::getline(std::cin, line)) {
+        std::cerr << "\nnatLHA: reached end of input while waiting for a response.\n"
+                  << "Interactive prompts need one line of input each. For non-interactive\n"
+                  << "or batch use, run natlha-cli instead.\n";
+        std::exit(3);
+    }
+    return line;
+}
+
+/// Prompt until an integer in [lo, hi] is entered, treating end-of-input as fatal.
+///
+/// Reads a whole LINE via promptLine() and parses it, rather than using `cin >> n`. Two
+/// reasons. First, end of input: a failed `cin >> n` leaves the variable untouched, so the
+/// `while (true)` retry loops this replaces never terminate once input runs out -- the same
+/// defect promptLine() exists to stop, which it does by exiting on a failed getline.
+/// Second, `cin >> n` leaves the trailing newline in the buffer, so it cannot be freely mixed
+/// with line-based reads; going line-based everywhere removes that ordering hazard entirely.
+///
+/// Rejects trailing characters, so "2junk" is an error rather than silently parsing as 2.
+///
+/// NOT to be confused with the `std::cin.get()` calls further down: those sit under "Press
+/// Enter to continue" prompts and are deliberate pauses, not leftover-newline cleanup. They
+/// are outside any retry loop, so at end of input they return immediately and a scripted run
+/// simply does not pause -- no hang, and nothing for this helper to replace.
+static int promptInt(const std::string & prompt, int lo, int hi, const std::string & onError) {
+    while (true) {
+        std::cout << prompt;
+        const std::string raw = promptLine();
+        try {
+            std::size_t pos = 0;
+            const int value = std::stoi(raw, &pos);
+            if (pos == raw.size() && value >= lo && value <= hi) {
+                return value;
+            }
+        } catch (const std::exception &) {
+            // Fall through to the shared error message below.
+        }
+        std::cout << onError << "\n\n";
+        this_thread::sleep_for(chrono::seconds(1));
+    }
+}
 
 std::string getCurrentTimeFormatted() {
     auto now = std::chrono::system_clock::now();
@@ -219,7 +279,7 @@ void terminalUI() {
          << "and pMSSM-19 for Delta_BG.\n\n"
          << "Press Enter to begin." << endl;
     string input;
-    getline(cin, input); // User reads intro and presses enter
+    input = promptLine(); // User reads intro and presses enter
 
     while (userContinue) {
         clearScreen();
@@ -240,7 +300,7 @@ void terminalUI() {
             std::cout << "Would you like to also calculate the high-scale naturalness measure Delta_HS?\n";
             std::cout << "Enter Y for yes or N for no: ";
             string dhsCheckInp;
-            getline(cin, dhsCheckInp);
+            dhsCheckInp = promptLine();
 
             // Convert to lowercase to normalize
             transform(dhsCheckInp.begin(), dhsCheckInp.end(), dhsCheckInp.begin(),
@@ -267,7 +327,7 @@ void terminalUI() {
             std::cout << "Would you like to also calculate the Barbieri-Giudice naturalness measure Delta_BG?\n";
             std::cout << "Enter Y for yes or N for no: ";
             string dbgCheckInp;
-            getline(cin, dbgCheckInp);
+            dbgCheckInp = promptLine();
 
             // Convert to lowercase to normalize
             transform(dbgCheckInp.begin(), dbgCheckInp.end(), dbgCheckInp.begin(),
@@ -294,7 +354,7 @@ void terminalUI() {
             std::cout << "Would you like to also calculate the stringy naturalness measure Delta_SN?\n";
             std::cout << "Enter Y for yes or N for no: ";
             string dsnCheckInp;
-            getline(cin, dsnCheckInp);
+            dsnCheckInp = promptLine();
 
             // Convert to lowercase to normalize
             transform(dsnCheckInp.begin(), dsnCheckInp.end(), dsnCheckInp.begin(),
@@ -324,7 +384,7 @@ void terminalUI() {
             std::cout << "Valid values for n are integers between 1 and 12, though higher precision (e.g., n=12) may lose accuracy due to double floating-point precision." << endl;
             std::cout << "Input the number of decimals, n, to which you want the results printed: ";
             string precCheckInp;
-            getline(cin, precCheckInp);
+            precCheckInp = promptLine();
             stringstream ss(precCheckInp);
             int n;
 
@@ -361,15 +421,8 @@ void terminalUI() {
                 << "4: NUHM3\n"
                 << "5: NUHM4\n"
                 << "6: pMSSM-19\n\n";
-            while (true) {
-                std::cout << "From the list above, input the number of the model your SLHA file corresponds to: "; 
-                if ((!(cin >> modinp)) || (modinp < 1 || modinp > 6)) {
-                    std::cout << "Invalid model number selected, please try again.\n\n";
-                    this_thread::sleep_for(chrono::seconds(1));
-                } else {
-                    break;
-                }
-            }
+            modinp = promptInt("From the list above, input the number of the model your SLHA file corresponds to: ",
+                               1, 6, "Invalid model number selected, please try again.");
             std::cout << "\n####################################################\n"
                     << "Please select the level of precision you want for the Delta_BG calculation.\n"
                     << "Below are the options: \n"
@@ -377,16 +430,8 @@ void terminalUI() {
                     << "2: Medium precision, twice as fast as high precision mode.\n"
                     << "3: Lowest precision, four times as fast as high precision mode.\n\n";
 
-            while (true) {
-                std::cout << "From the list above, input the number corresponding to the precision you want: ";
-                if (!(cin >> precinp) || (precinp < 1 || precinp > 3)) {
-                    std::cout << "Invalid Delta_BG precision setting selected, please try again.\n\n";
-                    
-                    this_thread::sleep_for(chrono::seconds(1));
-                } else {
-                    break; 
-                }
-            }
+            precinp = promptInt("From the list above, input the number corresponding to the precision you want: ",
+                                1, 3, "Invalid Delta_BG precision setting selected, please try again.");
         }
         
         /******************************************************************
@@ -403,51 +448,44 @@ void terminalUI() {
                     << "1: Full DSN P_mu + soft terms integrated density measure\n"
                     << "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
                     << "3: Differential ABDS density at current BM point.\n\n";
-            while (true) {
-                std::cout << "From the list above, input the number corresponding to the precision you want: ";
-                if (!(cin >> DSNcalcSelect) || (DSNcalcSelect < 1 || DSNcalcSelect > 4)) {
-                    std::cout << "Invalid Delta_SN precision setting selected, please try again.\n\n";
-                    
-                    this_thread::sleep_for(chrono::seconds(1));
-                    std::cout << "1: Full DSN P_mu + soft terms integrated density measure\n"
-                        << "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
-                        << "3: Differential ABDS density at current BM point.\n\n";
-                    
-                } else {
-                    break; 
-                }
-            }            
+            // Accepts 1-4 although the menu above offers only 1-3. A 4 is passed to DSN_calc
+            // as its mode and computes a result, but the reporting branches below cover only
+            // (1 || 2) and (3), so nothing about that result is ever printed.
+            DSNcalcSelect = promptInt("From the list above, input the number corresponding to the precision you want: ",
+                                      1, 4,
+                                      "Invalid Delta_SN precision setting selected, please try again.\n\n"
+                                      "1: Full DSN P_mu + soft terms integrated density measure\n"
+                                      "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
+                                      "3: Differential ABDS density at current BM point.");
             std::cout << "\n####################################################\n";
             if ((DSNcalcSelect == 1) || (DSNcalcSelect == 3)) {
-                while (true) {
-                    std::cout << "Please input the number of F-type SUSY breaking fields as an integer: ";
-                    if (!(cin >> nF_input) || (nF_input < 0) || (isnan(nF_input))) {
-                        std::cout << "Invalid number of F-type fields input, please try again.\n\n";
-                        
-                        this_thread::sleep_for(chrono::seconds(1));
-                    } else {
-                        break; 
-                    }
-                }                
+                // The isnan() guard the previous loop carried could never fire: nF_input is an
+                // int, and isnan of an integral value is always false. promptInt covers the
+                // case it was reaching for -- std::stoi throws on a non-numeric entry and the
+                // catch re-prompts -- and its lo bound enforces non-negativity.
+                nF_input = promptInt("Please input the number of F-type SUSY breaking fields as an integer: ",
+                                     0, std::numeric_limits<int>::max(),
+                                     "Invalid number of F-type fields input, please try again.");
                 std::cout << "\n####################################################\n";
-                while (true) {
-                    std::cout << "Please input the number of D-type SUSY breaking fields as an integer: ";
-                    if (!(cin >> nD_input) || (nD_input < 0) || (isnan(nD_input))) {
-                        std::cout << "Invalid number of D-type fields input, please try again.\n\n";
-                        
-                        this_thread::sleep_for(chrono::seconds(1));
-                    } else {
-                        break; 
-                    }
-                }       
+                nD_input = promptInt("Please input the number of D-type SUSY breaking fields as an integer: ",
+                                     0, std::numeric_limits<int>::max(),
+                                     "Invalid number of D-type fields input, please try again.");
             }       
         }
 
         std::cout << "\n########## Configuration Complete ##########\n";
         this_thread::sleep_for(chrono::milliseconds(1500));
         clearScreen();
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        // No stdin flush here. This used to be cin.clear() plus
+        // cin.ignore(max, '\n'), which discarded the newline that `cin >> n` leaves behind.
+        // Every prompt above now reads whole lines, so nothing partial is ever pending and
+        // that ignore() consumed the NEXT REAL LINE instead.
+        //
+        // Isolated rather than assumed: with the flush still in place, a scripted run whose
+        // SLHA path came directly after the precision answer reported "The input file cannot
+        // be found", while the same script with ONE extra blank line inserted ahead of the
+        // path -- giving the ignore() something harmless to eat -- accepted the file and
+        // completed normally. That is the flush consuming exactly one line.
             
         /******************************************************************
          ************************ SLHA READ-IN ****************************
@@ -457,7 +495,7 @@ void terminalUI() {
         string direc;
         while (fileCheck) {
             std::cout << "Enter the full directory for your SLHA file: ";
-            getline(cin, direc);
+            direc = promptLine();
 
             fs::path filePath(direc);
 
@@ -481,272 +519,57 @@ void terminalUI() {
         }
         this_thread::sleep_for(chrono::milliseconds(500));
         clearScreen();
-        ifstream ifs(direc);
-        Coll input(ifs);
+        // THE PIPELINE LIVES IN natlha::evaluate() NOW, not here.
+        //
+        // What used to be inlined at this point -- parse the SLHA, run to
+        // Q_SUSY = sqrt(mst1 * mst2), re-solve EWSB for mu, fill b = B*mu, and iterate to
+        // the g1 = g2 scale -- is one function, and src/main_cli.cpp calls that same function
+        // for its non-interactive modes. One implementation, so a fix to the pipeline reaches
+        // both front ends instead of only the one it was made in.
+        //
+        // What remains here is what is genuinely interactive: collecting the choices above,
+        // and reporting and saving the results below.
+        natlha::Config apiCfg;
+        apiCfg.slhaPath = direc;
+        apiCfg.verbose = true;
+        // The measures are left OFF here on purpose, so this call performs the shared setup
+        // only. The reporting code below invokes DEW_calc, DHS_calc, DBG_calc and DSN_calc
+        // itself, because it interleaves each result with its own prompts and save handling.
+        // Asking evaluate() for them as well would run every calculator twice per point --
+        // which for DBG_calc means paying its finite-difference stencil twice over, the most
+        // expensive thing natLHA does.
+        apiCfg.computeDEW = false;
+        apiCfg.computeDHS = false;
+        apiCfg.computeDBG = false;
+        apiCfg.computeDSN = false;
+        apiCfg.bgModelIndex = modinp;
+        apiCfg.bgPrecision = precinp;
+        apiCfg.snMode = DSNcalcSelect;
+        apiCfg.snNF = nF_input;
+        apiCfg.snND = nD_input;
+
         std::cout << "Analyzing submitted SLHA.\n";
-        high_prec_float mZ = 91.1876;
-
-        auto getDoubleVecValue = [&](const string& block, int i, double defaultValue = 0.0) -> double {
-            try {
-                return to<double>(input.at(block).at(to_string(i)).at(1));
-            } catch (const exception& e) {
-                return defaultValue;
-            }
-        };
-
-        auto getDoubleMatValue = [&](const string& block, int i, int j, double defaultValue = 0.0) -> double {
-            try {
-                return to<double>(input.at(block).at(i, j).at(2));
-            } catch (const exception& e) {
-                return defaultValue;
-            }
-        };
-        // Higgs sector variables
-        high_prec_float vHiggs = high_prec_float(getDoubleVecValue("HMIX", 3));
-        high_prec_float tanb = high_prec_float(getDoubleVecValue("HMIX", 2));
-        high_prec_float beta = atan(tanb);
-        high_prec_float muQ = high_prec_float(getDoubleVecValue("HMIX", 1));
-        // Yukawas (2nd and 1st gens approximated if not present)
-        high_prec_float y_t = high_prec_float(getDoubleMatValue("YU",3,3));
-        high_prec_float y_c = high_prec_float(getDoubleMatValue("YU",2,2));
-        if (y_c == 0.0) {
-            y_c = high_prec_float(0.003882759826930082) * y_t;
+        const natlha::Result apiResult = natlha::evaluate(apiCfg);
+        if (!apiResult.ok) {
+            std::cout << "This SLHA file could not be evaluated: " << apiResult.error << "\n"
+                      << "Returning to the configuration screen.\n";
+            this_thread::sleep_for(chrono::seconds(2));
+            continue;
         }
-        high_prec_float y_u = high_prec_float(getDoubleMatValue("YU",1,1));
-        if (y_u == 0.0) {
-            y_u = high_prec_float(7.779613278615955e-6) * y_t;
-        }
-        high_prec_float y_b = high_prec_float(getDoubleMatValue("YD",3,3));
-        high_prec_float y_s = high_prec_float(getDoubleMatValue("YD",2,2));
-        if (y_s == 0.0) {
-            y_s = high_prec_float(0.0206648802754076) * y_b;
-        }
-        high_prec_float y_d = high_prec_float(getDoubleMatValue("YD",1,1));
-        if (y_d == 0.0) {
-            y_d = high_prec_float(0.0010117174290779725) * y_b;
-        }
-        high_prec_float y_tau = high_prec_float(getDoubleMatValue("YE",3,3));
-        high_prec_float y_mu = high_prec_float(getDoubleMatValue("YE",2,2));
-        if (y_mu == 0.0) {
-            y_mu = high_prec_float(0.05792142442492775) * y_tau;
-        }
-        high_prec_float y_e = high_prec_float(getDoubleMatValue("YE",1,1));
-        if (y_e == 0.0) {
-            y_e = high_prec_float(0.0002801267571260388) * y_tau;
-        }
-        // Gauge couplings
-        high_prec_float g_pr = high_prec_float(getDoubleVecValue("GAUGE", 1));
-        high_prec_float g_2 = high_prec_float(getDoubleVecValue("GAUGE", 2));
-        high_prec_float g_s = high_prec_float(getDoubleVecValue("GAUGE", 3));
-        // Soft trilinear couplings
-        // Check for which soft trilinear block is present
-        // softTrilinIdentif: 0 = "TU,TD,TE", 1 = "AU, AD, AE"
-        int softTrilinIdentif = 0;
-        string softTrilinUBlock, softTrilinDBlock, softTrilinEBlock;
-        high_prec_float test_at = high_prec_float(getDoubleMatValue("TU", 3, 3));
-        high_prec_float test_ab = high_prec_float(getDoubleMatValue("TD", 3, 3));
-        high_prec_float test_atau = high_prec_float(getDoubleMatValue("TE", 3, 3));
-        high_prec_float a_t, a_c, a_u, a_b, a_s, a_d, a_tau, a_mu, a_e;
-        if ((test_at == 0.0) && (test_ab == 0.0) && (test_atau == 0.0)) {
-            softTrilinIdentif = 1;
-        }
-        if (softTrilinIdentif == 0) {
-            softTrilinUBlock = "TU";
-            softTrilinDBlock = "TD";
-            softTrilinEBlock = "TE";
-            a_t = high_prec_float(1.0);
-            a_c = high_prec_float(1.0);
-            a_u = high_prec_float(1.0);
-            a_b = high_prec_float(1.0);
-            a_s = high_prec_float(1.0);
-            a_d = high_prec_float(1.0);
-            a_tau = high_prec_float(1.0);
-            a_mu = high_prec_float(1.0);
-            a_e = high_prec_float(1.0);
-        } else {
-            softTrilinUBlock = "AU";
-            softTrilinDBlock = "AD";
-            softTrilinEBlock = "AE";
-            a_t = y_t;
-            a_c = y_c;
-            a_u = y_u;
-            a_b = y_b;
-            a_s = y_s;
-            a_d = y_d;
-            a_tau = y_tau;
-            a_mu = y_mu;
-            a_e = y_e;
-        }
-        a_t *= high_prec_float(getDoubleMatValue(softTrilinUBlock, 3, 3));
-        a_c *= high_prec_float(getDoubleMatValue(softTrilinUBlock, 2, 2));
-        a_u *= high_prec_float(getDoubleMatValue(softTrilinUBlock, 1, 1));
-        a_b *= high_prec_float(getDoubleMatValue(softTrilinDBlock, 3, 3));
-        a_s *= high_prec_float(getDoubleMatValue(softTrilinDBlock, 2, 2));
-        a_d *= high_prec_float(getDoubleMatValue(softTrilinDBlock, 1, 1));
-        a_tau *= high_prec_float(getDoubleMatValue(softTrilinEBlock, 3, 3));
-        a_mu *= high_prec_float(getDoubleMatValue(softTrilinEBlock, 2, 2));
-        a_e *= high_prec_float(getDoubleMatValue(softTrilinEBlock, 1, 1));
-        // Gaugino masses
-        high_prec_float my_M1, my_M2, my_M3;
-        my_M1 = high_prec_float(getDoubleVecValue("MSOFT", 1));
-        my_M2 = high_prec_float(getDoubleVecValue("MSOFT", 2));
-        my_M3 = high_prec_float(getDoubleVecValue("MSOFT", 3));
-        // Soft Higgs masses
-        high_prec_float mHusq, mHdsq;
-        mHusq = high_prec_float(getDoubleVecValue("MSOFT", 22));
-        mHdsq = high_prec_float(getDoubleVecValue("MSOFT", 21));
-        // Soft scalar masses
-        // Check for which soft mass block(s) is (are) present
-        // softMassIdentif: 0 = "MSQ2,MSU2,MSD2,MSL2,MSE2", 1 = "MSOFT"x5
-        high_prec_float test_mQ3sq = high_prec_float(getDoubleMatValue("MSQ2", 3, 3));
-        high_prec_float test_mU3sq = high_prec_float(getDoubleMatValue("MSU2", 3, 3));
-        high_prec_float test_mE3sq = high_prec_float(getDoubleMatValue("MSE2", 3, 3));
-        high_prec_float mQ3sq, mQ2sq, mQ1sq;
-        high_prec_float mL3sq, mL2sq, mL1sq;
-        high_prec_float mU3sq, mU2sq, mU1sq;
-        high_prec_float mD3sq, mD2sq, mD1sq;
-        high_prec_float mE3sq, mE2sq, mE1sq;
-        if ((test_mQ3sq == 0.0) && (test_mU3sq == 0.0) && (test_mE3sq == 0.0)) {
-            mQ3sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 43)), 2.0);
-            mQ2sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 42)), 2.0);
-            mQ1sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 41)), 2.0);
-            mL3sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 33)), 2.0);
-            mL2sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 32)), 2.0);
-            mL1sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 31)), 2.0);
-            mU3sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 46)), 2.0);
-            mU2sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 45)), 2.0);
-            mU1sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 44)), 2.0);
-            mD3sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 49)), 2.0);
-            mD2sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 48)), 2.0);
-            mD1sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 47)), 2.0);
-            mE3sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 36)), 2.0);
-            mE2sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 35)), 2.0);
-            mE1sq = pow(high_prec_float(getDoubleVecValue("MSOFT", 34)), 2.0);
-        } else {
-            mQ3sq = high_prec_float(getDoubleMatValue("MSQ2", 3, 3));
-            mQ2sq = high_prec_float(getDoubleMatValue("MSQ2", 2, 2));
-            mQ1sq = high_prec_float(getDoubleMatValue("MSQ2", 1, 1));
-            mL3sq = high_prec_float(getDoubleMatValue("MSL2", 3, 3));
-            mL2sq = high_prec_float(getDoubleMatValue("MSL2", 2, 2));
-            mL1sq = high_prec_float(getDoubleMatValue("MSL2", 1, 1));
-            mU3sq = high_prec_float(getDoubleMatValue("MSU2", 3, 3));
-            mU2sq = high_prec_float(getDoubleMatValue("MSU2", 2, 2));
-            mU1sq = high_prec_float(getDoubleMatValue("MSU2", 1, 1));
-            mD3sq = high_prec_float(getDoubleMatValue("MSD2", 3, 3));
-            mD2sq = high_prec_float(getDoubleMatValue("MSD2", 2, 2));
-            mD1sq = high_prec_float(getDoubleMatValue("MSD2", 1, 1));
-            mE3sq = high_prec_float(getDoubleMatValue("MSE2", 3, 3));
-            mE2sq = high_prec_float(getDoubleMatValue("MSE2", 2, 2));
-            mE1sq = high_prec_float(getDoubleMatValue("MSE2", 1, 1));
-        }
-        double SLHA_scale_dbl = getRenormalizationScale(input, "GAUGE");
-        high_prec_float SLHA_scale = high_prec_float(SLHA_scale_dbl);
-        // std::cout << "Q(SLHA) = " << SLHA_scale << endl;
         std::cout << "SLHA parameters read in." << endl;
-        /* Use 2-loop MSSM RGEs to evolve results to a renormalization scale of 
-           Q = sqrt(mst1 * mst2) if the submitted SLHA file is not currently at that scale.
-           This is so evaluations of the naturalness measures are always performed
-           at a scale that somewhat minimizes logs and to avoid badly organized SLHA files.
-           ///////////////////////////////////////////////////////////////////////
-           The result is then run to a high scale of 3*10^16 GeV, and an approximate GUT
-           scale is chosen at the value where g1(Q) is closest to g2(Q) over the scanned
-           renormalization scales. This is done by iterating and adjusting GUT thresholds to 
-           account for log corrections at that scale. 
-           ///////////////////////////////////////////////////////////////////////
-           This running to the GUT scale is used in the evaluations of Delta_HS and Delta_BG.
-           Compute loop-level soft Higgs bilinear parameter b=B*mu at SUSY scale for RGE BC
-           after. 
-        */        
-
-        /******************************************************************
-         ***************** ESTABLISH WEAK-SCALE VALUES ********************
-         ******************************************************************/
-
-        std::vector<high_prec_float> mySLHABCs;
-        mySLHABCs = {sqrt(5.0 / 3.0) * g_pr, g_2, g_s, my_M1, my_M2, my_M3,
-                     muQ, y_t, y_c, y_u, y_b, y_s, y_d, y_tau, y_mu, y_e,
-                     a_t, a_c, a_u, a_b, a_s, a_d, a_tau, a_mu, a_e,
-                     mHusq, mHdsq, mQ1sq, mQ2sq, mQ3sq, mL1sq, mL2sq,
-                     mL3sq, mU1sq, mU2sq, mU3sq, mD1sq, mD2sq, mD3sq,
-                     mE1sq, mE2sq, mE3sq, 0.0, tanb};
-        std::vector<double> mySLHABCs_dbl;
-        for (const auto& value : mySLHABCs) {
-            mySLHABCs_dbl.push_back(double(value));
-        }
-        std::vector<double> dummyrun = solveODEs(mySLHABCs_dbl, log(SLHA_scale_dbl), log(1.0e12), std::copysign(1.0e-6, (log(1.0e12 / SLHA_scale_dbl))));
-        // SUSY scale equal to Q = sqrt(mt1(Q) * mt2(Q))
-        double tempT_target = log(250.0); 
-        std::vector<RGEStruct> SUSYscale_struct = solveODEstoMSUSY(dummyrun, log(1.0e12), -1.0e-6, tempT_target, 91.1876 * 91.1876);
-
-        high_prec_float SLHAQSUSY = exp(high_prec_float(SUSYscale_struct[0].SUSYscale_eval));
-        double SLHAQSUSY_dbl = double(SLHAQSUSY);
-        std::vector<double> first_SUSY_BCs_dbl = solveODEs(mySLHABCs_dbl, log(SLHA_scale_dbl), log(SLHAQSUSY_dbl), copysign(1.0e-6, (SLHAQSUSY_dbl - SLHA_scale_dbl)));
-        std::vector<high_prec_float> first_SUSY_BCs;
-        for (const auto& value : first_SUSY_BCs_dbl) {
-            first_SUSY_BCs.push_back(high_prec_float(value));
-        }
-        for (const auto& value : first_SUSY_BCs) {
-            std::cout << value << endl;
-        }
-        std::vector<high_prec_float> first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, high_prec_float(91.1876 * 91.1876));
-        // std::cout << "Sigma_u = " << first_radcorrs[0] << std::endl << "Sigma_d = " << first_radcorrs[1] << std::endl;
-        tanb = first_SUSY_BCs[43];
-        mHdsq = first_SUSY_BCs[26];
-        mHusq = first_SUSY_BCs[25];
-        muQ = first_SUSY_BCs[6];
-        // Converge a value of mu that gives mZ=91.1876 GeV
-        high_prec_float lsqtol = high_prec_float(1.0) / high_prec_float(1000000000000.0);
-        high_prec_float curr_iter_lsq = high_prec_float(100.0);
-        high_prec_float muQsq = muQ * muQ;
-        high_prec_float newmuQsq = muQsq;
-        while (curr_iter_lsq > lsqtol) {
-            newmuQsq = ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)) - (91.1876 * 91.1876 / 2.0);
-            first_SUSY_BCs[6] = copysign(sqrt(abs(newmuQsq)), muQ);
-            first_radcorrs = radcorr_calc(first_SUSY_BCs, SLHAQSUSY, high_prec_float(91.1876 * 91.1876));
-            curr_iter_lsq = pow((muQsq) - (newmuQsq), 2.0);
-            muQsq = newmuQsq;
-        }
-        high_prec_float currentmZ2 = ((2.0 * ((mHdsq + first_radcorrs[1] - ((mHusq + first_radcorrs[0]) * pow(tanb, 2.0))) / (pow(tanb, 2.0) - 1.0)))
-                             - (2.0 * muQsq));
-        // std::cout << "Sigma_u(tuned) = " << first_radcorrs[0] << std::endl << "Sigma_d(tuned) = " << first_radcorrs[1] << std::endl;
-        // std::cout << "mZ(tuned) = " << copysign(sqrt(abs(currentmZ2)), currentmZ2) << std::endl;
-        
-        high_prec_float getmZ2_value = getmZ2(first_SUSY_BCs, SLHAQSUSY, 91.1876 * 91.1876);
-        // std::cout << "getmZ(tuned) = " << copysign(sqrt(abs(getmZ2_value)), getmZ2_value) << std::endl;
-        // Now we calculate the value of b=B*mu coming from this SLHA point. 
-        high_prec_float BmuSLHA = sin(2.0 * beta) * (mHusq + first_radcorrs[0] + mHdsq + first_radcorrs[1] + (2.0 * muQsq)) / 2.0;
-        first_SUSY_BCs[42] = BmuSLHA;
-        // std::cout << "Bmu = " << BmuSLHA << std::endl;
         std::cout << "Weak scale parameters established." << endl;
         this_thread::sleep_for(chrono::seconds(1));
 
-        /******************************************************************
-         ******************** ESTABLISH GUT VALUES ************************
-         ******************************************************************/
-        
-        // Get GUT scale now
-        curr_iter_lsq = high_prec_float(100.0);
-        std::vector<double> first_GUT_BCs_dbl = solveODEs(first_SUSY_BCs_dbl, log(SLHAQSUSY_dbl), log(3.0e16), 1.0e-6);
-        std::vector<high_prec_float> first_GUT_BCs;
-        for (const auto& value : first_GUT_BCs_dbl) {
-            first_GUT_BCs.push_back(high_prec_float(value));
-        }
-        std::vector<high_prec_float> currbetag1g2GUT = beta_g1g2(first_GUT_BCs[0], first_GUT_BCs[1], first_GUT_BCs[2], first_GUT_BCs[7], first_GUT_BCs[8], first_GUT_BCs[9],
-                                                   first_GUT_BCs[10], first_GUT_BCs[11], first_GUT_BCs[12], first_GUT_BCs[13], first_GUT_BCs[14], first_GUT_BCs[15]);
-        high_prec_float curr_iter_QGUT = log(high_prec_float(3.0e16) * exp((first_GUT_BCs[1] - first_GUT_BCs[0]) / (currbetag1g2GUT[0] - currbetag1g2GUT[1])));
-        high_prec_float new_QGUT = curr_iter_QGUT;
-        double curr_iter_QGUT_dbl = double(curr_iter_QGUT);
-        double new_QGUT_dbl = double(new_QGUT_dbl);
-        while (curr_iter_lsq > lsqtol) {
-            first_GUT_BCs_dbl = solveODEs(first_SUSY_BCs_dbl, log(SLHAQSUSY_dbl), curr_iter_QGUT_dbl, 1.0e-6);
-            for (int GUTidx = 0; GUTidx < 44; ++GUTidx) {
-                first_GUT_BCs[GUTidx] = high_prec_float(first_GUT_BCs_dbl[GUTidx]);
-            }
-            new_QGUT = log(exp(curr_iter_QGUT) * exp((first_GUT_BCs[1] - first_GUT_BCs[0]) / (currbetag1g2GUT[0] - currbetag1g2GUT[1])));
-            curr_iter_lsq = pow((high_prec_float(1.0) - (new_QGUT / curr_iter_QGUT)), high_prec_float(2.0));
-            curr_iter_QGUT = new_QGUT;
-            curr_iter_QGUT_dbl = double(curr_iter_QGUT);
-        }
+        // Names kept exactly as they were, so the reporting and saving code below reads the
+        // same quantities it always did and needed no changes.
+        std::vector<high_prec_float> first_SUSY_BCs = apiResult.weakBCs;
+        std::vector<high_prec_float> first_GUT_BCs = apiResult.gutBCs;
+        std::vector<high_prec_float> first_radcorrs = apiResult.radCorrs;
+        high_prec_float SLHAQSUSY = apiResult.qSusy;
+        high_prec_float curr_iter_QGUT = apiResult.logQGut;
+        high_prec_float currentmZ2 = apiResult.mZ2;
+        high_prec_float getmZ2_value = apiResult.mZ2FromSolver;
+        high_prec_float tanb = first_SUSY_BCs[43];
 
         /******************************************************************
          ********************* COMPUTE DEW VALUES *************************
@@ -770,7 +593,7 @@ void terminalUI() {
         string saveinput;
         while (checkSaveBool) {
             std::cout << "\nWould you like to save these DEW results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DEW)?\nEnter Y to save the result or N to continue: ";
-            std::getline(std::cin, saveinput);
+            saveinput = promptLine();
 
             std::string timeStr = getCurrentTimeFormatted();
 
@@ -780,7 +603,7 @@ void terminalUI() {
                 if (!fs::exists(path)) fs::create_directory(path);
 
                 std::cout << "\nThe default file name is 'current_system_time_DEW_contrib_list.txt', e.g., " << timeStr << "_DEW_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
-                std::getline(std::cin, saveinput);
+                saveinput = promptLine();
 
                 if (saveinput == "Y" || saveinput == "y" || saveinput == "Yes" || saveinput == "yes") {
                     saveDEWResults(dewlist, path, timeStr + "_DEW_contrib_list.txt", printPrec);
@@ -790,7 +613,7 @@ void terminalUI() {
                 } else if (saveinput == "N" || saveinput == "n" || saveinput == "No" || saveinput == "no") {
                     std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DEW_list' without the quotes): ";
                     std::string newFileName;
-                    std::getline(std::cin, newFileName);
+                    newFileName = promptLine();
                     saveDEWResults(dewlist, path, newFileName + ".txt", printPrec);
                     checkSaveBool = false;
                     std::cout << "##### Press Enter to continue... #####\n";
@@ -818,7 +641,7 @@ void terminalUI() {
                                                       first_GUT_BCs[25], first_SUSY_BCs[25] - first_GUT_BCs[25],
                                                       pow(first_GUT_BCs[6], 2.0),
                                                       pow(first_SUSY_BCs[6], 2.0) - pow(first_GUT_BCs[6], 2.0),
-                                                      91.1876 * 91.1876, first_SUSY_BCs[43] * first_SUSY_BCs[43], first_radcorrs[0], first_radcorrs[1]);
+                                                      91.1876 * 91.1876, first_SUSY_BCs[43] * first_SUSY_BCs[43], first_radcorrs[0], first_radcorrs[1]);  // stale-ok: this literal is DHS_calc's running_mZ_sq parameter (DHS_calc.hpp:18), an argument to the call
 
             this_thread::sleep_for(chrono::seconds(1));
             std::cout << "\n########## Delta_HS Results ##########\n";
@@ -836,7 +659,7 @@ void terminalUI() {
             string saveDHSinput;
             while (checkDHSSaveBool) {
                 std::cout << "\nWould you like to save these DHS results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DHS)?\nEnter Y to save the result or N to continue: ";
-                std::getline(std::cin, saveDHSinput);
+                saveDHSinput = promptLine();
 
                 std::string DHStimeStr = getCurrentTimeFormatted();
 
@@ -846,7 +669,7 @@ void terminalUI() {
                     if (!fs::exists(DHSpath)) fs::create_directory(DHSpath);
 
                     std::cout << "\nThe default file name is 'current_system_time_DHS_contrib_list.txt', e.g., " << DHStimeStr << "_DHS_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
-                    std::getline(std::cin, saveDHSinput);
+                    saveDHSinput = promptLine();
 
                     if (saveDHSinput == "Y" || saveDHSinput == "y" || saveDHSinput == "Yes" || saveDHSinput == "yes") {
                         saveDHSResults(dhslist, DHSpath, DHStimeStr + "_DHS_contrib_list.txt", printPrec);
@@ -856,7 +679,7 @@ void terminalUI() {
                     } else if (saveDHSinput == "N" || saveDHSinput == "n" || saveDHSinput == "No" || saveDHSinput == "no") {
                         std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DHS_list' without the quotes): ";
                         std::string newDHSFileName;
-                        std::getline(std::cin, newDHSFileName);
+                        newDHSFileName = promptLine();
                         saveDHSResults(dhslist, DHSpath, newDHSFileName + ".txt", printPrec);
                         checkDHSSaveBool = false;
                         std::cout << "##### Press Enter to continue... #####\n";
@@ -900,7 +723,7 @@ void terminalUI() {
             string saveDBGinput;
             while (checkDBGSaveBool) {
                 std::cout << "\nWould you like to save these DBG results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/natLHA_results/DBG)?\nEnter Y to save the result or N to continue: ";
-                std::getline(std::cin, saveDBGinput);
+                saveDBGinput = promptLine();
 
                 std::string DBGtimeStr = getCurrentTimeFormatted();
 
@@ -910,7 +733,7 @@ void terminalUI() {
                     if (!fs::exists(DBGpath)) fs::create_directory(DBGpath);
 
                     std::cout << "\nThe default file name is 'current_system_time_DBG_contrib_list.txt', e.g., " << DBGtimeStr << "_DBG_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
-                    std::getline(std::cin, saveDBGinput);
+                    saveDBGinput = promptLine();
 
                     if (saveDBGinput == "Y" || saveDBGinput == "y" || saveDBGinput == "Yes" || saveDBGinput == "yes") {
                         saveDBGResults(myDBGlist, DBGpath, DBGtimeStr + "_DBG_contrib_list.txt", printPrec);
@@ -920,7 +743,7 @@ void terminalUI() {
                     } else if (saveDBGinput == "N" || saveDBGinput == "n" || saveDBGinput == "No" || saveDBGinput == "no") {
                         std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DBG_list' without the quotes): ";
                         std::string newDBGFileName;
-                        std::getline(std::cin, newDBGFileName);
+                        newDBGFileName = promptLine();
                         saveDBGResults(myDBGlist, DBGpath, newDBGFileName + ".txt", printPrec);
                         checkDBGSaveBool = false;
                         std::cout << "##### Press Enter to continue... #####\n";
@@ -970,7 +793,7 @@ void terminalUI() {
                 string saveDSNinput;
                 while (checkDSNSaveBool) {
                     std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
-                    std::getline(std::cin, saveDSNinput);
+                    saveDSNinput = promptLine();
 
                     std::string DSNtimeStr = getCurrentTimeFormatted();
 
@@ -980,7 +803,7 @@ void terminalUI() {
                         if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
 
                         std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
-                        std::getline(std::cin, saveDSNinput);
+                        saveDSNinput = promptLine();
 
                         if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
                             saveDSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
@@ -990,7 +813,7 @@ void terminalUI() {
                         } else if (saveDSNinput == "N" || saveDSNinput == "n" || saveDSNinput == "No" || saveDSNinput == "no") {
                             std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_DSN_list' without the quotes): ";
                             std::string newDSNFileName;
-                            std::getline(std::cin, newDSNFileName);
+                            newDSNFileName = promptLine();
                             saveDSNResults(myDSNlist, totalN, DSNpath, newDSNFileName + ".txt", printPrec);
                             checkDSNSaveBool = false;
                             std::cout << "##### Press Enter to continue... #####\n";
@@ -1026,7 +849,7 @@ void terminalUI() {
                 string saveDSNinput;
                 while (checkDSNSaveBool) {
                     std::cout << "\nWould you like to save these DSN results to a .txt file (will be saved to the directory \n" << fs::current_path().string() << "/DSN4SLHA_results/DSN)?\nEnter Y to save the result or N to continue: ";
-                    std::getline(std::cin, saveDSNinput);
+                    saveDSNinput = promptLine();
 
                     std::string DSNtimeStr = getCurrentTimeFormatted();
 
@@ -1036,7 +859,7 @@ void terminalUI() {
                         if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
 
                         std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
-                        std::getline(std::cin, saveDSNinput);
+                        saveDSNinput = promptLine();
 
                         if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
                             saveDSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
@@ -1046,7 +869,7 @@ void terminalUI() {
                         } else if (saveDSNinput == "N" || saveDSNinput == "n" || saveDSNinput == "No" || saveDSNinput == "no") {
                             std::cout << "\nInput your desired filename with no whitespaces and without the .txt extension (e.g. 'my_SLHA_deltaSN_list' without the quotes): ";
                             std::string newDSNFileName;
-                            std::getline(std::cin, newDSNFileName);
+                            newDSNFileName = promptLine();
                             savedeltaSNResults(myDSNlist, totalN, DSNpath, newDSNFileName + ".txt", printPrec);
                             checkDSNSaveBool = false;
                             std::cout << "##### Press Enter to continue... #####\n";
@@ -1069,7 +892,7 @@ void terminalUI() {
         // Try again?
         string checkcontinue;
         std::cout << "Would you like to try again with a new SLHA file? Enter Y to try again or N to stop: ";
-        getline(cin, checkcontinue);
+        checkcontinue = promptLine();
         std::transform(checkcontinue.begin(), checkcontinue.end(), checkcontinue.begin(),
                        [](unsigned char c){ return std::tolower(c); });
         if (checkcontinue == "y" || checkcontinue == "yes") {
@@ -1090,9 +913,4 @@ void terminalUI() {
             break;
         }
     }
-}
-
-int main() {
-    terminalUI();
-    return 0;
 }
