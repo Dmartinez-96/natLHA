@@ -13,9 +13,12 @@
 // function exists: a batch caller pays for them once per point regardless of how many labels
 // it asks for.
 
+#include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <exception>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -26,19 +29,8 @@
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
 #include "mZ_numsolver.hpp"
 #include "radcorr_calc.hpp"
+#include "shared_helpers.hpp"
 #include "slhaea.h"
-
-// These two helpers are DEFINED in terminal_UI.cpp and declared in no header. They are
-// declared here rather than copied so that there is exactly one definition of each; both
-// have external linkage, so the linker resolves them within natlha_core. When terminalUI()
-// is cut over to call evaluate(), they should move to a shared header instead.
-std::vector<high_prec_float> beta_g1g2(const high_prec_float & g1val, const high_prec_float & g2val,
-                                       const high_prec_float & g3val, const high_prec_float & ytval,
-                                       const high_prec_float & ycval, const high_prec_float & yuval,
-                                       const high_prec_float & ybval, const high_prec_float & ysval,
-                                       const high_prec_float & ydval, const high_prec_float & ytauval,
-                                       const high_prec_float & ymuval, const high_prec_float & yeval);
-double getRenormalizationScale(const SLHAea::Coll & slha, const std::string & blockName);
 
 namespace natlha {
 
@@ -236,6 +228,7 @@ Result evaluate(const Config & cfg) {
         high_prec_float muQsq = muQ * muQ;
         high_prec_float newMuQsq = muQsq;
         while (currIterLsq > lsqtol) {
+            ++out.ewsbIters;
             newMuQsq = ((mHdsq + radCorrs[1] - ((mHusq + radCorrs[0]) * pow(tanb, 2.0)))
                         / (pow(tanb, 2.0) - 1.0)) - (kMZ * kMZ / 2.0);
             weakBCs[6] = copysign(sqrt(abs(newMuQsq)), muQ);
@@ -246,7 +239,30 @@ Result evaluate(const Config & cfg) {
         const high_prec_float currentMZ2 =
             (2.0 * ((mHdsq + radCorrs[1] - ((mHusq + radCorrs[0]) * pow(tanb, 2.0)))
                     / (pow(tanb, 2.0) - 1.0))) - (2.0 * muQsq);
-        const high_prec_float getmZ2Value = getmZ2(weakBCs, qSusy, kMZ * kMZ);
+        // Solve for m_Z^2 only when something downstream reads it. delta_SN is the one measure
+        // that consumes it, and `wantMZ2FromSolver` covers callers that read the field without
+        // asking for a measure. With all four measures requested this condition is true, so
+        // the skip matters to a Delta_EW-only pass rather than to a full production run.
+        //
+        // Wall time printed when NATLHA_ODE_TRACE is set, to stderr, so stdout is unchanged.
+        static const bool apiTrace = [] {
+            const char * e = std::getenv("NATLHA_ODE_TRACE");
+            return e != nullptr && *e != '\0';
+        }();
+        high_prec_float getmZ2Value = 0;
+        if (cfg.computeDSN || cfg.wantMZ2FromSolver) {
+            const auto tMZ0 = std::chrono::steady_clock::now();
+            bool mz2Converged = false;
+            getmZ2Value = getmZ2(weakBCs, qSusy, kMZ * kMZ, &mz2Converged);
+            out.haveMZ2FromSolver = true;
+            out.mZ2SolverConverged = mz2Converged;
+            if (apiTrace) {
+                std::cerr << "# api_trace getmZ2_seconds "
+                          << std::chrono::duration<double>(
+                                 std::chrono::steady_clock::now() - tMZ0).count()
+                          << "  converged " << (mz2Converged ? 1 : 0) << "\n";
+            }
+        }
 
         // b = B*mu at the SUSY scale, from the tree relation with the loop-corrected soft
         // masses substituted. Slot 42 holds b itself, not B; consumers divide by mu.
@@ -283,6 +299,7 @@ Result evaluate(const Config & cfg) {
             log(high_prec_float(3.0e16) * exp((gutBCs[1] - gutBCs[0]) / (betaG1G2[0] - betaG1G2[1])));
         double currIterQGutDbl = double(currIterQGut);
         while (currIterLsq > lsqtol) {
+            ++out.gutIters;
             gutDbl = solveODEs(weakDbl, log(qSusyDbl), currIterQGutDbl, 1.0e-6);
             for (std::size_t i = 0; i < gutBCs.size() && i < gutDbl.size(); ++i) {
                 gutBCs[i] = high_prec_float(gutDbl[i]);

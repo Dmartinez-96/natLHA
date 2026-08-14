@@ -17,6 +17,7 @@
 #include <boost/multiprecision/mpfr.hpp>
 #include "mZ_numsolver.hpp"
 #include "natlha_api.hpp"
+#include "shared_helpers.hpp"
 #include "terminal_UI.hpp"
 #include "MSSM_RGE_solver.hpp"
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
@@ -542,6 +543,11 @@ void terminalUI() {
         apiCfg.computeDHS = false;
         apiCfg.computeDBG = false;
         apiCfg.computeDSN = false;
+        // Every compute* flag above is false because this front end calls the calculators
+        // itself. It does still read apiResult.mZ2FromSolver and hand it to its own DSN_calc,
+        // and evaluate() skips that solve unless something asks for it, so ask explicitly.
+        // Without this the interactive delta_SN would be fed a zero.
+        apiCfg.wantMZ2FromSolver = true;
         apiCfg.bgModelIndex = modinp;
         apiCfg.bgPrecision = precinp;
         apiCfg.snMode = DSNcalcSelect;

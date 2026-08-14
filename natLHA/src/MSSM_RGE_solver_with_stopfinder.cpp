@@ -2,7 +2,9 @@
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
 #include "constants.hpp"
 #include <iostream>
+#include <chrono>
 #include <cmath>
+#include <cstdlib>
 #include <vector>
 #include <boost/numeric/odeint.hpp>
 #ifndef M_PI
@@ -47,8 +49,13 @@ struct MyObserver{
         double intermmuweakBC = x[6];
         double intermcos2b = std::cos(2.0 * intermbeta_wk);
         double intermsin2b = std::sin(2.0 * intermbeta_wk);
-        double intermDelta_suL = (pow(intermvu, 2.0) - pow(intermvd, 2.0)) * ((intermgpr_wk * intermgpr_wk / 6.0) - (intermg2_wk * intermg2_wk / 4.0));
-        double intermDelta_suR = (-1.0) * (pow(intermvu, 2.0) - pow(intermvd, 2.0)) * ((4.0 * intermgpr_wk * intermgpr_wk / 3.0));
+        // Electroweak D-terms for the stops. Same expressions as radcorr_calc.cpp, where the
+        // derivation from S. P. Martin's primer eq. (defDeltaphi) is written out in full:
+        //     suL   (vu^2 - vd^2) * ( g'^2/12 - g^2/4 )
+        //     suR  -(vu^2 - vd^2) * ( g'^2/3 )
+        // `intermgpr_wk` is the unnormalized g', formed above as sqrt(3/5) * x[0].
+        double intermDelta_suL = (pow(intermvu, 2.0) - pow(intermvd, 2.0)) * ((intermgpr_wk * intermgpr_wk / 12.0) - (intermg2_wk * intermg2_wk / 4.0));
+        double intermDelta_suR = (-1.0) * (pow(intermvu, 2.0) - pow(intermvd, 2.0)) * (intermgpr_wk * intermgpr_wk / 3.0);
         double intermm_stop_1sq = (0.5)\
             * (intermmQ3_sq_arr + intermmU3_sq_arr + (2.0 * intermmymtsq) + intermDelta_suL + intermDelta_suR
                - sqrt(pow((intermmQ3_sq_arr + intermDelta_suL - intermmU3_sq_arr - intermDelta_suR), 2.0)
@@ -83,11 +90,36 @@ std::vector<RGEStruct> solveODEstoMSUSY(std::vector<double> initialConditions, d
     MyObserver myObserver(t_target, min_difference, condition_met, value_of_mZ2);
 
     // Integrate
+    const auto tStart = std::chrono::steady_clock::now();
     boost::numeric::odeint::integrate_adaptive(
         make_controlled(1.0E-12, 1.0E-12, stepper_type()),
         MSSMRGESolver, x, startTime, std::log(500.0), timeStep, myObserver
     );
-    
+    const double elapsed =
+        std::chrono::duration<double>(std::chrono::steady_clock::now() - tStart).count();
+
+    // Wall time for THIS call, printed when NATLHA_ODE_TRACE is set to anything non-empty.
+    // Off by default and written to stderr, so stdout is unchanged either way.
+    //
+    // Traced separately from solveODEs because it is a different integration with a different
+    // job, and because its tolerances are the literals on the make_controlled line above: the
+    // NATLHA_ODE_ABS_ERR / NATLHA_ODE_REL_ERR overrides occur only in MSSM_RGE_solver.cpp and
+    // apply to solveODEs, not here. t_from and t_to are printed so the span and its direction
+    // can be read off the output rather than assumed.
+    //
+    // Seconds rather than a step count: the observer here already carries the stop-condition
+    // state, and threading a counter through it would change more than this measurement needs.
+    static const bool trace = [] {
+        const char * e = std::getenv("NATLHA_ODE_TRACE");
+        return e != nullptr && *e != '\0';
+    }();
+    if (trace) {
+        std::cerr << "# stopfinder_trace seconds " << elapsed
+                  << "  t_from " << startTime << "  t_to " << std::log(500.0)
+                  << "  t_target " << t_target
+                  << "  condition_met " << (condition_met ? 1 : 0) << "\n";
+    }
+
     std::vector<RGEStruct> solstruct = { {x, t_target} };
     return solstruct;
 }

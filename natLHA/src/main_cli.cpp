@@ -86,7 +86,8 @@ void printReport(const natlha::Result & r, const natlha::Config & cfg, int digit
               << "   <- re-solved from EWSB, NOT the SLHA's mu\n"
               << "b = B*mu  " << r.weakBCs[42] << "\n"
               << "Sigma_u   " << r.radCorrs[0] << "\n"
-              << "Sigma_d   " << r.radCorrs[1] << "\n";
+              << "Sigma_d   " << r.radCorrs[1] << "\n"
+              << "iters     ewsb " << r.ewsbIters << "   gut " << r.gutIters << "\n";
     if (r.haveDEW) {
         std::cout << "\nDelta_EW  " << r.deltaEW << "\n";
         for (std::size_t i = 0; i < r.dewContributions.size(); ++i) {

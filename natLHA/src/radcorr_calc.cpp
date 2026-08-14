@@ -706,13 +706,32 @@ std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boun
     // Tree-level charged Higgs running squared mass.
     const high_prec_float mH_pmsq = mA0sq + m_w_sq;
 
-    // Set up hyperfine splitting contributions to squark/slepton masses
-    high_prec_float Delta_suL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 6.0) - (g2_sq / 4.0));
-    high_prec_float Delta_suR = (-1.0) * (pow(vu, 2.0) - pow(vd, 2.0)) * ((4.0 * gpr_sq / 3.0));
-    high_prec_float Delta_sdL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 6.0) + (g2_sq / 4.0));
-    high_prec_float Delta_sdR = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 3.0));
-    high_prec_float Delta_seL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((g2_sq / 4.0) - (gpr_sq / 2.0));
-    high_prec_float Delta_seR = (pow(vu, 2.0) - pow(vd, 2.0)) * gpr_sq;
+    // Electroweak D-term contributions to the squark and slepton squared masses.
+    //
+    // From S. P. Martin's SUSY primer, eq. (defDeltaphi) at primerv7.tex:10638-10643:
+    //     Delta_phi = (1/2) * (T3_phi * g^2 - Y_phi * g'^2) * (vd^2 - vu^2)
+    // where T3, Y and Q belong to the LEFT-HANDED chiral supermultiplet containing phi, in the
+    // convention Q = T3 + Y. Written over (vu^2 - vd^2), as below, every coefficient flips sign.
+    //
+    // The hypercharges that follow from Q = T3 + Y, each checked against the electric charges
+    // they must reproduce: the quark doublet has Y = 1/6 (Q_u = 1/2 + 1/6 = 2/3,
+    // Q_d = -1/2 + 1/6 = -1/3), u-bar has Y = -2/3, d-bar has Y = 1/3, the lepton doublet has
+    // Y = -1/2 (Q_nu = 0, Q_e = -1), and e-bar has Y = 1. So:
+    //     suL   T3 = +1/2, Y =  1/6   ->  (vu^2 - vd^2) * ( g'^2/12 - g^2/4 )
+    //     suR   T3 =    0, Y = -2/3   -> -(vu^2 - vd^2) * ( g'^2/3 )
+    //     sdL   T3 = -1/2, Y =  1/6   ->  (vu^2 - vd^2) * ( g'^2/12 + g^2/4 )
+    //     sdR   T3 =    0, Y =  1/3   ->  (vu^2 - vd^2) * ( g'^2/6 )
+    //     seL   T3 = -1/2, Y = -1/2   ->  (vu^2 - vd^2) * ( g^2/4 - g'^2/4 )
+    //     seR   T3 =    0, Y =  1     ->  (vu^2 - vd^2) * ( g'^2/2 )
+    //
+    // `gpr` is the UNNORMALIZED g', formed a few lines above as g1 * sqrt(3/5), so these are
+    // the primer's own g' and no further rescaling applies.
+    high_prec_float Delta_suL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 12.0) - (g2_sq / 4.0));
+    high_prec_float Delta_suR = (-1.0) * (pow(vu, 2.0) - pow(vd, 2.0)) * (gpr_sq / 3.0);
+    high_prec_float Delta_sdL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 12.0) + (g2_sq / 4.0));
+    high_prec_float Delta_sdR = (pow(vu, 2.0) - pow(vd, 2.0)) * (gpr_sq / 6.0);
+    high_prec_float Delta_seL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((g2_sq / 4.0) - (gpr_sq / 4.0));
+    high_prec_float Delta_seR = (pow(vu, 2.0) - pow(vd, 2.0)) * (gpr_sq / 2.0);
 
     // Up-type squark mass eigenstate eigenvalues
     high_prec_float m_stop_1sq = (0.5)\

@@ -716,13 +716,21 @@ std::vector<LabeledValue> DEW_calc(std::vector<high_prec_float> weak_boundary_co
         // Tree-level charged Higgs running squared mass.
         const high_prec_float mH_pmsq = mA0sq + m_w_sq;
 
-        // Set up hyperfine splitting contributions to squark/slepton masses
-        high_prec_float Delta_suL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 6.0) - (g2_sq / 4.0));
-        high_prec_float Delta_suR = (-1.0) * (pow(vu, 2.0) - pow(vd, 2.0)) * ((4.0 * gpr_sq / 3.0));
-        high_prec_float Delta_sdL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 6.0) + (g2_sq / 4.0));
-        high_prec_float Delta_sdR = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 3.0));
-        high_prec_float Delta_seL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((g2_sq / 4.0) - (gpr_sq / 2.0));
-        high_prec_float Delta_seR = (pow(vu, 2.0) - pow(vd, 2.0)) * gpr_sq;
+        // Electroweak D-term contributions to the squark and slepton squared masses. Same six
+        // expressions as radcorr_calc.cpp, where the derivation from S. P. Martin's primer
+        // eq. (defDeltaphi) is written out in full; `gpr` is the unnormalized g' in both.
+        //     suL   (vu^2 - vd^2) * ( g'^2/12 - g^2/4 )
+        //     suR  -(vu^2 - vd^2) * ( g'^2/3 )
+        //     sdL   (vu^2 - vd^2) * ( g'^2/12 + g^2/4 )
+        //     sdR   (vu^2 - vd^2) * ( g'^2/6 )
+        //     seL   (vu^2 - vd^2) * ( g^2/4 - g'^2/4 )
+        //     seR   (vu^2 - vd^2) * ( g'^2/2 )
+        high_prec_float Delta_suL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 12.0) - (g2_sq / 4.0));
+        high_prec_float Delta_suR = (-1.0) * (pow(vu, 2.0) - pow(vd, 2.0)) * (gpr_sq / 3.0);
+        high_prec_float Delta_sdL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((gpr_sq / 12.0) + (g2_sq / 4.0));
+        high_prec_float Delta_sdR = (pow(vu, 2.0) - pow(vd, 2.0)) * (gpr_sq / 6.0);
+        high_prec_float Delta_seL = (pow(vu, 2.0) - pow(vd, 2.0)) * ((g2_sq / 4.0) - (gpr_sq / 4.0));
+        high_prec_float Delta_seR = (pow(vu, 2.0) - pow(vd, 2.0)) * (gpr_sq / 2.0);
 
         // Up-type squark mass eigenstate eigenvalues
         high_prec_float m_stop_1sq = (0.5)\

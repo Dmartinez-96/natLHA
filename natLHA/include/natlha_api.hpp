@@ -37,6 +37,14 @@ struct Config {
     bool computeDBG = false;
     bool computeDSN = false;
 
+    /// Ask for `Result::mZ2FromSolver` even when no measure needs it.
+    ///
+    /// The solve behind that field is skipped unless something wants it, so a caller that
+    /// reads it without computing delta_SN must set this. The interactive front end is exactly
+    /// such a caller: it leaves every compute* flag false and runs the calculators itself, but
+    /// still reads mZ2FromSolver to pass into its own DSN_calc.
+    bool wantMZ2FromSolver = false;
+
     /// DBG_calc's `modselno`, the model whose parameters the derivatives are taken with
     /// respect to. Valid range 1-6, matching the interactive menu.
     int bgModelIndex = 1;
@@ -107,6 +115,32 @@ struct Result {
     std::vector<high_prec_float> gutBCs;
     /// Sigma_u and Sigma_d, the one-loop tadpole corrections at Q_SUSY, in that order.
     std::vector<high_prec_float> radCorrs;
+
+    /// Whether `mZ2FromSolver` was computed at all, and whether its solve converged.
+    ///
+    /// `haveMZ2FromSolver` is false when the solve was skipped because nothing asked for it,
+    /// in which case `mZ2FromSolver` keeps its zero initialiser and means nothing. Check it
+    /// before reading that field: a skipped solve and a solve that genuinely returned zero
+    /// are otherwise the same value.
+    ///
+    /// `mZ2SolverConverged` reports whether the solver met its residual tolerance. It is
+    /// meaningful only when `haveMZ2FromSolver` is true.
+    bool haveMZ2FromSolver = false;
+    bool mZ2SolverConverged = false;
+
+    /// Iterations taken by the two fixed-point loops in `evaluate`, reported so that a slow
+    /// point can be attributed to one of them instead of guessed at.
+    ///
+    /// Both loops run to a tolerance with NO iteration cap, so either can in principle spin
+    /// for a long time on an awkward point. They are not equally expensive per pass:
+    /// `gutIters` counts passes that each call `solveODEs` over the full run from Q_SUSY to
+    /// the trial GUT scale, while `ewsbIters` counts passes that each call `radcorr_calc` at
+    /// a single scale.
+    ///
+    /// These count iterations, not seconds. A large count is evidence about WHERE time went
+    /// only together with a timing measurement, since neither per-pass cost is recorded here.
+    long ewsbIters = 0;
+    long gutIters = 0;
 
     bool haveDEW = false, haveDHS = false, haveDBG = false, haveDSN = false;
 
