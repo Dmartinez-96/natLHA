@@ -159,8 +159,8 @@ void saveDSNResults(const std::vector<DSNLabeledValue>& dsnlist, const high_prec
 void savedeltaSNResults(const std::vector<DSNLabeledValue>& dsnlist, const high_prec_float& totalNvac, const std::string& directory, const std::string& filename, const int& printprec) {
     std::ofstream outFile(directory + "/" + filename, std::ios::out);
     outFile << "Given the submitted SLHA file, " << directory << ", your value for the differential stringy\n"
-            << "naturalness measure, delta_SN ~ 1 / dN_vac, is: " << std::fixed << std::setprecision(printprec) << high_prec_float(1.0) / totalNvac << std::endl;
-    outFile << "\nThe ordered contributions to N_vac are as follows (decr. order): \n\n";
+            << "naturalness measure, delta_SN = log10(1 / dN_vac), is: " << std::fixed << std::setprecision(printprec) << log10(high_prec_float(1.0) / totalNvac) << std::endl;
+    outFile << "\nThe ordered contributions to dN_vac are as follows (decr. order): \n\n";
     for (const auto& item : dsnlist) {
         if (item.value < 1.0e-3) {
             outFile << item.label << ": " << std::fixed << std::setprecision(printprec) << std::scientific << item.value << std::endl;
@@ -449,12 +449,9 @@ void terminalUI() {
                     << "1: Full DSN P_mu + soft terms integrated density measure\n"
                     << "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
                     << "3: Differential ABDS density at current BM point.\n\n";
-            // Accepts 1-4 although the menu above offers only 1-3. A 4 is passed to DSN_calc
-            // as its mode and computes a result, but the reporting branches below cover only
-            // (1 || 2) and (3), so nothing about that result is ever printed.
             DSNcalcSelect = promptInt("From the list above, input the number corresponding to the precision you want: ",
-                                      1, 4,
-                                      "Invalid Delta_SN precision setting selected, please try again.\n\n"
+                                      1, 3,
+                                      "Invalid Delta_SN mode selected, please try again.\n\n"
                                       "1: Full DSN P_mu + soft terms integrated density measure\n"
                                       "2: P_mu (integrated ABDS density measure in mu parameter alone)\n"
                                       "3: Differential ABDS density at current BM point.");
@@ -778,7 +775,16 @@ void terminalUI() {
             for (const auto& item : myDSNlist) {
                 totalN += item.value;
             }
-            high_prec_float totalDSN = high_prec_float(1.0) / totalN;
+            if (myDSNlist.empty() || totalN <= 0.0 || isnan(totalN) || isinf(totalN)) {
+                std::cerr << "Error: DSN_calc returned an invalid vacuum density.\n";
+                continue;
+            }
+            // Mode 3 reports log10(1 / dN_vac) per dissertation Eq. 5.21; modes 1/2 report
+            // the plain reciprocal 1 / N_vac. Kept mode-conditional so the console headline
+            // matches what savedeltaSNResults writes for the same run.
+            high_prec_float totalDSN = (DSNcalcSelect == 3)
+                                           ? log10(high_prec_float(1.0) / totalN)
+                                           : high_prec_float(1.0) / totalN;
             if ((DSNcalcSelect == 1) || (DSNcalcSelect == 2)) {
                 std::cout << "\n########## Delta_SN Results ##########\n";
                 std::cout << "Your value for the stringy naturalness measure, Delta_SN ~ 1 / N_vac, is: "
@@ -837,7 +843,7 @@ void terminalUI() {
                 }
             } else if ((DSNcalcSelect == 3)) {
                 std::cout << "\n########## delta_SN Results ##########\n";
-                std::cout << "Your value for the differential stringy naturalness measure, delta_SN ~ 1 / dN_vac, is: "
+                std::cout << "Your value for the differential stringy naturalness measure, delta_SN = log10(1 / dN_vac), is: "
                     << totalDSN;
                 this_thread::sleep_for(chrono::milliseconds(250));
                 std::cout << "\nThe ordered contributions to dN_vac are as follows (decr. order):\n";
@@ -864,11 +870,11 @@ void terminalUI() {
                         if (!fs::exists("DSN4SLHA_results")) fs::create_directory("DSN4SLHA_results");
                         if (!fs::exists(DSNpath)) fs::create_directory(DSNpath);
 
-                        std::cout << "\nThe default file name is 'current_system_time_DSN_contrib_list.txt', e.g., " << DSNtimeStr << "_DSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
+                        std::cout << "\nThe default file name is 'current_system_time_deltaSN_contrib_list.txt', e.g., " << DSNtimeStr << "_deltaSN_contrib_list.txt.\nWould you like to keep this default file name or input your own?\nEnter Y to keep the default file name or N to input your own: ";
                         saveDSNinput = promptLine();
 
                         if (saveDSNinput == "Y" || saveDSNinput == "y" || saveDSNinput == "Yes" || saveDSNinput == "yes") {
-                            saveDSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_DSN_contrib_list.txt", printPrec);
+                            savedeltaSNResults(myDSNlist, totalN, DSNpath, DSNtimeStr + "_deltaSN_contrib_list.txt", printPrec);
                             checkDSNSaveBool = false;
                             std::cout << "##### Press Enter to continue... #####\n";
                             std::cin.get();

@@ -67,3 +67,8 @@ set_target_properties(natlha-cli PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
 
 # Remove RPATH to avoid system paths in the executable
 set_target_properties(natLHA PROPERTIES INSTALL_RPATH_USE_LINK_PATH FALSE)
+
+enable_testing()
+add_executable(test-delta-sn src/test_delta_sn.cpp)
+target_link_libraries(test-delta-sn PRIVATE natlha_core)
+add_test(NAME delta-sn-eq-5.21 COMMAND test-delta-sn)

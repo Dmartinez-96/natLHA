@@ -58,10 +58,9 @@ struct Config {
     /// so precselno = 1 costs four times the trailing case per direction.
     int bgPrecision = 1;
 
-    /// DSN_calc's `precselno`, 1-4, selecting which flavour of stringy naturalness is
-    /// computed. The label currently in scope is the LOWERCASE delta_SN, the differential
-    /// vacuum density; capital Delta_SN via numerical continuation is deferred work and is
-    /// not reachable through this struct.
+    /// DSN_calc's mode, 1-3. Mode 3 is the lowercase differential delta_SN defined by
+    /// dissertation Eq. 5.21. Capital Delta_SN via numerical continuation is deferred and
+    /// is not reachable through this struct.
     int snMode = 1;
     /// Numbers of F-term and D-term contributions for the delta_SN calculation.
     int snNF = 0;
@@ -144,26 +143,21 @@ struct Result {
 
     bool haveDEW = false, haveDHS = false, haveDBG = false, haveDSN = false;
 
-    /// The headline value of each measure: the contribution largest in ABSOLUTE value, sign
-    /// retained. All four calculators establish that ordering the same way -- each sorts with
-    /// an `abs(a.value) < abs(b.value)` comparator and then reverses, so element [0] of the
-    /// returned list is the largest by magnitude. Comparator / sort / reverse line numbers:
-    ///     DEW_calc.cpp  20 / 26 / 27      DHS_calc.cpp  14 / 20 / 21
-    ///     DBG_calc.cpp  39 / 45 / 46      DSN_calc.cpp  27 / 33 / 34
-    /// Note the comparator alone sorts ASCENDING;
-    /// it is the `reverse` that makes [0] the maximum, so reading only the comparator gives
-    /// the opposite answer.
+    /// The Delta_EW, Delta_HS and Delta_BG headlines retain the sign of the contribution
+    /// largest in ABSOLUTE value. Their calculators sort with an
+    /// `abs(a.value) < abs(b.value)` comparator and then reverse, so element [0] is the
+    /// largest by magnitude. The stringy-naturalness headline is mode-dependent: modes 1/2
+    /// return the reciprocal of the summed N_vac contributions, and mode 3 returns
+    /// log10(1 / dN_vac) per dissertation Eq. 5.21.
     high_prec_float deltaEW = 0, deltaHS = 0, deltaBG = 0, deltaSN = 0;
 
-    /// Every contribution with its label, ordered as the underlying calculator returns
-    /// them. Kept because the breakdown is what makes a surprising total diagnosable --
-    /// on the arXiv:2111.03096 benchmark, for instance, Delta_EW is set by Sigma_u(stop_2)
-    /// rather than by mu, which is not visible from the total alone.
+    /// Every contribution with its label, ordered as the underlying calculator returns it.
+    /// Kept because the breakdown identifies which sector produced a surprising headline.
     std::vector<LabeledValue> dewContributions;
     std::vector<LabeledValueHS> dhsContributions;
     std::vector<LabeledValueBG> dbgContributions;
     std::vector<DSNLabeledValue> dsnContributions;
-    /// Summed vacuum density over the delta_SN contributions.
+    /// Summed vacuum density (N_vac, or differential dN_vac in mode 3).
     high_prec_float snTotalNvac = 0;
 };
 

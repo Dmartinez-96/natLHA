@@ -362,10 +362,19 @@ Result evaluate(const Config & cfg) {
                                             logQGutForSn, nF, nD);
             out.snTotalNvac = 0.0;
             for (const auto & item : out.dsnContributions) out.snTotalNvac += item.value;
-            if (!out.dsnContributions.empty()) {
-                out.deltaSN = out.dsnContributions[0].value;
-                out.haveDSN = true;
+            if (out.dsnContributions.empty() || out.snTotalNvac <= 0.0
+                    || isnan(out.snTotalNvac) || isinf(out.snTotalNvac)) {
+                out.error = "DSN_calc returned an invalid vacuum density";
+                return out;
             }
+            out.deltaSN = cfg.snMode == 3
+                            ? log10(high_prec_float(1.0) / out.snTotalNvac)
+                            : high_prec_float(1.0) / out.snTotalNvac;
+            if (isnan(out.deltaSN) || isinf(out.deltaSN)) {
+                out.error = "DSN_calc returned a non-finite naturalness measure";
+                return out;
+            }
+            out.haveDSN = true;
         }
 
         out.ok = true;
