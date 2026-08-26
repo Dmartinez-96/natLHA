@@ -2,9 +2,13 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <array>
 #include <string>
 #include <limits>
-#include <boost/math/special_functions/next.hpp>
+#include <sstream>
+#include <stdexcept>
+#include <utility>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include "DBG_calc.hpp"
 #include "MSSM_RGE_solver.hpp"
@@ -16,37 +20,18 @@
 using namespace boost::multiprecision;
 typedef number<mpfr_float_backend<50>> high_prec_float;
 
-/// x advanced by one DOUBLE-precision ULP, so that `dblNext(x) - x` is exactly that ULP.
-///
-/// This is the right ULP for sizing the finite-difference steps in this file, and
-/// boost::math::float_next is not. float_next advances by one ULP of `high_prec_float`, which is
-/// mpfr_float_backend<50> -- roughly 1e-50 relative. The steps below are sized as
-/// h = (C * ulp)^(1/n), but the function being differentiated is evaluated in DOUBLE:
-/// deriv_mZ_step_calc converts its boundary conditions to vector<double> and hands them to
-/// solveODEs. Estimating the MPFR ULP as 1e-50 relative, at a reference scale of 5000 that
-/// choice gives
-///     8-point  1.263e-05  relative 2.53e-09   (fine, far above double resolution)
-///     4-point  8.913e-10  relative 1.78e-13   (only ~800 double ULPs, at the noise floor)
-///     2-point  5.313e-16  relative 1.06e-19   (BELOW double epsilon, 2.22e-16)
-/// For the 2-point rule x + h == x exactly in double, making f(+h) and f(-h) bit-identical and
-/// the central difference identically zero. Measured on the arXiv:2111.03096 benchmark with
-/// MPFR-sized steps: Delta_BG = -5253.40158787 at precision 1, -5234.93148081 at precision 2,
-/// and exactly 0 at precision 3, where all six of its contributions were 0. The agreement
-/// between precisions 1 and 2 to 0.35 percent was luck near the noise floor, not accuracy.
-///
-/// Sizing from the double ULP gives relative steps of 1.66e-05, 1.32e-06 and 2.99e-08 for the
-/// 8-, 4- and 2-point rules at that same scale -- all far above double epsilon. The reference is
-/// max(|x|, 1.0) rather than |x| so a parameter passing through zero cannot collapse the step to
-/// a denormal.
-static high_prec_float dblNext(const high_prec_float & x) {
-    const double xd = double(x);
-    const double ref = std::max(std::abs(xd), 1.0);
-    const double ulp = std::nextafter(ref, std::numeric_limits<double>::infinity()) - ref;
-    return x + high_prec_float(ulp);
+namespace {
+
+bool finiteBG(const high_prec_float& value) {
+    return (boost::math::isfinite)(value);
 }
 
-high_prec_float deriv_mZ_step_calc(high_prec_float RGE_scale_init_val, high_prec_float RGE_scale_final_val, vector<high_prec_float> BCs_to_run) {
+MZ2SolveResult shiftedMZ2Solve(high_prec_float RGE_scale_init_val,
+                               high_prec_float RGE_scale_final_val,
+                               const vector<high_prec_float>& BCs_to_run,
+                               high_prec_float continuationSeed) {
     vector<double> BCs_to_run_dbl;
+    BCs_to_run_dbl.reserve(BCs_to_run.size());
     for (const auto& value : BCs_to_run) {
         BCs_to_run_dbl.push_back(double(value));
     }
@@ -58,22 +43,48 @@ high_prec_float deriv_mZ_step_calc(high_prec_float RGE_scale_init_val, high_prec
         currentweaksol.push_back(high_prec_float(value));
     }
     high_prec_float QSUSY_for_calc = exp(RGE_scale_final_val);
-    high_prec_float mZ2_calc = getmZ2(currentweaksol, QSUSY_for_calc, high_prec_float(91.1876 * 91.1876));
-    return mZ2_calc;
+    return solveMZ2(currentweaksol, QSUSY_for_calc, continuationSeed);
 }
 
-bool absValCompareBG(const LabeledValueBG& a, const LabeledValueBG& b) {
-    return abs(a.value) < abs(b.value);
+bool distinctDoubleStates(const std::vector<high_prec_float>& unshifted,
+                          const std::vector<high_prec_float>& negative,
+                          const std::vector<high_prec_float>& positive,
+                          std::string& failure) {
+    if (unshifted.size() != negative.size() || unshifted.size() != positive.size()) {
+        failure = "shifted boundary-state size changed";
+        return false;
+    }
+    bool negativeDiffers = false;
+    bool positiveDiffers = false;
+    bool pairDiffers = false;
+    for (std::size_t i = 0; i < unshifted.size(); ++i) {
+        const double central = double(unshifted[i]);
+        const double minus = double(negative[i]);
+        const double plus = double(positive[i]);
+        if (!std::isfinite(central) || !std::isfinite(minus) || !std::isfinite(plus)) {
+            failure = "a boundary state is non-finite after conversion to double";
+            return false;
+        }
+        negativeDiffers = negativeDiffers || minus != central;
+        positiveDiffers = positiveDiffers || plus != central;
+        pairDiffers = pairDiffers || minus != plus;
+    }
+    if (!negativeDiffers || !positiveDiffers || !pairDiffers) {
+        failure = "plus, minus, and unshifted boundary states are not distinct in double";
+        return false;
+    }
+    return true;
 }
 
-vector<LabeledValueBG> sortAndReturnBG(const vector<LabeledValueBG>& DBGList) {
-    vector<LabeledValueBG> sortedList = DBGList;
-    sort(sortedList.begin(), sortedList.end(), absValCompareBG);
-    reverse(sortedList.begin(), sortedList.end());
-    return sortedList;
+bool validNode(const BGNodeDiagnostic& node) {
+    return node.boundaryStatesDistinct && node.failure.empty() && node.root.ok
+        && finiteBG(node.root.value) && finiteBG(node.root.lower)
+        && finiteBG(node.root.upper) && node.root.lower > 0
+        && node.root.upper >= node.root.lower;
 }
 
-high_prec_float deriv_num_calc(int precselno, high_prec_float curr_hval, vector<high_prec_float> mzsq_values) {
+high_prec_float deriv_num_calc(int precselno, high_prec_float curr_hval,
+                               const vector<high_prec_float>& mzsq_values) {
     high_prec_float approxderivval = 0.0;
     if (precselno == 1) {
         // 8-point derivative calculation
@@ -88,12 +99,91 @@ high_prec_float deriv_num_calc(int precselno, high_prec_float curr_hval, vector<
             ((mzsq_values[0] / 12.0) - (2.0 / 3.0) * mzsq_values[1] +
             (2.0 / 3.0) * mzsq_values[2] - mzsq_values[3] / 12.0);
     } else {
-        // 2-point derivative calculation (default)
+        // 2-point derivative branch
         approxderivval = (1.0 / curr_hval) *
             ((-0.5) * mzsq_values[0] + 0.5 * mzsq_values[1]);
     }
 
     return approxderivval;
+}
+
+high_prec_float fixedStencilUncertainty(
+        int precision, const high_prec_float& h, const high_prec_float& prefactor,
+        const std::vector<std::pair<BGNodeDiagnostic, BGNodeDiagnostic>>& pairs) {
+    const std::array<high_prec_float, 4> weights8 = {
+        high_prec_float(4) / 5, high_prec_float(1) / 5,
+        high_prec_float(4) / 105, high_prec_float(1) / 280};
+    const std::array<high_prec_float, 2> weights4 = {
+        high_prec_float(2) / 3, high_prec_float(1) / 12};
+    high_prec_float weightedWidth = 0;
+    for (std::size_t i = 0; i < pairs.size(); ++i) {
+        const high_prec_float weight = precision == 1 ? weights8[i] : weights4[i];
+        const high_prec_float minusWidth = pairs[i].first.root.upper - pairs[i].first.root.lower;
+        const high_prec_float plusWidth = pairs[i].second.root.upper - pairs[i].second.root.lower;
+        weightedWidth += weight * (minusWidth + plusWidth) / 2;
+    }
+    return abs(prefactor) * weightedWidth / h;
+}
+
+}  // namespace
+
+namespace dbg_detail {
+
+high_prec_float doubleDomainStep(const high_prec_float& coordinate) {
+    const double coordinateDouble = double(coordinate);
+    if (!std::isfinite(coordinateDouble)) {
+        throw std::runtime_error("Delta_BG coordinate is not finite in the production double domain");
+    }
+    const double reference = std::max(std::abs(coordinateDouble), 1.0);
+    const double next = std::nextafter(reference, std::numeric_limits<double>::infinity());
+    const double ulp = next - reference;
+    if (!std::isfinite(ulp) || !(ulp > 0)) {
+        throw std::runtime_error("Delta_BG coordinate has no finite positive double ULP");
+    }
+    return cbrt(high_prec_float(3) * high_prec_float(ulp));
+}
+
+bool usesAdaptiveTwoPoint(int precision) {
+    return precision == 3;
+}
+
+std::vector<LabeledValueBG> orderContributions(
+        const std::vector<LabeledValueBG>& contributions) {
+    std::vector<LabeledValueBG> ordered = contributions;
+    std::sort(ordered.begin(), ordered.end(), [](const LabeledValueBG& left,
+                                                  const LabeledValueBG& right) {
+        const high_prec_float leftMagnitude = abs(left.value);
+        const high_prec_float rightMagnitude = abs(right.value);
+        if (leftMagnitude != rightMagnitude) return leftMagnitude > rightMagnitude;
+        return left.ordinal < right.ordinal;
+    });
+    return ordered;
+}
+
+BGHeadlineDiagnostic makeHeadlineDiagnostic(
+        const std::vector<LabeledValueBG>& orderedContributions) {
+    BGHeadlineDiagnostic diagnostic;
+    if (orderedContributions.empty()) return diagnostic;
+    const LabeledValueBG& top = orderedContributions[0];
+    diagnostic.topLabel = top.label;
+    diagnostic.topValue = top.value;
+    diagnostic.topRootUncertainty = top.rootUncertainty;
+    for (const auto& contribution : orderedContributions) {
+        if (abs(contribution.value) == abs(top.value)) {
+            diagnostic.tiedDirectionOrdinals.push_back(contribution.ordinal);
+        }
+    }
+    if (orderedContributions.size() < 2) return diagnostic;
+    const LabeledValueBG& second = orderedContributions[1];
+    diagnostic.secondLabel = second.label;
+    diagnostic.secondValue = second.value;
+    diagnostic.secondRootUncertainty = second.rootUncertainty;
+    diagnostic.headlineMagnitudeGap = abs(top.value) - abs(second.value);
+    const bool signsDiffer = (top.value < 0) != (second.value < 0);
+    diagnostic.headlineSignFragileRootUncertainty = signsDiffer
+        && diagnostic.headlineMagnitudeGap
+            <= top.rootUncertainty + second.rootUncertainty;
+    return diagnostic;
 }
 
 // ==========================================================================================
@@ -112,99 +202,72 @@ high_prec_float deriv_num_calc(int precselno, high_prec_float curr_hval, vector<
 /// The bilinear form exists because slot 42 holds b = B*mu while the direction is B, so the
 /// shift applies to b/mu and multiplies back by mu at slot 6. That denominator is NOT i-9,
 /// which is why it cannot reuse the trilinear form.
-enum BGShiftKind {
-    kBGShiftPlain = 0,      ///< BCs[i] += h
-    kBGShiftScalar = 1,     ///< BCs[i] = copysign((sqrt(|BCs[i]|) + h)^2, BCs[i])
-    kBGShiftTrilinear = 2,  ///< BCs[i] = ((BCs[i] / BCs[i-9]) + h) * BCs[i-9]
-    kBGShiftBilinear = 3    ///< BCs[i] = ((BCs[i] / BCs[6]) + h) * BCs[6]
-};
-
-/// One Barbieri-Giudice direction.
-///
-/// `shiftIndices` and `value` are deliberately independent. The set of slots a direction moves
-/// is not always the set its magnitude is drawn from: a universal m_0 shifts every soft scalar
-/// slot while its magnitude comes from a max over a candidate list, and those two lists differ
-/// in the existing models. Keeping them separate lets the general loop stay agnostic while each
-/// model supplies whatever value convention that model uses.
-struct BGDirection {
-    std::string label;             ///< reported as-is in the returned LabeledValueBG
-    BGShiftKind kind;
-    std::vector<int> shiftIndices;
-    high_prec_float value;         ///< dimension-1 magnitude: sets the step size and prefactor
-};
-
 /// Finite-difference step for one direction at one precision setting.
 ///
-/// The constant and the root are fixed by the stencil order, and pair with the coefficients in
-/// deriv_num_calc: (2625/16, 9) for the 8-point form, (45/4, 5) for the 4-point, (3, 3) for the
-/// 2-point default. The scale comes from dblNext, for the reason given on that function.
-static high_prec_float bgStepSize(high_prec_float value, int precselno) {
-    const high_prec_float delta = dblNext(value) - value;
-    if (precselno == 1) return pow((high_prec_float(2625.0) / high_prec_float(16.0)) * delta,
-                                   high_prec_float(1.0) / high_prec_float(9.0));
-    if (precselno == 2) return pow((high_prec_float(45.0) / high_prec_float(4.0)) * delta,
-                                   high_prec_float(1.0) / high_prec_float(5.0));
-    return pow(high_prec_float(3.0) * delta, high_prec_float(1.0) / high_prec_float(3.0));
+/// Precision 1/2 retain their fixed 8-/4-point diagnostic stencils. Precision 3 uses the
+/// adaptive two-point start returned by doubleDomainStep instead.
+static high_prec_float fixedDiagnosticStep(const high_prec_float& value, int precision) {
+    const double coordinate = double(value);
+    if (!std::isfinite(coordinate)) {
+        throw std::runtime_error("Delta_BG coordinate is not finite in the production double domain");
+    }
+    const double reference = std::max(std::abs(coordinate), 1.0);
+    const double ulp = std::nextafter(reference, std::numeric_limits<double>::infinity())
+        - reference;
+    if (!std::isfinite(ulp) || !(ulp > 0)) {
+        throw std::runtime_error("Delta_BG coordinate has no finite positive double ULP");
+    }
+    if (precision == 1) {
+        return pow((high_prec_float(2625) / 16) * high_prec_float(ulp),
+                   high_prec_float(1) / 9);
+    }
+    return pow((high_prec_float(45) / 4) * high_prec_float(ulp),
+               high_prec_float(1) / 5);
 }
 
-/// Stencil node offsets in units of the step, ordered to match deriv_num_calc's coefficients.
-///
-/// Every stencil here is central and omits the zero node, which is why no unshifted evaluation
-/// appears. LOWER precselno IS MORE EXPENSIVE: 1 costs eight solves per direction, 2 costs
-/// four, and the default costs two.
-static std::vector<high_prec_float> bgStencilNodes(int precselno) {
-    if (precselno == 1) return {-4.0, -3.0, -2.0, -1.0, 1.0, 2.0, 3.0, 4.0};
-    if (precselno == 2) return {-2.0, -1.0, 1.0, 2.0};
-    return {-1.0, 1.0};
-}
-
-/// Apply one direction's shift to a COPY of the boundary conditions and return the resulting
-/// m_Z^2 after running down to the weak scale.
-///
-/// Takes `inputGUT_BCs` by value: every stencil node must start from the unshifted point, so
-/// shifting a shared vector would accumulate the offsets across nodes.
-static high_prec_float bgShiftedMZ2(const BGDirection& dir, high_prec_float shift,
-                                    std::vector<high_prec_float> inputGUT_BCs,
-                                    high_prec_float initialScale, high_prec_float finalScale) {
-    for (int i : dir.shiftIndices) {
-        if (dir.kind == kBGShiftPlain) {
-            inputGUT_BCs[i] += shift;
-        } else if (dir.kind == kBGShiftScalar) {
-            inputGUT_BCs[i] = copysign(pow(sqrt(abs(inputGUT_BCs[i])) + shift, high_prec_float(2.0)),
-                                       inputGUT_BCs[i]);
+bool applyShift(const BGDirection& direction, const high_prec_float& shift,
+                const std::vector<high_prec_float>& input,
+                std::vector<high_prec_float>& shifted, std::string& failure) {
+    shifted = input;
+    for (int i : direction.shiftIndices) {
+        if (i < 0 || static_cast<std::size_t>(i) >= shifted.size()) {
+            failure = "direction contains an out-of-range boundary-condition index";
+            return false;
+        }
+        if (direction.kind == BGShiftKind::Plain) {
+            shifted[i] += shift;
+        } else if (direction.kind == BGShiftKind::Scalar) {
+            const high_prec_float magnitude = sqrt(abs(shifted[i]));
+            shifted[i] = copysign(pow(magnitude + shift, high_prec_float(2)), shifted[i]);
         } else {
-            // Trilinear and bilinear differ only in which slot holds the denominator: the
-            // matching Yukawa at i-9 for a_ij, and mu at slot 6 for b.
-            const int denom = (dir.kind == kBGShiftBilinear) ? 6 : (i - 9);
-            inputGUT_BCs[i] = ((inputGUT_BCs[i] / inputGUT_BCs[denom]) + shift) * inputGUT_BCs[denom];
+            const int denominatorIndex = direction.kind == BGShiftKind::Bilinear ? 6 : i - 9;
+            if (denominatorIndex < 0
+                    || static_cast<std::size_t>(denominatorIndex) >= shifted.size()
+                    || shifted[denominatorIndex] == 0) {
+                failure = "direction has a zero or invalid ratio denominator";
+                return false;
+            }
+            shifted[i] = ((shifted[i] / shifted[denominatorIndex]) + shift)
+                * shifted[denominatorIndex];
+        }
+        if (!finiteBG(shifted[i])) {
+            failure = "shift produced a non-finite boundary condition";
+            return false;
         }
     }
-    return deriv_mZ_step_calc(initialScale, finalScale, inputGUT_BCs);
+    return true;
 }
 
 /// The directions of one model, in the order they are reported.
 ///
-/// Order does not affect the returned Delta_BG: DBG_calc sorts by absolute value before
-/// returning, so element [0] is the largest contribution regardless of how this list is built.
+/// The ordinal recorded here is the deterministic tie-break used when two contributions have
+/// exactly equal magnitude.
 ///
-/// ONE `value` SERVES BOTH THE PREFACTOR AND THE STEP SIZE, and that is only sound because the
-/// step is sign-independent. bgStepSize takes its scale from dblNext(value) - value, and
-/// dblNext advances by ulp(max(|x|, 1.0)), so the difference depends on |value| alone. The
-/// prefactor, by contrast, is sign-sensitive, so `value` carries the SIGNED magnitude wherever
-/// the model's prefactor is signed.
-///
-/// EACH MODEL'S PREFACTOR CONVENTION IS REPRODUCED AS IT STANDS, including where the models
-/// disagree with each other, because Delta_BG is defined with respect to them:
-///   - The SIGNED root is used by mHu and mHd wherever they appear as separate directions, by
-///     model 1's universal m_0, and by model 2's combined mHu,d. Everything else scalar takes
-///     the UNSIGNED root: the universal m_0 of models 2 and 3, the per-generation m_0 groups of
-///     models 4 and 5, and each per-slot sfermion direction of pMSSM-30. A signed prefactor is
-///     what lets a contribution come out negative, which is why Delta_BG(mHu) is negative on
-///     the benchmark.
-/// That sign convention is preserved as it stands rather than unified, because Delta_BG for
-/// those models is defined with respect to it.
-static std::vector<BGDirection> bgDirections(int modselno,
-                                             const std::vector<high_prec_float>& G) {
+/// Every scalar direction uses the positive magnitude p=sqrt(|m^2|) both as its shift
+/// coordinate and as the prefactor. The signed contribution comes from dmZ^2/dp, not from
+/// silently orienting p with sign(m^2).
+std::vector<BGDirection> buildDirections(
+        int modselno, const std::vector<high_prec_float>& G) {
     auto idxRange = [](int lo, int hiExclusive) {
         std::vector<int> v;
         for (int i = lo; i < hiExclusive; ++i) v.push_back(i);
@@ -215,7 +278,6 @@ static std::vector<BGDirection> bgDirections(int modselno,
         for (int i : idx) if (abs(G[i]) > abs(best)) best = G[i];
         return best;
     };
-    auto signedRoot = [](high_prec_float v) { return copysign(sqrt(abs(v)), v); };
     auto plainRoot = [](high_prec_float v) { return sqrt(abs(v)); };
 
     // Largest gaugino mass by VALUE, not by magnitude: the gaugino candidate comparison is a
@@ -242,26 +304,30 @@ static std::vector<BGDirection> bgDirections(int modselno,
     const std::vector<int> gen2Scalars  = {28, 31, 34, 37, 40};
     const std::vector<int> gen3Scalars  = {29, 32, 35, 38, 41};
 
-    const BGDirection gauginoDir = {"Delta_BG(m_1/2)", kBGShiftPlain, {3, 4, 5}, gauginoVal};
-    const BGDirection trilinDir  = {"Delta_BG(A_0)", kBGShiftTrilinear, idxRange(16, 25), trilinVal};
-    const BGDirection muDir      = {"Delta_BG(mu_0)", kBGShiftPlain, {6}, G[6]};
-    const BGDirection mHuDir     = {"Delta_BG(mHu)", kBGShiftScalar, {25}, signedRoot(G[25])};
-    const BGDirection mHdDir     = {"Delta_BG(mHd)", kBGShiftScalar, {26}, signedRoot(G[26])};
+    const BGDirection gauginoDir = {
+        "Delta_BG(m_1/2)", BGShiftKind::Plain, {3, 4, 5}, gauginoVal};
+    const BGDirection trilinDir = {
+        "Delta_BG(A_0)", BGShiftKind::Trilinear, idxRange(16, 25), trilinVal};
+    const BGDirection muDir = {"Delta_BG(mu_0)", BGShiftKind::Plain, {6}, G[6]};
+    const BGDirection mHuDir = {
+        "Delta_BG(mHu)", BGShiftKind::Scalar, {25}, plainRoot(G[25])};
+    const BGDirection mHdDir = {
+        "Delta_BG(mHd)", BGShiftKind::Scalar, {26}, plainRoot(G[26])};
 
     std::vector<BGDirection> dirs;
     if (modselno == 1) {
         std::vector<int> cands = universalScalars;
         cands.push_back(25);
         cands.push_back(26);
-        dirs.push_back({"Delta_BG(m_0)", kBGShiftScalar, idxRange(25, 42),
-                        signedRoot(maxByAbs(cands))});
+        dirs.push_back({"Delta_BG(m_0)", BGShiftKind::Scalar, idxRange(25, 42),
+                        plainRoot(maxByAbs(cands))});
         dirs.push_back(gauginoDir);
         dirs.push_back(trilinDir);
         dirs.push_back(muDir);
     } else if (modselno == 2) {
-        dirs.push_back({"Delta_BG(mHu,d)", kBGShiftScalar, {25, 26},
-                        signedRoot(maxByAbs({25, 26}))});
-        dirs.push_back({"Delta_BG(m_0)", kBGShiftScalar, idxRange(27, 42),
+        dirs.push_back({"Delta_BG(mHu,d)", BGShiftKind::Scalar, {25, 26},
+                        plainRoot(maxByAbs({25, 26}))});
+        dirs.push_back({"Delta_BG(m_0)", BGShiftKind::Scalar, idxRange(27, 42),
                         plainRoot(maxByAbs(universalScalars))});
         dirs.push_back(gauginoDir);
         dirs.push_back(trilinDir);
@@ -269,7 +335,7 @@ static std::vector<BGDirection> bgDirections(int modselno,
     } else if (modselno == 3) {
         dirs.push_back(mHuDir);
         dirs.push_back(mHdDir);
-        dirs.push_back({"Delta_BG(m_0)", kBGShiftScalar, idxRange(27, 42),
+        dirs.push_back({"Delta_BG(m_0)", BGShiftKind::Scalar, idxRange(27, 42),
                         plainRoot(maxByAbs(universalScalars))});
         dirs.push_back(gauginoDir);
         dirs.push_back(trilinDir);
@@ -277,9 +343,9 @@ static std::vector<BGDirection> bgDirections(int modselno,
     } else if (modselno == 4) {
         dirs.push_back(mHuDir);
         dirs.push_back(mHdDir);
-        dirs.push_back({"Delta_BG(m_0(1,2))", kBGShiftScalar, gen12Scalars,
+        dirs.push_back({"Delta_BG(m_0(1,2))", BGShiftKind::Scalar, gen12Scalars,
                         plainRoot(maxByAbs(gen12Scalars))});
-        dirs.push_back({"Delta_BG(m_0(3))", kBGShiftScalar, gen3Scalars,
+        dirs.push_back({"Delta_BG(m_0(3))", BGShiftKind::Scalar, gen3Scalars,
                         plainRoot(maxByAbs(gen3Scalars))});
         dirs.push_back(gauginoDir);
         dirs.push_back(trilinDir);
@@ -287,11 +353,11 @@ static std::vector<BGDirection> bgDirections(int modselno,
     } else if (modselno == 5) {
         dirs.push_back(mHuDir);
         dirs.push_back(mHdDir);
-        dirs.push_back({"Delta_BG(m_0(1))", kBGShiftScalar, gen1Scalars,
+        dirs.push_back({"Delta_BG(m_0(1))", BGShiftKind::Scalar, gen1Scalars,
                         plainRoot(maxByAbs(gen1Scalars))});
-        dirs.push_back({"Delta_BG(m_0(2))", kBGShiftScalar, gen2Scalars,
+        dirs.push_back({"Delta_BG(m_0(2))", BGShiftKind::Scalar, gen2Scalars,
                         plainRoot(maxByAbs(gen2Scalars))});
-        dirs.push_back({"Delta_BG(m_0(3))", kBGShiftScalar, gen3Scalars,
+        dirs.push_back({"Delta_BG(m_0(3))", BGShiftKind::Scalar, gen3Scalars,
                         plainRoot(maxByAbs(gen3Scalars))});
         dirs.push_back(gauginoDir);
         dirs.push_back(trilinDir);
@@ -316,54 +382,382 @@ static std::vector<BGDirection> bgDirections(int modselno,
         for (int k = 0; k < 15; ++k) {
             const int i = 27 + k;
             dirs.push_back({std::string("Delta_BG(") + sfermionNames[k] + ")",
-                            kBGShiftScalar, {i}, plainRoot(G[i])});
+                            BGShiftKind::Scalar, {i}, plainRoot(G[i])});
         }
         for (int k = 0; k < 3; ++k) {
             const int i = 3 + k;
             dirs.push_back({std::string("Delta_BG(") + gauginoNames[k] + ")",
-                            kBGShiftPlain, {i}, G[i]});
+                            BGShiftKind::Plain, {i}, G[i]});
         }
         for (int k = 0; k < 9; ++k) {
             const int i = 16 + k;
             dirs.push_back({std::string("Delta_BG(") + trilinearNames[k] + ")",
-                            kBGShiftTrilinear, {i}, G[i] / G[i - 9]});
+                            BGShiftKind::Trilinear, {i}, G[i] / G[i - 9]});
         }
         dirs.push_back(muDir);
-        dirs.push_back({"Delta_BG(B)", kBGShiftBilinear, {42}, G[42] / G[6]});
+        dirs.push_back({"Delta_BG(B)", BGShiftKind::Bilinear, {42}, G[42] / G[6]});
     }
+    for (std::size_t i = 0; i < dirs.size(); ++i) dirs[i].ordinal = i;
     return dirs;
 }
 
-std::vector<LabeledValueBG> DBG_calc(int& modselno, int& precselno,
-                                high_prec_float GUT_SCALE, high_prec_float myweakscale, high_prec_float inptanbval,
-                                std::vector<high_prec_float> GUT_boundary_conditions, high_prec_float originalmZ2value) {
-    // GUT_SCALE and myweakscale should be log(Q)
-    vector<LabeledValueBG> dbglist;
-    high_prec_float mymZ_squared = 91.1876 * 91.1876;
-
-    // One loop over the model's directions, whatever the model. The direction list carries the
-    // shift kind, the slots to move and the magnitude, so nothing here depends on which model
-    // is selected or on how many directions it has -- which is what lets pMSSM-30 plus mu run
-    // its directions through the same code that runs CMSSM's.
-    //
-    // COST, so it is not a surprise: solves = directions * stencil nodes, and every solve is
-    // one solveODEs from the GUT scale to the weak scale plus one getmZ2. bgStencilNodes
-    // returns 8, 4 and 2 nodes for precselno 1, 2 and anything else respectively, so a LOWER
-    // precselno is more expensive.
-    const std::vector<BGDirection> directions = bgDirections(modselno, GUT_boundary_conditions);
-    const std::vector<high_prec_float> stencilNodes = bgStencilNodes(precselno);
-    for (std::size_t d = 0; d < directions.size(); ++d) {
-        const BGDirection& dir = directions[d];
-        const high_prec_float h = bgStepSize(dir.value, precselno);
-        std::vector<high_prec_float> mZ2Values;
-        mZ2Values.reserve(stencilNodes.size());
-        for (std::size_t n = 0; n < stencilNodes.size(); ++n) {
-            mZ2Values.push_back(bgShiftedMZ2(dir, stencilNodes[n] * h, GUT_boundary_conditions,
-                                             GUT_SCALE, myweakscale));
-        }
-        dbglist.push_back({(dir.value / mymZ_squared)
-                               * deriv_num_calc(precselno, h, mZ2Values),
-                           dir.label});
+BGDirectionDiagnostic adaptiveTwoPointDirection(
+        const BGDirection& direction, const high_prec_float& mZSquared,
+        const BGNodePairEvaluator& evaluatePair) {
+    BGDirectionDiagnostic diagnostic;
+    diagnostic.ordinal = direction.ordinal;
+    diagnostic.label = direction.label;
+    if (!finiteBG(direction.value) || !finiteBG(mZSquared) || !(mZSquared > 0)) {
+        diagnostic.failure = "the direction coordinate or mZ squared denominator is invalid";
+        return diagnostic;
     }
-    return sortAndReturnBG(dbglist);
+
+    high_prec_float h0 = 0;
+    try {
+        h0 = doubleDomainStep(direction.value);
+    } catch (const std::exception& error) {
+        diagnostic.failure = error.what();
+        return diagnostic;
+    }
+
+    std::vector<std::pair<BGNodeDiagnostic, BGNodeDiagnostic>> cache;
+    auto getPair = [&](unsigned level)
+            -> const std::pair<BGNodeDiagnostic, BGNodeDiagnostic>& {
+        while (cache.size() <= level) {
+            const unsigned nextLevel = static_cast<unsigned>(cache.size());
+            const high_prec_float magnitude = ldexp(h0, static_cast<int>(nextLevel));
+            try {
+                auto pair = evaluatePair(magnitude, nextLevel);
+                pair.first.shift = -magnitude;
+                pair.first.level = nextLevel;
+                pair.second.shift = magnitude;
+                pair.second.level = nextLevel;
+                cache.push_back(std::move(pair));
+            } catch (const std::exception& error) {
+                BGNodeDiagnostic negative;
+                negative.shift = -magnitude;
+                negative.level = nextLevel;
+                negative.failure = std::string("node evaluation threw: ") + error.what();
+                BGNodeDiagnostic positive = negative;
+                positive.shift = magnitude;
+                cache.push_back({std::move(negative), std::move(positive)});
+            } catch (...) {
+                BGNodeDiagnostic negative;
+                negative.shift = -magnitude;
+                negative.level = nextLevel;
+                negative.failure = "node evaluation threw an unknown exception";
+                BGNodeDiagnostic positive = negative;
+                positive.shift = magnitude;
+                cache.push_back({std::move(negative), std::move(positive)});
+            }
+        }
+        return cache[level];
+    };
+
+    const high_prec_float prefactor = direction.value / mZSquared;
+    for (unsigned firstLevel = 0; ; ++firstLevel) {
+        const high_prec_float h = ldexp(h0, static_cast<int>(firstLevel));
+        if (!(high_prec_float(4) * h < high_prec_float(1))) break;
+
+        BGWindowDiagnostic window;
+        window.firstLevel = firstLevel;
+        window.h = h;
+        getPair(firstLevel + 2);
+        const auto& pairH = cache[firstLevel];
+        const auto& pair2H = cache[firstLevel + 1];
+        const auto& pair4H = cache[firstLevel + 2];
+        const std::array<const std::pair<BGNodeDiagnostic, BGNodeDiagnostic>*, 3> pairs = {
+            &pairH, &pair2H, &pair4H};
+
+        bool nodesValid = true;
+        for (const auto* pair : pairs) {
+            nodesValid = nodesValid && validNode(pair->first) && validNode(pair->second);
+        }
+        if (!nodesValid) {
+            window.failure = "a required plus/minus state or root is invalid";
+            diagnostic.windows.push_back(std::move(window));
+            continue;
+        }
+
+        const std::array<high_prec_float, 3> steps = {
+            h, high_prec_float(2) * h, high_prec_float(4) * h};
+        bool finiteWindow = true;
+        for (std::size_t i = 0; i < pairs.size(); ++i) {
+            const auto& pair = *pairs[i];
+            const high_prec_float contribution = prefactor
+                * (pair.second.root.value - pair.first.root.value)
+                / (high_prec_float(2) * steps[i]);
+            const high_prec_float uncertainty = abs(prefactor)
+                * ((pair.second.root.upper - pair.second.root.lower)
+                   + (pair.first.root.upper - pair.first.root.lower))
+                / (high_prec_float(4) * steps[i]);
+            window.contributions.push_back(contribution);
+            window.rootUncertainties.push_back(uncertainty);
+            finiteWindow = finiteWindow && finiteBG(contribution) && finiteBG(uncertainty)
+                && uncertainty >= 0;
+        }
+        if (!finiteWindow) {
+            window.failure = "a contribution or propagated root uncertainty is non-finite";
+            diagnostic.windows.push_back(std::move(window));
+            continue;
+        }
+
+        high_prec_float minimum = window.contributions[0];
+        high_prec_float maximum = window.contributions[0];
+        high_prec_float maximumMagnitude = abs(window.contributions[0]);
+        for (const auto& contribution : window.contributions) {
+            minimum = min(minimum, contribution);
+            maximum = max(maximum, contribution);
+            maximumMagnitude = max(maximumMagnitude, abs(contribution));
+        }
+        window.contributionSpan = maximum - minimum;
+        window.agreementTolerance = max(high_prec_float(1),
+            high_prec_float("0.005") * maximumMagnitude);
+        bool uncertaintyAccepted = true;
+        for (const auto& uncertainty : window.rootUncertainties) {
+            uncertaintyAccepted = uncertaintyAccepted
+                && uncertainty <= high_prec_float("0.01") * window.agreementTolerance;
+        }
+        if (!uncertaintyAccepted) {
+            window.failure = "propagated root uncertainty exceeds 1% of the agreement tolerance";
+            diagnostic.windows.push_back(std::move(window));
+            continue;
+        }
+        if (window.contributionSpan > window.agreementTolerance) {
+            window.failure = "C(h), C(2h), and C(4h) do not meet the agreement tolerance";
+            diagnostic.windows.push_back(std::move(window));
+            continue;
+        }
+
+        window.accepted = true;
+        diagnostic.contribution = window.contributions[0];
+        diagnostic.rootUncertainty = window.rootUncertainties[0];
+        diagnostic.acceptedH = h;
+        diagnostic.accepted = true;
+        diagnostic.windows.push_back(std::move(window));
+        break;
+    }
+
+    for (const auto& pair : cache) {
+        diagnostic.nodes.push_back(pair.first);
+        diagnostic.nodes.push_back(pair.second);
+    }
+    if (!diagnostic.accepted) {
+        if (diagnostic.windows.empty()) {
+            diagnostic.failure = "the initial adaptive window already reaches the unit shift bound";
+        } else {
+            diagnostic.failure = "no outward adaptive two-point window met the root and agreement gates";
+            if (!diagnostic.windows.back().failure.empty()) {
+                diagnostic.failure += "; last window: " + diagnostic.windows.back().failure;
+            }
+            std::size_t invalidNodes = 0;
+            const BGNodeDiagnostic* firstInvalid = nullptr;
+            for (const auto& node : diagnostic.nodes) {
+                if (!validNode(node)) {
+                    ++invalidNodes;
+                    if (firstInvalid == nullptr) firstInvalid = &node;
+                }
+            }
+            if (firstInvalid != nullptr) {
+                std::ostringstream details;
+                details << "; invalid nodes=" << invalidNodes
+                        << "; first invalid shift=" << firstInvalid->shift << ": ";
+                if (!firstInvalid->failure.empty()) {
+                    details << firstInvalid->failure;
+                } else {
+                    details << describeMZ2Failure(firstInvalid->root);
+                }
+                diagnostic.failure += details.str();
+            }
+        }
+    }
+    return diagnostic;
+}
+
+}  // namespace dbg_detail
+
+namespace {
+
+std::pair<BGNodeDiagnostic, BGNodeDiagnostic> evaluateProductionPair(
+        const dbg_detail::BGDirection& direction, const high_prec_float& magnitude,
+        unsigned level, const std::vector<high_prec_float>& unshifted,
+        const high_prec_float& initialScale, const high_prec_float& finalScale,
+        const high_prec_float& continuationSeed) {
+    BGNodeDiagnostic negative;
+    negative.shift = -magnitude;
+    negative.level = level;
+    BGNodeDiagnostic positive;
+    positive.shift = magnitude;
+    positive.level = level;
+    std::vector<high_prec_float> negativeState;
+    std::vector<high_prec_float> positiveState;
+    std::string negativeFailure;
+    std::string positiveFailure;
+    const bool negativeShifted = dbg_detail::applyShift(
+        direction, -magnitude, unshifted, negativeState, negativeFailure);
+    const bool positiveShifted = dbg_detail::applyShift(
+        direction, magnitude, unshifted, positiveState, positiveFailure);
+    if (!negativeShifted || !positiveShifted) {
+        negative.failure = negativeShifted ? positiveFailure : negativeFailure;
+        positive.failure = positiveShifted ? negativeFailure : positiveFailure;
+        return {negative, positive};
+    }
+    std::string distinctFailure;
+    const bool distinct = distinctDoubleStates(
+        unshifted, negativeState, positiveState, distinctFailure);
+    negative.boundaryStatesDistinct = distinct;
+    positive.boundaryStatesDistinct = distinct;
+    if (!distinct) {
+        negative.failure = distinctFailure;
+        positive.failure = distinctFailure;
+        return {negative, positive};
+    }
+    try {
+        negative.root = shiftedMZ2Solve(
+            initialScale, finalScale, negativeState, continuationSeed);
+        if (!negative.root.ok) negative.failure = describeMZ2Failure(negative.root);
+    } catch (const std::exception& error) {
+        negative.failure = std::string("negative node threw: ") + error.what();
+    } catch (...) {
+        negative.failure = "negative node threw an unknown exception";
+    }
+    try {
+        positive.root = shiftedMZ2Solve(
+            initialScale, finalScale, positiveState, continuationSeed);
+        if (!positive.root.ok) positive.failure = describeMZ2Failure(positive.root);
+    } catch (const std::exception& error) {
+        positive.failure = std::string("positive node threw: ") + error.what();
+    } catch (...) {
+        positive.failure = "positive node threw an unknown exception";
+    }
+    return {negative, positive};
+}
+
+BGDirectionDiagnostic fixedDiagnosticDirection(
+        const dbg_detail::BGDirection& direction, int precision,
+        const high_prec_float& mZSquared,
+        const dbg_detail::BGNodePairEvaluator& evaluatePair) {
+    BGDirectionDiagnostic diagnostic;
+    diagnostic.ordinal = direction.ordinal;
+    diagnostic.label = direction.label;
+    high_prec_float h = 0;
+    try {
+        h = dbg_detail::fixedDiagnosticStep(direction.value, precision);
+    } catch (const std::exception& error) {
+        diagnostic.failure = error.what();
+        return diagnostic;
+    }
+    const unsigned pairCount = precision == 1 ? 4 : 2;
+    std::vector<std::pair<BGNodeDiagnostic, BGNodeDiagnostic>> pairs;
+    pairs.reserve(pairCount);
+    for (unsigned i = 0; i < pairCount; ++i) {
+        const high_prec_float magnitude = high_prec_float(i + 1) * h;
+        auto pair = evaluatePair(magnitude, i);
+        pair.first.shift = -magnitude;
+        pair.first.level = i;
+        pair.second.shift = magnitude;
+        pair.second.level = i;
+        diagnostic.nodes.push_back(pair.first);
+        diagnostic.nodes.push_back(pair.second);
+        if (!validNode(pair.first) || !validNode(pair.second)) {
+            diagnostic.failure = "a fixed-stencil plus/minus state or root is invalid";
+            return diagnostic;
+        }
+        pairs.push_back(std::move(pair));
+    }
+
+    std::vector<high_prec_float> mZSquaredValues;
+    mZSquaredValues.reserve(pairCount * 2);
+    for (unsigned i = pairCount; i > 0; --i) {
+        mZSquaredValues.push_back(pairs[i - 1].first.root.value);
+    }
+    for (unsigned i = 0; i < pairCount; ++i) {
+        mZSquaredValues.push_back(pairs[i].second.root.value);
+    }
+    const high_prec_float prefactor = direction.value / mZSquared;
+    diagnostic.contribution = prefactor * deriv_num_calc(precision, h, mZSquaredValues);
+    diagnostic.rootUncertainty = fixedStencilUncertainty(
+        precision, h, prefactor, pairs);
+    if (!finiteBG(diagnostic.contribution) || !finiteBG(diagnostic.rootUncertainty)) {
+        diagnostic.failure = "fixed-stencil contribution or root uncertainty is non-finite";
+        return diagnostic;
+    }
+    diagnostic.accepted = true;
+    diagnostic.acceptedH = h;
+    BGWindowDiagnostic window;
+    window.h = h;
+    window.contributions = {diagnostic.contribution};
+    window.rootUncertainties = {diagnostic.rootUncertainty};
+    window.accepted = true;
+    diagnostic.windows.push_back(std::move(window));
+    return diagnostic;
+}
+
+}  // namespace
+
+BGResult DBG_calc(int& modselno, int& precselno,
+                  high_prec_float GUT_SCALE, high_prec_float myweakscale,
+                  high_prec_float inptanbval,
+                  std::vector<high_prec_float> GUT_boundary_conditions,
+                  high_prec_float originalmZ2value) {
+    (void)inptanbval;
+    BGResult result;
+    const high_prec_float physicalMZSquared = high_prec_float("91.1876")
+        * high_prec_float("91.1876");
+    if (modselno < 1 || modselno > 6) {
+        result.failure = "Delta_BG model index must be in [1, 6]";
+        return result;
+    }
+    if (precselno < 1 || precselno > 3) {
+        result.failure = "Delta_BG precision must be 1, 2, or 3";
+        return result;
+    }
+    if (GUT_boundary_conditions.size() < 44) {
+        result.failure = "Delta_BG requires all 44 GUT-scale boundary conditions";
+        return result;
+    }
+    if (!finiteBG(GUT_SCALE) || !finiteBG(myweakscale)
+            || !finiteBG(originalmZ2value) || !(originalmZ2value > 0)) {
+        result.failure = "Delta_BG received an invalid scale or continuation seed";
+        return result;
+    }
+
+    const std::vector<dbg_detail::BGDirection> directions =
+        dbg_detail::buildDirections(modselno, GUT_boundary_conditions);
+    std::vector<LabeledValueBG> contributions;
+    contributions.reserve(directions.size());
+    for (const auto& direction : directions) {
+        if (!finiteBG(direction.value)) {
+            result.failure = "Delta_BG direction has a non-finite coordinate: "
+                + direction.label;
+            return result;
+        }
+        const dbg_detail::BGNodePairEvaluator evaluatePair =
+            [&](const high_prec_float& magnitude, unsigned level) {
+                return evaluateProductionPair(
+                    direction, magnitude, level, GUT_boundary_conditions,
+                    GUT_SCALE, myweakscale, originalmZ2value);
+            };
+        BGDirectionDiagnostic diagnostic = dbg_detail::usesAdaptiveTwoPoint(precselno)
+            ? dbg_detail::adaptiveTwoPointDirection(
+                direction, physicalMZSquared, evaluatePair)
+            : fixedDiagnosticDirection(
+                direction, precselno, physicalMZSquared, evaluatePair);
+        result.directions.push_back(diagnostic);
+        if (!diagnostic.accepted) {
+            result.failure = "Delta_BG direction failed: " + direction.label
+                + ": " + diagnostic.failure;
+            return result;
+        }
+        contributions.push_back({diagnostic.contribution, direction.label,
+                                 direction.ordinal, diagnostic.rootUncertainty});
+    }
+    result.contributions = dbg_detail::orderContributions(contributions);
+    if (result.contributions.empty()) {
+        result.failure = "Delta_BG produced no contributions";
+        return result;
+    }
+    result.headline = dbg_detail::makeHeadlineDiagnostic(result.contributions);
+    result.ok = true;
+    return result;
 }

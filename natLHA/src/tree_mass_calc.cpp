@@ -9,16 +9,6 @@
 
 using namespace std;
 
-// Function to compute F = m^2.0 * (ln(m^2 / Q^2) - 1) for linear mass term
-double logfunc(double mass, double Q_renorm_sq) {
-    return pow(mass, 2.0) * (log(pow(mass, 2.0) / Q_renorm_sq) - 1);
-}
-
-// Function to compute F = m^2.0 * (ln(m^2 / Q^2) - 1) for quadratic mass term
-double logfunc2(double masssq, double Q_renorm_sq) {
-    return masssq * (log(masssq / Q_renorm_sq) - 1);
-}
-
 double PVB1(double extmom, double mass2, double Qval) {
     double my_M = max(pow(extmom, 2.0), mass2);
     double my_x = pow((extmom / mass2),2.0);

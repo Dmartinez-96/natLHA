@@ -1,125 +1,455 @@
-#include "MSSM_RGE_solver.hpp"
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
-#include "constants.hpp"
-#include <iostream>
+
+#include "MSSM_RGE_solver.hpp"
+#include "radcorr_calc.hpp"
+
+#include <boost/math/tools/roots.hpp>
+#include <boost/numeric/odeint.hpp>
+
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <cstdlib>
+#include <iostream>
+#include <limits>
+#include <string>
+#include <utility>
 #include <vector>
-#include <boost/numeric/odeint.hpp>
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
-typedef boost::numeric::odeint::runge_kutta_dopri5<std::vector<double>> stepper_type;
+namespace {
 
-struct MyObserver{
-    double& t_target;
-    double& min_difference;
-    bool& condition_met;
-    double intermmz_q_sq;
+using State = std::vector<double>;
+using Stepper = boost::numeric::odeint::runge_kutta_dopri5<State>;
 
-    MyObserver(double& t_target, double& min_difference, bool& condition_met, double intermmz_q_sq) : t_target(t_target),
-        min_difference(min_difference), condition_met(condition_met), intermmz_q_sq(intermmz_q_sq) {}
+constexpr std::size_t kStateSize = 44;
+constexpr double kMZ = 91.1876;
+constexpr double kSearchLowerScale = 500.0;
+constexpr double kRootUpperScale = 1.0e11;
 
-    void operator()(const std::vector<double>& x, const double t) const {
-        double current_Q = std::exp(t);
-        double intermmQ3_sq_arr = (x[29]);
-        double intermmU3_sq_arr = (x[35]);
-        double intermvHiggs_wk = std::sqrt((2.0) / ((3.0 * std::pow(x[0], 2.0) / 5.0) + (std::pow(x[1], 2.0)))) * 91.1876;
-        double intermbeta_wk = std::atan(x[43]);
-        double intermsinsqb = std::pow(std::sin(intermbeta_wk), 2.0);
-        double intermcossqb = std::pow(std::cos(intermbeta_wk), 2.0);
-        double intermvu = intermvHiggs_wk * std::sqrt(intermsinsqb);
-        double intermvd = intermvHiggs_wk * std::sqrt(intermcossqb);
-        double intermvu_sq = std::pow(intermvu, 2.0);
-        double intermvd_sq = std::pow(intermvd, 2.0);
-        double intermv_sq = std::pow(intermvHiggs_wk, 2.0);
-        double intermtan_th_w = std::sqrt(3.0 / 5.0) * x[0] / x[1];
-        double intermtheta_w = std::atan(intermtan_th_w);
-        double intermsinsq_th_w = std::pow(std::sin(intermtheta_w), 2.0);
-        double intermgpr_wk = std::sqrt(3.0 / 5.0) * x[0];
-        double intermg2_wk = x[1];
-        double intermgz_sq = (std::pow(intermg2_wk, 2.0) + std::pow(intermgpr_wk, 2.0)) / 8.0;
-        double intermyt_wk = x[7];
-        double intermmymt = intermyt_wk * intermvu;
-        double intermmymtsq = std::pow(intermmymt, 2.0);
-        //double intermmz_q_sq = std::pow(91.1876, 2.0);
-        double intermat_wk = x[16];
-        double intermmuweakBC = x[6];
-        double intermcos2b = std::cos(2.0 * intermbeta_wk);
-        double intermsin2b = std::sin(2.0 * intermbeta_wk);
-        // Electroweak D-terms for the stops. Same expressions as radcorr_calc.cpp, where the
-        // derivation from S. P. Martin's primer eq. (defDeltaphi) is written out in full:
-        //     suL   (vu^2 - vd^2) * ( g'^2/12 - g^2/4 )
-        //     suR  -(vu^2 - vd^2) * ( g'^2/3 )
-        // `intermgpr_wk` is the unnormalized g', formed above as sqrt(3/5) * x[0].
-        double intermDelta_suL = (pow(intermvu, 2.0) - pow(intermvd, 2.0)) * ((intermgpr_wk * intermgpr_wk / 12.0) - (intermg2_wk * intermg2_wk / 4.0));
-        double intermDelta_suR = (-1.0) * (pow(intermvu, 2.0) - pow(intermvd, 2.0)) * (intermgpr_wk * intermgpr_wk / 3.0);
-        double intermm_stop_1sq = (0.5)\
-            * (intermmQ3_sq_arr + intermmU3_sq_arr + (2.0 * intermmymtsq) + intermDelta_suL + intermDelta_suR
-               - sqrt(pow((intermmQ3_sq_arr + intermDelta_suL - intermmU3_sq_arr - intermDelta_suR), 2.0)
-                      + (4.0 * pow(((intermat_wk * intermvu) - (intermmuweakBC * intermyt_wk * intermvd)), 2.0))));
-        double intermm_stop_2sq = (0.5)\
-            * (intermmQ3_sq_arr + intermmU3_sq_arr + (2.0 * intermmymtsq) + intermDelta_suL + intermDelta_suR
-               + sqrt(pow((intermmQ3_sq_arr + intermDelta_suL - intermmU3_sq_arr - intermDelta_suR), 2.0)
-                      + (4.0 * pow(((intermat_wk * intermvu) - (intermmuweakBC * intermyt_wk * intermvd)), 2.0))));
-
-        double current_difference = std::abs(current_Q - std::pow(std::abs(intermm_stop_1sq
-                                                                           * intermm_stop_2sq), 0.25));
-
-        if (current_difference > min_difference) {
-            return; // No need to check further
-        }
-
-        if ((current_difference < min_difference) && (current_Q < 1.0e11)) {
-            condition_met = true;
-            t_target = t;
-            min_difference = current_difference;
-        }
-    }
-};
-
-std::vector<RGEStruct> solveODEstoMSUSY(std::vector<double> initialConditions, double startTime, double timeStep, double& t_target, double value_of_mZ2) {
-    using state_type = std::vector<double>;
-    state_type x = initialConditions;
-    double endTime = std::log(500.0);
-    double min_difference = std::numeric_limits<double>::infinity();
-    bool condition_met = false;
-
-    MyObserver myObserver(t_target, min_difference, condition_met, value_of_mZ2);
-
-    // Integrate
-    const auto tStart = std::chrono::steady_clock::now();
-    boost::numeric::odeint::integrate_adaptive(
-        make_controlled(1.0E-12, 1.0E-12, stepper_type()),
-        MSSMRGESolver, x, startTime, std::log(500.0), timeStep, myObserver
-    );
-    const double elapsed =
-        std::chrono::duration<double>(std::chrono::steady_clock::now() - tStart).count();
-
-    // Wall time for THIS call, printed when NATLHA_ODE_TRACE is set to anything non-empty.
-    // Off by default and written to stderr, so stdout is unchanged either way.
-    //
-    // Traced separately from solveODEs because it is a different integration with a different
-    // job, and because its tolerances are the literals on the make_controlled line above: the
-    // NATLHA_ODE_ABS_ERR / NATLHA_ODE_REL_ERR overrides occur only in MSSM_RGE_solver.cpp and
-    // apply to solveODEs, not here. t_from and t_to are printed so the span and its direction
-    // can be read off the output rather than assumed.
-    //
-    // Seconds rather than a step count: the observer here already carries the stop-condition
-    // state, and threading a counter through it would change more than this measurement needs.
-    static const bool trace = [] {
-        const char * e = std::getenv("NATLHA_ODE_TRACE");
-        return e != nullptr && *e != '\0';
+bool traceEnabled() {
+    static const bool enabled = [] {
+        const char * value = std::getenv("NATLHA_ODE_TRACE");
+        return value != nullptr && *value != '\0';
     }();
-    if (trace) {
-        std::cerr << "# stopfinder_trace seconds " << elapsed
-                  << "  t_from " << startTime << "  t_to " << std::log(500.0)
-                  << "  t_target " << t_target
-                  << "  condition_met " << (condition_met ? 1 : 0) << "\n";
+    return enabled;
+}
+
+void requireFiniteState(const State& state, const std::string& stage) {
+    std::vector<std::string> invalid;
+    if (state.size() != kStateSize) {
+        invalid.push_back("state size=" + std::to_string(state.size()));
+    } else {
+        for (std::size_t i = 0; i < state.size(); ++i) {
+            if (!std::isfinite(state[i])) {
+                invalid.push_back("state[" + std::to_string(i) + "]");
+            }
+        }
+    }
+    if (!invalid.empty()) throw NumericalFailure(stage, invalid);
+}
+
+class UnusableNumericalBoundary {};
+
+void incrementBoundaryCount(std::size_t& count, const std::string& name) {
+    if (count == std::numeric_limits<std::size_t>::max()) {
+        throw NumericalFailure("Q_SUSY root search", {name + " counter overflow"});
+    }
+    ++count;
+}
+
+std::string rootCountDiagnostic(
+    std::size_t roots,
+    std::size_t invalidBoundaries,
+    std::size_t nonFiniteBoundaries) {
+    return "roots=" + std::to_string(roots)
+           + ", invalid_boundaries=" + std::to_string(invalidBoundaries)
+           + ", nonfinite_boundaries=" + std::to_string(nonFiniteBoundaries);
+}
+
+}  // namespace
+
+QSusyRootSearchFailure::QSusyRootSearchFailure(
+    std::size_t roots,
+    std::size_t invalidBoundaryCount,
+    std::size_t nonFiniteBoundaryCount)
+    : NumericalFailure(
+          "Q_SUSY root search",
+          {rootCountDiagnostic(
+              roots, invalidBoundaryCount, nonFiniteBoundaryCount)}),
+      rootsFound(roots),
+      invalidBoundaries(invalidBoundaryCount),
+      nonFiniteBoundaries(nonFiniteBoundaryCount) {}
+
+bool qsusy_detail::sameRootScale(double first, double second) {
+    return first == second;
+}
+
+void qsusy_detail::addRoot(
+    std::vector<RootCandidate>& roots,
+    RootCandidate candidate) {
+    for (const RootCandidate& root : roots) {
+        if (sameRootScale(root.logScale, candidate.logScale)) return;
+    }
+    roots.push_back(std::move(candidate));
+}
+
+double qsusy_detail::nextScanLogScale(
+    double currentLogScale,
+    double lowerLogScale,
+    double maxDeltaLogQ) {
+    if (!std::isfinite(currentLogScale) || !std::isfinite(lowerLogScale)
+            || !std::isfinite(maxDeltaLogQ) || maxDeltaLogQ <= 0.0
+            || currentLogScale <= lowerLogScale) {
+        throw NumericalFailure(
+            "Q_SUSY scan spacing", {"invalid scan bounds or maximum spacing"});
     }
 
-    std::vector<RGEStruct> solstruct = { {x, t_target} };
-    return solstruct;
+    const double remaining = currentLogScale - lowerLogScale;
+    const double nextLogScale = remaining <= maxDeltaLogQ
+        ? lowerLogScale
+        : std::nextafter(currentLogScale - maxDeltaLogQ, currentLogScale);
+    const double observed = currentLogScale - nextLogScale;
+    if (!std::isfinite(remaining) || !std::isfinite(nextLogScale)
+            || !std::isfinite(observed) || nextLogScale < lowerLogScale
+            || nextLogScale >= currentLogScale || observed > maxDeltaLogQ) {
+        throw NumericalFailure(
+            "Q_SUSY scan spacing",
+            {"current=" + std::to_string(currentLogScale),
+             "next=" + std::to_string(nextLogScale),
+             "lower=" + std::to_string(lowerLogScale),
+             "observed=" + std::to_string(observed),
+             "maximum=" + std::to_string(maxDeltaLogQ)});
+    }
+    return nextLogScale;
+}
+
+void qsusy_detail::requireUniqueRootCount(
+    std::size_t roots,
+    std::size_t invalidBoundaries,
+    std::size_t nonFiniteBoundaries) {
+    if (roots != 1 || nonFiniteBoundaries != 0) {
+        throw QSusyRootSearchFailure(
+            roots, invalidBoundaries, nonFiniteBoundaries);
+    }
+}
+
+void qsusy_detail::recordIsolatedNumericalBoundary(ScanState& scanState) {
+    incrementBoundaryCount(scanState.invalidBoundaries, "invalid-boundary");
+    incrementBoundaryCount(scanState.nonFiniteBoundaries, "nonfinite-boundary");
+}
+
+std::vector<qsusy_detail::ScanEvent> qsusy_detail::classifySegment(
+    double highLogScale,
+    const StopScalePoint& highPoint,
+    double lowLogScale,
+    const StopScalePoint& lowPoint,
+    ScanState& scanState) {
+    const auto recordDomain = [&](const StopScalePoint& point) {
+        if (!point.numericallyValid) {
+            if (!scanState.inNonFiniteDomain) {
+                incrementBoundaryCount(
+                    scanState.nonFiniteBoundaries, "nonfinite-boundary");
+            }
+            scanState.inNonFiniteDomain = true;
+        } else {
+            scanState.inNonFiniteDomain = false;
+        }
+        if (!point.numericallyValid || !point.physical) {
+            if (!scanState.inInvalidDomain) {
+                incrementBoundaryCount(
+                    scanState.invalidBoundaries, "invalid-boundary");
+            }
+            scanState.inInvalidDomain = true;
+        } else {
+            scanState.inInvalidDomain = false;
+        }
+    };
+    recordDomain(highPoint);
+    recordDomain(lowPoint);
+
+    const auto validRootPoint = [](const StopScalePoint& point) {
+        return point.numericallyValid && point.physical;
+    };
+    std::vector<ScanEvent> events;
+    if (validRootPoint(highPoint) && highPoint.logResidual == 0.0) {
+        events.push_back({ScanEventKind::exactHigh, highLogScale, highLogScale});
+    }
+    if (validRootPoint(lowPoint) && lowPoint.logResidual == 0.0) {
+        events.push_back({ScanEventKind::exactLow, lowLogScale, lowLogScale});
+    }
+    if (validRootPoint(highPoint) && validRootPoint(lowPoint)
+            && highPoint.logResidual != 0.0 && lowPoint.logResidual != 0.0
+            && std::signbit(highPoint.logResidual)
+                   != std::signbit(lowPoint.logResidual)) {
+        events.push_back({ScanEventKind::signBracket, highLogScale, lowLogScale});
+    }
+    return events;
+}
+
+StopScalePoint evaluateStopScalePoint(const std::vector<double>& state, double logScale) {
+    requireFiniteState(state, "Q_SUSY stop matrix input");
+    if (!std::isfinite(logScale)) {
+        throw NumericalFailure("Q_SUSY stop matrix input", {"log scale"});
+    }
+
+    const double gPrime = std::sqrt(3.0 / 5.0) * state[0];
+    const double g2 = state[1];
+    const double vevDenominator = (3.0 * state[0] * state[0] / 5.0) + g2 * g2;
+    const double higgsVev = std::sqrt(2.0 / vevDenominator) * kMZ;
+    const double beta = std::atan(state[43]);
+    const double vu = higgsVev * std::sqrt(std::pow(std::sin(beta), 2.0));
+    const double vd = higgsVev * std::sqrt(std::pow(std::cos(beta), 2.0));
+    const double mt = state[7] * vu;
+    const double vevDifference = vu * vu - vd * vd;
+    const double deltaL = vevDifference * ((gPrime * gPrime / 12.0) - (g2 * g2 / 4.0));
+    const double deltaR = -vevDifference * gPrime * gPrime / 3.0;
+    const double mixing = state[16] * vu - state[6] * state[7] * vd;
+    const double mLL = state[29] + mt * mt + deltaL;
+    const double mRR = state[35] + mt * mt + deltaR;
+    const double discriminant = (mLL - mRR) * (mLL - mRR) + 4.0 * mixing * mixing;
+    const double splitting = std::sqrt(discriminant);
+
+    StopScalePoint point;
+    point.stop1Squared = 0.5 * (mLL + mRR - splitting);
+    point.stop2Squared = 0.5 * (mLL + mRR + splitting);
+    if (!std::isfinite(point.stop1Squared) || !std::isfinite(point.stop2Squared)) {
+        point.numericallyValid = false;
+        return point;
+    }
+    if (point.stop1Squared <= 0.0 || point.stop2Squared <= 0.0) return point;
+
+    point.physical = true;
+    point.logResidual = logScale
+                        - 0.25 * (std::log(point.stop1Squared)
+                                  + std::log(point.stop2Squared));
+    if (!std::isfinite(point.logResidual)) {
+        point.numericallyValid = false;
+        point.physical = false;
+    }
+    return point;
+}
+
+QSusyResult findQSusy(const std::vector<double>& highScaleState,
+                      double highLogScale,
+                      double timeStep,
+                      double maxDeltaLogQ) {
+    requireFiniteState(highScaleState, "Q_SUSY root search input");
+    const double lowerLogScale = std::log(kSearchLowerScale);
+    if (!std::isfinite(highLogScale) || highLogScale <= lowerLogScale) {
+        throw NumericalFailure("Q_SUSY root search input", {"high log scale"});
+    }
+    if (!std::isfinite(timeStep) || timeStep == 0.0) {
+        throw NumericalFailure("Q_SUSY root search input", {"time step"});
+    }
+    if (!std::isfinite(maxDeltaLogQ) || maxDeltaLogQ <= 0.0) {
+        throw NumericalFailure(
+            "Q_SUSY root search input", {"maximum delta log Q"});
+    }
+
+    const ODETolerances& tolerances = odeTolerances();
+    auto dense = boost::numeric::odeint::make_dense_output(
+        tolerances.absolute, tolerances.relative, Stepper());
+    dense.initialize(highScaleState, highLogScale, -std::abs(timeStep));
+
+    const double scanUpper = std::min(
+        highLogScale,
+        std::nextafter(std::log(kRootUpperScale), lowerLogScale));
+    std::vector<qsusy_detail::RootCandidate> roots;
+    std::size_t acceptedSteps = 0;
+    std::size_t scanSegments = 0;
+    double maxObservedDeltaLogQ = 0.0;
+    std::size_t refinementEvaluations = 0;
+    qsusy_detail::ScanState scanState;
+    bool havePrevious = false;
+    double previousLogScale = 0.0;
+    State previousState;
+    StopScalePoint previousPoint;
+
+    const auto started = std::chrono::steady_clock::now();
+    try {
+        while (dense.current_time() > lowerLogScale) {
+            if (dense.current_time() + dense.current_time_step() < lowerLogScale) {
+                dense.initialize(dense.current_state(), dense.current_time(),
+                                 lowerLogScale - dense.current_time());
+            }
+            const std::pair<double, double> interval = dense.do_step(MSSMRGESolver);
+            ++acceptedSteps;
+
+            const double segmentHigh = std::min(interval.first, scanUpper);
+            const double segmentLow = std::max(interval.second, lowerLogScale);
+            if (segmentHigh <= segmentLow) continue;
+
+            State scanHighState(kStateSize);
+            StopScalePoint scanHighPoint;
+            if (havePrevious && previousLogScale == segmentHigh) {
+                scanHighState = previousState;
+                scanHighPoint = previousPoint;
+            } else {
+                dense.calc_state(segmentHigh, scanHighState);
+                scanHighPoint = evaluateStopScalePoint(scanHighState, segmentHigh);
+            }
+
+            double scanHigh = segmentHigh;
+            while (scanHigh > segmentLow) {
+                const double scanLow = qsusy_detail::nextScanLogScale(
+                    scanHigh, segmentLow, maxDeltaLogQ);
+                const double observedDeltaLogQ = scanHigh - scanLow;
+                if (scanSegments == std::numeric_limits<std::size_t>::max()) {
+                    throw NumericalFailure(
+                        "Q_SUSY scan spacing", {"scan-segment counter overflow"});
+                }
+                ++scanSegments;
+                maxObservedDeltaLogQ = std::max(
+                    maxObservedDeltaLogQ, observedDeltaLogQ);
+
+                State scanLowState(kStateSize);
+                dense.calc_state(scanLow, scanLowState);
+                const StopScalePoint scanLowPoint =
+                    evaluateStopScalePoint(scanLowState, scanLow);
+
+                const std::vector<qsusy_detail::ScanEvent> events =
+                    qsusy_detail::classifySegment(
+                        scanHigh, scanHighPoint, scanLow, scanLowPoint, scanState);
+                for (const qsusy_detail::ScanEvent& event : events) {
+                    if (event.kind == qsusy_detail::ScanEventKind::exactHigh) {
+                        qsusy_detail::addRoot(
+                            roots, {scanHigh, scanHighState, scanHighPoint});
+                        continue;
+                    }
+                    if (event.kind == qsusy_detail::ScanEventKind::exactLow) {
+                        qsusy_detail::addRoot(
+                            roots, {scanLow, scanLowState, scanLowPoint});
+                        continue;
+                    }
+
+                    try {
+                        auto residual = [&](double logScale) {
+                            State state(kStateSize);
+                            dense.calc_state(logScale, state);
+                            const StopScalePoint point =
+                                evaluateStopScalePoint(state, logScale);
+                            if (!point.numericallyValid) {
+                                throw UnusableNumericalBoundary{};
+                            }
+                            if (!point.physical) {
+                                throw NumericalFailure(
+                                    "Q_SUSY root search",
+                                    {"nonpositive stop inside valid bracket"});
+                            }
+                            return point.logResidual;
+                        };
+
+                        boost::math::tools::eps_tolerance<double> tolerance;
+                        boost::uintmax_t evaluations =
+                            2 * static_cast<boost::uintmax_t>(
+                                std::numeric_limits<double>::digits);
+                        const std::pair<double, double> refined =
+                            boost::math::tools::toms748_solve(
+                                residual, scanLow, scanHigh,
+                                scanLowPoint.logResidual,
+                                scanHighPoint.logResidual, tolerance, evaluations);
+                        refinementEvaluations += static_cast<std::size_t>(evaluations);
+                        if (!tolerance(refined.first, refined.second)) {
+                            throw NumericalFailure(
+                                "Q_SUSY root search",
+                                {"TOMS 748 evaluation budget exhausted"});
+                        }
+                        const double lowerResidual = residual(refined.first);
+                        const double upperResidual = residual(refined.second);
+                        if (lowerResidual != 0.0 && upperResidual != 0.0
+                                && std::signbit(lowerResidual)
+                                       == std::signbit(upperResidual)) {
+                            throw NumericalFailure(
+                                "Q_SUSY root search",
+                                {"refined interval lost its sign bracket"});
+                        }
+
+                        const double rootLogScale =
+                            refined.first
+                            + 0.5 * (refined.second - refined.first);
+                        State rootState(kStateSize);
+                        dense.calc_state(rootLogScale, rootState);
+                        const StopScalePoint rootPoint =
+                            evaluateStopScalePoint(rootState, rootLogScale);
+                        if (!rootPoint.numericallyValid) {
+                            throw UnusableNumericalBoundary{};
+                        }
+                        if (!rootPoint.physical) {
+                            throw NumericalFailure(
+                                "Q_SUSY root search",
+                                {"refined root has nonpositive stop"});
+                        }
+                        if (std::abs(rootPoint.logResidual)
+                                > std::max(
+                                    tolerances.absolute, tolerances.relative)) {
+                            throw NumericalFailure(
+                                "Q_SUSY root search",
+                                {"refined root failed residual gate"});
+                        }
+                        qsusy_detail::addRoot(
+                            roots,
+                            {rootLogScale, std::move(rootState), rootPoint});
+                    } catch (const UnusableNumericalBoundary&) {
+                        qsusy_detail::recordIsolatedNumericalBoundary(scanState);
+                    }
+                }
+
+                scanHigh = scanLow;
+                scanHighState = std::move(scanLowState);
+                scanHighPoint = scanLowPoint;
+            }
+
+            previousLogScale = segmentLow;
+            previousState = std::move(scanHighState);
+            previousPoint = scanHighPoint;
+            havePrevious = true;
+        }
+    } catch (const NumericalFailure&) {
+        throw;
+    } catch (const std::exception& error) {
+        throw NumericalFailure("Q_SUSY root search", {error.what()});
+    }
+
+    qsusy_detail::requireUniqueRootCount(
+        roots.size(), scanState.invalidBoundaries,
+        scanState.nonFiniteBoundaries);
+
+    QSusyResult result;
+    result.stateAtRoot = std::move(roots.front().state);
+    result.logScale = roots.front().logScale;
+    result.scale = std::exp(result.logScale);
+    result.residual = roots.front().point.logResidual;
+    result.stop1Squared = roots.front().point.stop1Squared;
+    result.stop2Squared = roots.front().point.stop2Squared;
+    result.acceptedSteps = acceptedSteps;
+    result.declaredMaxDeltaLogQ = maxDeltaLogQ;
+    result.scanSegments = scanSegments;
+    result.maxObservedDeltaLogQ = maxObservedDeltaLogQ;
+    result.rootsFound = roots.size();
+    result.invalidBoundaries = scanState.invalidBoundaries;
+    result.refinementEvaluations = refinementEvaluations;
+    result.diagnostic =
+        "one positive-stop sign-changing or exact root at the declared scan spacing";
+
+    if (!std::isfinite(result.scale) || result.scale <= 0.0) {
+        throw NumericalFailure("Q_SUSY root search", {"nonpositive or non-finite scale"});
+    }
+    if (traceEnabled()) {
+        const double elapsed = std::chrono::duration<double>(
+            std::chrono::steady_clock::now() - started).count();
+        std::cerr << "# stopfinder_trace seconds " << elapsed
+                  << "  t_from " << highLogScale << "  t_to " << lowerLogScale
+                  << "  t_root " << result.logScale
+                  << "  residual " << result.residual
+                  << "  accepted_steps " << result.acceptedSteps
+                  << "  max_dlogQ " << result.declaredMaxDeltaLogQ
+                  << "  scan_segments " << result.scanSegments
+                  << "  max_observed_dlogQ " << result.maxObservedDeltaLogQ
+                  << "  roots " << result.rootsFound
+                  << "  invalid_boundaries " << result.invalidBoundaries
+                  << "  refinement_evaluations " << result.refinementEvaluations
+                  << "  eps_abs " << tolerances.absolute
+                  << "  eps_rel " << tolerances.relative << "\n";
+    }
+    return result;
 }

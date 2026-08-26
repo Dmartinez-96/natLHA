@@ -5,6 +5,8 @@
 # DEW4SLHAv1.3
 This program computes the naturalness measures $\Delta_{EW}$ (DEW) and produces an ordered list of contributions to DEW from the one-loop and partial two-loop Higgs minimization conditions using the effective potential method and a user-provided input SLHA file from the user's choice of spectrum generator. For versions later than v1.3, the program also computes the naturalness measures $\Delta_{HS}$ and $\Delta_{BG}$ for the user-input SLHA file. This documentation is for v1.3.
 
+The installation instructions and general runtime walkthrough below remain historical v1.3 documentation. The $\Delta_{BG}$ model, numerical-mode, and result-convention paragraphs are updated for the current C++ natLHA implementation.
+
 # Installation
 There are two main options for obtaining and running DEW4SLHA. The first is perhaps the simplest: a standalone executable for DEW4SLHA, precompiled into the C language using [Pyinstaller](https://pyinstaller.org/en/stable/). Obtain the file `DEW4SLHAv1_3.tar.gz` or equivalently `DEW4SLHAv1_3.zip` from the GitHub releases (https://github.com/Dmartinez-96/DEW-Calculator/releases/tag/DEW4SLHAv1.3). Put this archive in the desired location for the DEW4SLHA program to live. 
 
@@ -90,11 +92,7 @@ The user is similarly prompted regarding the Barbieri-Giudice naturalness measur
 
 ![DBG_check](Readme_images/Delta_BG_check.png "DEW4SLHA prompts the user to see if DBG should be calculated")
 
-Should the user choose to evaluate $\Delta_{BG}$, further information will be required before the computation can proceed. In particular, the user must select the model (available models include the CMSSM, NUHM(1,2,3,4) models, pMSSM-19, and the pMSSM-30) they wish to evaluate $\Delta_{BG}$ within, as well as the precision level for evaluating the derivatives in $\Delta_{BG}$ numerically, as portrayed below.
-
-![modsel](Readme_images/modsel.png "DEW4SLHA prompts for DBG model selection from list")
-
-![precsel](Readme_images/precsel.png "DEW4SLHA prompts for DBG numerical derivative precision level")
+Should the user choose to evaluate $\Delta_{BG}$, further information is required before the computation can proceed. The active natLHA interface offers the CMSSM, NUHM(1,2,3,4), and pMSSM-30 plus $\mu$. The last model has 31 independent directions. The numerical mode is selected separately as described below.
 
 With the configuration complete and successful, the user should next see a screen similar to below, prompting them for the location of their SLHA file.
 
@@ -114,15 +112,40 @@ If the user chose to also evaluate $\Delta_{HS}$, then a similar process will oc
 
 ![DHS_results](Readme_images/DHS_results.png "Ordered list of results for DHS")
 
-If the user chose to also evaluate $\Delta_{BG}$, then a similar process will occur on screen. The $\Delta_{BG}$ calculations are much more involved numerically than their electroweak or high-scale cousins, so this calculation can be time-intensive. Computation time is dependent on model choice, as well as the precision level selected. The three precision options are:
+If the user chose to also evaluate $\Delta_{BG}$, then a similar process will occur on screen. The $\Delta_{BG}$ calculations are much more involved numerically than their electroweak or high-scale cousins, so this calculation can be time-intensive. Computation time depends on the model and on the numerical mode. The three modes are:
 
-| Precision level | Numerical derivative approx. method | Time req. relative to low precision |
-|:---------------:|:-----------------------------------:|:-----------------------------------:|
-|        3        | 8-point finite central differences  |             $4\times$               |
-|        2        | 4-point finite central differences  |             $2\times$               |
-|        1        | 2-point finite central differences  |             $1\times$               |
+| Mode | Numerical derivative method | Purpose |
+|:----:|:----------------------------|:--------|
+| 1 | Fixed 8-point central difference | Diagnostic |
+| 2 | Fixed 4-point central difference | Diagnostic |
+| 3 | Adaptive 2-point central differences at $h$, $2h$, and $4h$ | Production default |
 
-The calculation progress is tracked via a progress bar onscreen, courtesy of the `alive-progress` Python package, providing the user with an active interface to track their computation, including error estimates on the derivatives. 
+Adaptive mode moves its three-estimate window outward only when required and therefore has data-dependent work. It accepts a contribution only when the signed estimates agree within $\max(1,0.005\max|C|)$ and the propagated root-bracket uncertainty separately fits within one percent of that tolerance. A failed required root or a direction with no accepted window fails the requested $\Delta_{BG}$ result rather than returning a partial contribution list.
+
+natLHA reports the signed contribution $C_i$ with the largest absolute magnitude, using the lowest fixed direction ordinal for exact magnitude ties. This signed headline intentionally differs from the conventional non-negative definition $\max_i|C_i|$; the contribution list retains the signs needed to distinguish them.
+
+### Operational $Q_{\rm SUSY}$ root contract
+
+The current natLHA setup accepts $Q_{\rm SUSY}$ only when the bounded dense-output trajectory contains exactly one sampled sign-changing or exact root of
+
+$$
+\log Q-\frac{1}{4}\left(\log m_{\tilde t_1}^2+\log m_{\tilde t_2}^2\right)=0,
+$$
+
+with both running stop mass-squares finite and strictly positive. Adjacent classification nodes are separated by no more than the declared `qSusyMaxDeltaLogQ`; the CLI override is `--qsusy-max-dlogq H`. A finite nonpositive-stop region breaks root continuity without ending the bounded scan. A non-finite derived stop eigenvalue or stop residual is recorded as a numerical boundary and the scan continues through later valid regions to complete its root-count diagnostic, but any recorded numerical boundary makes the search fail closed even if exactly one root was otherwise found. A non-finite input state remains an immediate numerical failure.
+
+The current default $H=0.1$ is a provisional audit candidate, not a frozen production value. Freezing it requires agreement between $H$ and $H/2$ over the complete development population in success status and root count, with accepted roots agreeing in $\log Q$ within the shared ODE tolerance.
+
+Batch runs can add the structured fields needed for that comparison with `--qsusy-audit`. The option leaves the default batch schema unchanged. In audit mode, each row additionally reports whether every root search completed and accepted one root, the final attempt's root count when that attempt reported structured counts, whether every attempted search reported measured counts, the number of root-search attempts, and the accepted $\log Q$ from the final search. An unstructured final search failure uses `Q_SUSY_roots=-1` and `Q_SUSY_scan_complete=0`; that status means search progress is unknown, so missing root-count evidence cannot be mistaken for a measured zero. `Q_SUSY_search_logQ` is meaningful only when `Q_SUSY_search_ok=1` and otherwise uses zero as a gated sentinel.
+
+After each root search, natLHA re-solves $\mu$ and repeats the full-window search until the root and the retuned state jointly satisfy
+
+$$
+\left|\log Q_{\rm SUSY}-\frac{1}{4}\left(\log m_{\tilde t_1}^2+\log m_{\tilde t_2}^2\right)\right|
+\leq \max(\epsilon_{\rm ODE,abs},\epsilon_{\rm ODE,rel}).
+$$
+
+This is an operational uniqueness definition at a declared sampling resolution. It does not claim to detect tangent or even-multiplicity roots between classification nodes. The sub-step states come from the ODE solver's dense-output interpolant, so the $H$ versus $H/2$ comparison measures stability of that sampled construction rather than independently bounding interpolation error relative to the true trajectory.
 
 ![DBG_calc](Readme_images/DBG_calc.png "DEW4SLHA provides real-time feedback on evaluation of DBG")
 
@@ -144,6 +167,5 @@ This software makes use of several third-party libraries:
 
 - **Boost Libraries** (Boost Software License): [Boost website](https://www.boost.org/)
 - **Eigen Libraries** (LGPL3+ License): [Eigen website](https://eigen.tuxfamily.org/)
-- **GNU Scientific Library (GSL)** (GNU General Public License): [GSL website](https://www.gnu.org/software/gsl/)
 
 Special thanks to the developers of these libraries for their invaluable contributions to the open source community.

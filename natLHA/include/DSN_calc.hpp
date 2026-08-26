@@ -3,6 +3,7 @@
 #ifndef DSN_CALC_HPP
 #define DSN_CALC_HPP
 
+#include <exception>
 #include <vector>
 #include <string>
 #include <boost/multiprecision/mpfr.hpp>
@@ -13,6 +14,12 @@ struct DSNLabeledValue {
     high_prec_float value;
     std::string label;
 };
+
+namespace dsn_detail {
+
+void propagateRequiredNumericalFailure(std::exception_ptr failure);
+
+}  // namespace dsn_detail
 
 std::vector<DSNLabeledValue> DSN_calc(int precselno, std::vector<high_prec_float> Wk_boundary_conditions,
                                       high_prec_float& current_mZ2, high_prec_float& current_logQSUSY,

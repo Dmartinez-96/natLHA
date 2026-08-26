@@ -7,6 +7,7 @@
 #include <thread>
 #include <chrono>
 #include <stdexcept>
+#include <boost/math/constants/constants.hpp>
 #include <boost/math/special_functions/next.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include "DSN_calc.hpp"
@@ -17,12 +18,31 @@
 #include "tree_mass_calc.hpp"
 #include "EWSB_loop.hpp"
 #include "other_derivs.hpp"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 using namespace boost::multiprecision;
 typedef number<mpfr_float_backend<50>> high_prec_float;
+
+namespace {
+
+#ifdef M_PI
+#undef M_PI
+#endif
+
+const high_prec_float M_PI = boost::math::constants::pi<high_prec_float>();
+
+}  // namespace
+
+void dsn_detail::propagateRequiredNumericalFailure(std::exception_ptr failure) {
+    if (!failure) return;
+    try {
+        std::rethrow_exception(failure);
+    } catch (const NumericalFailure&) {
+        throw;
+    } catch (const EWSBNumericalFailure&) {
+        throw;
+    } catch (...) {
+    }
+}
 
 bool DSNabsValCompare(const DSNLabeledValue& a, const DSNLabeledValue& b) {
     return abs(a.value) < abs(b.value);
@@ -373,8 +393,9 @@ vector<high_prec_float> DSN_B_windows(vector<high_prec_float> Wk_boundary_condit
                     BminusEWSB = false;
                     Bnewweaks_minus[42] = checkweaksols[42];
                 }
-            } 
+            }
         } catch (...) {
+            dsn_detail::propagateRequiredNumericalFailure(std::current_exception());
             BminusEWSB = false;
         }
         vector<high_prec_float> oldweak = Bnewweaks_minus;
@@ -446,8 +467,9 @@ vector<high_prec_float> DSN_B_windows(vector<high_prec_float> Wk_boundary_condit
                     BplusEWSB = false;
                     Bnewweaks_plus[42] = checkweaksols[42];
                 }
-            } 
+            }
         } catch (...) {
+            dsn_detail::propagateRequiredNumericalFailure(std::current_exception());
             BplusEWSB = false;
         }
         vector<high_prec_float> oldweak = Bnewweaks_plus;
@@ -760,8 +782,9 @@ vector<high_prec_float> DSN_specific_windows(vector<high_prec_float>& Wk_boundar
                         }
                     }
                 }
-            } 
+            }
         } catch (...) {
+            dsn_detail::propagateRequiredNumericalFailure(std::current_exception());
             piminusEWSB = false;
         }
         vector<high_prec_float> oldweak = pinewweaks_minus;
@@ -966,8 +989,9 @@ vector<high_prec_float> DSN_specific_windows(vector<high_prec_float>& Wk_boundar
                         }
                     }
                 }
-            } 
+            }
         } catch (...) {
+            dsn_detail::propagateRequiredNumericalFailure(std::current_exception());
             piplusEWSB = false;
         }
         vector<high_prec_float> oldweak = pinewweaks_plus;
@@ -1090,8 +1114,9 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
                     muminusEWSB = false;
                     munewweaks_minus[6] = checkweaksols[6];
                 }
-            } 
+            }
         } catch (...) {
+            dsn_detail::propagateRequiredNumericalFailure(std::current_exception());
             muminusEWSB = false;
         }
         vector<high_prec_float> oldweak = munewweaks_minus;
@@ -1176,8 +1201,9 @@ vector<high_prec_float> DSN_mu_windows(vector<high_prec_float>& Wk_boundary_cond
                     muplusEWSB = false;
                     munewweaks_plus[6] = checkweaksols[6];
                 }
-            } 
+            }
         } catch (...) {
+            dsn_detail::propagateRequiredNumericalFailure(std::current_exception());
             muplusEWSB = false;
         }
         vector<high_prec_float> oldweak = munewweaks_plus;

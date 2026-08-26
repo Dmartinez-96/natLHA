@@ -14,12 +14,11 @@
 //                  rather than per point, which is the point of the mode.
 //
 // Rows for points that fail are still emitted, with ok=0, so a caller can align input and
-// output line by line instead of guessing which point vanished. Do NOT read any other column
-// on an ok=0 row. evaluate() computes requested measures in sequence and sets ok only after
-// all of them, so an exception can leave a partially populated result. In --sn-random-seed
-// mode, a filename that has no numeric draw-index stem is rejected before evaluate() and its
-// sn_nF/sn_nD fields are written as 0/0 sentinels. Diagnostics go to stderr so the output
-// stream stays parseable.
+// output line by line instead of guessing which point vanished. Every label field is zero on
+// an ok=0 row: evaluate() invalidates the complete requested label row if any later measure
+// fails. In --sn-random-seed mode, a filename that has no numeric draw-index stem is rejected
+// before evaluate() and its sn_nF/sn_nD fields are written as 0/0 sentinels. Diagnostics go
+// to stderr so the output stream stays parseable.
 //
 // Exit status: 0 if every requested point succeeded, 1 on usage error, 2 if any point failed.
 
@@ -31,9 +30,12 @@
 #include <streambuf>
 #include <string>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #include "natlha_api.hpp"
+#include "natlha_cli_args.hpp"
+#include "natlha_cli_output.hpp"
 
 namespace {
 
@@ -49,13 +51,19 @@ void usage() {
         "\n"
         "options:\n"
         "  --out FILE           write report or batch rows to FILE (default stdout)\n"
-        "  --bg-model N         DBG_calc model index, 1-6      (default 1)\n"
-        "  --bg-precision N     DBG_calc stencil, 1-3; LOWER IS MORE EXPENSIVE (default 1)\n"
-        "  --sn-mode N          DSN_calc mode, 1-3             (default 1)\n"
+        "  --bg-model N         DBG_calc model index, 1-6; 6=pMSSM-30+mu (default 1)\n"
+        "  --bg-precision N     1=8-point diagnostic, 2=4-point diagnostic,\n"
+        "                       3=adaptive 2-point production (default 3)\n"
+        "  --sn-mode 3          lowercase differential mode    (default 3)\n"
+        "                       capital continuation modes 1/2 are deferred\n"
         "  --sn-nf N            fixed F-term count; required with --dsn unless random\n"
         "  --sn-nd N            fixed D-term count; required with --dsn unless random\n"
         "  --sn-random-seed N   choose one reproducible uniform (nF,nD) pair per draw,\n"
         "                       with nF in 1-10 and nD in 1-5; requires --dsn\n"
+        "  --qsusy-max-dlogq H maximum Q_SUSY scan spacing in log(Q)\n"
+        "                       (provisional audit candidate default 0.1)\n"
+        "  --qsusy-audit       append structured Q_SUSY freeze-audit columns\n"
+        "                       to batch rows without changing default output\n"
         "  --digits N           printed significant digits     (default 12)\n";
 }
 
@@ -129,7 +137,7 @@ void randomSNPair(uint64_t seed, uint64_t draw, int & nF, int & nD) {
 }
 
 void printRow(const std::string & path, const natlha::Result & r, const natlha::Config & cfg,
-              int digits, bool randomSN) {
+              int digits, bool randomSN, bool qSusyAudit) {
     std::cout << std::setprecision(digits) << std::scientific
               << (r.ok ? 1 : 0) << " " << r.deltaEW;
     if (cfg.computeDHS) std::cout << " " << r.deltaHS;
@@ -138,26 +146,67 @@ void printRow(const std::string & path, const natlha::Result & r, const natlha::
         std::cout << " " << r.deltaSN << " " << r.snTotalNvac;
         if (randomSN) std::cout << " " << cfg.snNF << " " << cfg.snND;
     }
-    std::cout << " " << r.qSusy << " " << r.logQGut << " " << r.mZ2 << " " << path << "\n";
+    std::cout << " " << r.qSusy << " " << r.logQGut << " " << r.mZ2;
+    if (qSusyAudit) {
+        const natlha_cli::QSusyAuditSummary audit =
+            natlha_cli::summarizeQSusyAudit(r);
+        std::cout << " " << (audit.allAccepted ? 1 : 0);
+        if (audit.haveLastRootCount) {
+            std::cout << " " << audit.lastRootsFound;
+        } else {
+            std::cout << " -1";
+        }
+        std::cout << " " << (audit.allCountsKnown ? 1 : 0)
+                  << " " << audit.searches;
+        if (audit.haveAcceptedLogScale) {
+            std::cout << " " << audit.acceptedLogScale;
+        } else {
+            std::cout << " " << 0.0;
+        }
+    }
+    std::cout << " " << path << "\n";
 }
 
-void printHeader(const natlha::Config & cfg, bool randomSN, uint64_t snSeed) {
+void printHeader(const natlha::Config & cfg, bool randomSN, uint64_t snSeed,
+                 bool qSusyAudit) {
     if (randomSN) std::cout << "# sn_random_seed " << snSeed << "\n";
     std::cout << "# ok Delta_EW";
     if (cfg.computeDHS) std::cout << " Delta_HS";
     if (cfg.computeDBG) std::cout << " Delta_BG";
     if (cfg.computeDSN) {
-        std::cout << (cfg.snMode == 3 ? " delta_SN dN_vac" : " Delta_SN N_vac");
+        std::cout << " delta_SN dN_vac";
         if (randomSN) std::cout << " sn_nF sn_nD";
     }
-    std::cout << " Q_SUSY logQ_GUT mZ2 slha_path\n";
+    std::cout << " Q_SUSY logQ_GUT mZ2";
+    if (qSusyAudit) {
+        std::cout << " Q_SUSY_search_ok Q_SUSY_roots Q_SUSY_scan_complete"
+                     " Q_SUSY_searches Q_SUSY_search_logQ";
+    }
+    std::cout << " slha_path\n";
 }
 
 void printReport(const natlha::Result & r, const natlha::Config & cfg, int digits,
                  bool randomSN, uint64_t snSeed) {
     std::cout << std::setprecision(digits);
+    std::cout << "Q_SUSY max dlogQ " << cfg.qSusyMaxDeltaLogQ << "\n";
     if (!r.ok) {
         std::cout << "FAILED: " << r.error << "\n";
+        for (const auto& diagnostic : r.qSusyDiagnostics) {
+            std::cout << "Q_SUSY iteration " << diagnostic.iteration
+                      << "  Q " << diagnostic.qSusy
+                      << "  residual " << diagnostic.residual
+                      << "  mu " << diagnostic.mu
+                      << "  stop1_sq " << diagnostic.stop1Squared
+                      << "  stop2_sq " << diagnostic.stop2Squared
+                      << "  ODE_steps " << diagnostic.acceptedSteps
+                      << "  max_dlogQ " << diagnostic.declaredMaxDeltaLogQ
+                      << "  scan_segments " << diagnostic.scanSegments
+                      << "  max_observed_dlogQ "
+                      << diagnostic.maxObservedDeltaLogQ
+                      << "  roots " << diagnostic.rootsFound
+                      << "  invalid_boundaries " << diagnostic.invalidBoundaries
+                      << "  root_evaluations " << diagnostic.refinementEvaluations << "\n";
+        }
         return;
     }
     std::cout << "Q_SUSY    " << r.qSusy << "\n"
@@ -168,7 +217,23 @@ void printReport(const natlha::Result & r, const natlha::Config & cfg, int digit
               << "b = B*mu  " << r.weakBCs[42] << "\n"
               << "Sigma_u   " << r.radCorrs[0] << "\n"
               << "Sigma_d   " << r.radCorrs[1] << "\n"
-              << "iters     ewsb " << r.ewsbIters << "   gut " << r.gutIters << "\n";
+              << "iters     q_susy " << r.qSusyIters
+              << "   ewsb " << r.ewsbIters << "   gut " << r.gutIters << "\n";
+    for (const auto& diagnostic : r.qSusyDiagnostics) {
+        std::cout << "Q_SUSY iteration " << diagnostic.iteration
+                  << "  Q " << diagnostic.qSusy
+                  << "  residual " << diagnostic.residual
+                  << "  mu " << diagnostic.mu
+                  << "  stop1_sq " << diagnostic.stop1Squared
+                  << "  stop2_sq " << diagnostic.stop2Squared
+                  << "  ODE_steps " << diagnostic.acceptedSteps
+                  << "  max_dlogQ " << diagnostic.declaredMaxDeltaLogQ
+                  << "  scan_segments " << diagnostic.scanSegments
+                  << "  max_observed_dlogQ " << diagnostic.maxObservedDeltaLogQ
+                  << "  roots " << diagnostic.rootsFound
+                  << "  invalid_boundaries " << diagnostic.invalidBoundaries
+                  << "  root_evaluations " << diagnostic.refinementEvaluations << "\n";
+    }
     if (r.haveDEW) {
         std::cout << "\nDelta_EW  " << r.deltaEW << "\n";
         for (std::size_t i = 0; i < r.dewContributions.size(); ++i) {
@@ -187,8 +252,8 @@ void printReport(const natlha::Result & r, const natlha::Config & cfg, int digit
             std::cout << "  " << c.value << ", " << c.label << "\n";
     }
     if (r.haveDSN) {
-        std::cout << (cfg.snMode == 3 ? "\ndelta_SN  " : "\nDelta_SN  ") << r.deltaSN
-                  << (cfg.snMode == 3 ? "   dN_vac " : "   N_vac ") << r.snTotalNvac << "\n"
+        std::cout << "\ndelta_SN  " << r.deltaSN
+                  << "   dN_vac " << r.snTotalNvac << "\n"
                   << "nF/nD     " << cfg.snNF << "/" << cfg.snND;
         if (randomSN) std::cout << "   random seed " << snSeed;
         std::cout << "\n";
@@ -197,107 +262,28 @@ void printReport(const natlha::Result & r, const natlha::Config & cfg, int digit
     }
 }
 
-bool intArg(int argc, char ** argv, int & i, int & dest, const char * what, int lo, int hi) {
-    if (i + 1 >= argc) {
-        std::cerr << "error: " << what << " needs a value\n";
-        return false;
-    }
-    const std::string raw = argv[++i];
-    int value = 0;
-    try {
-        std::size_t pos = 0;
-        value = std::stoi(raw, &pos);
-        if (pos != raw.size()) {
-            std::cerr << "error: " << what << " value has trailing characters: " << raw << "\n";
-            return false;
-        }
-    } catch (const std::exception &) {
-        std::cerr << "error: " << what << " value is not an integer: " << raw << "\n";
-        return false;
-    }
-    if (value < lo || value > hi) {
-        std::cerr << "error: " << what << " must be in [" << lo << ", " << hi
-                  << "], got " << value << "\n";
-        return false;
-    }
-    dest = value;
-    return true;
-}
-
-bool uint64Arg(int argc, char ** argv, int & i, uint64_t & dest, const char * what) {
-    if (i + 1 >= argc) {
-        std::cerr << "error: " << what << " needs a value\n";
-        return false;
-    }
-    const std::string raw = argv[++i];
-    if (raw.empty() || raw[0] == '-') {
-        std::cerr << "error: " << what << " value is not an unsigned integer: " << raw << "\n";
-        return false;
-    }
-    try {
-        std::size_t pos = 0;
-        const unsigned long long value = std::stoull(raw, &pos);
-        if (pos != raw.size()) {
-            std::cerr << "error: " << what << " value has trailing characters: " << raw << "\n";
-            return false;
-        }
-        dest = static_cast<uint64_t>(value);
-        return true;
-    } catch (const std::exception &) {
-        std::cerr << "error: " << what << " value is not an unsigned integer: " << raw << "\n";
-        return false;
-    }
-}
-
 }  // namespace
 
 int main(int argc, char ** argv) {
-    natlha::Config cfg;
-    std::string singlePath, batchPath, outputPath;
-    int digits = 12;
-    bool randomSN = false, fixedNF = false, fixedND = false;
-    uint64_t snSeed = 0;
-
-    for (int i = 1; i < argc; ++i) {
-        const std::string a = argv[i];
-        if (a == "--slha" && i + 1 < argc)        singlePath = argv[++i];
-        else if (a == "--batch" && i + 1 < argc)  batchPath = argv[++i];
-        else if (a == "--out" && i + 1 < argc)    outputPath = argv[++i];
-        else if (a == "--dhs")                    cfg.computeDHS = true;
-        else if (a == "--dbg")                    cfg.computeDBG = true;
-        else if (a == "--dsn")                    cfg.computeDSN = true;
-        else if (a == "--bg-model") { if (!intArg(argc, argv, i, cfg.bgModelIndex, a.c_str(), 1, 6)) return 1; }
-        else if (a == "--bg-precision") { if (!intArg(argc, argv, i, cfg.bgPrecision, a.c_str(), 1, 3)) return 1; }
-        else if (a == "--sn-mode") { if (!intArg(argc, argv, i, cfg.snMode, a.c_str(), 1, 3)) return 1; }
-        else if (a == "--sn-nf") { if (!intArg(argc, argv, i, cfg.snNF, a.c_str(), 0, 1000000)) return 1; fixedNF = true; }
-        else if (a == "--sn-nd") { if (!intArg(argc, argv, i, cfg.snND, a.c_str(), 0, 1000000)) return 1; fixedND = true; }
-        else if (a == "--sn-random-seed") { if (!uint64Arg(argc, argv, i, snSeed, a.c_str())) return 1; randomSN = true; }
-        else if (a == "--digits") { if (!intArg(argc, argv, i, digits, a.c_str(), 1, 50)) return 1; }
-        else if (a == "-h" || a == "--help") { usage(); return 0; }
-        else {
-            std::cerr << "error: unrecognised argument: " << a << "\n";
-            usage();
-            return 1;
-        }
+    natlha_cli::Options options;
+    const natlha_cli::ParseStatus parseStatus =
+        natlha_cli::parseArgs(argc, argv, options, std::cerr);
+    if (parseStatus == natlha_cli::ParseStatus::Help) {
+        usage();
+        return 0;
     }
-
-    if (singlePath.empty() == batchPath.empty()) {
-        std::cerr << "error: give exactly one of --slha or --batch\n";
+    if (parseStatus == natlha_cli::ParseStatus::Error) {
         usage();
         return 1;
     }
-    if (randomSN && !cfg.computeDSN) {
-        std::cerr << "error: --sn-random-seed requires --dsn\n";
-        return 1;
-    }
-    if (randomSN && (fixedNF || fixedND)) {
-        std::cerr << "error: --sn-random-seed cannot be combined with --sn-nf or --sn-nd\n";
-        return 1;
-    }
-    if (cfg.computeDSN && !randomSN && (!fixedNF || !fixedND)) {
-        std::cerr << "error: fixed-mode --dsn requires both --sn-nf and --sn-nd\n";
-        return 1;
-    }
+    natlha::Config& cfg = options.config;
+    const std::string& singlePath = options.singlePath;
+    const std::string& batchPath = options.batchPath;
+    const std::string& outputPath = options.outputPath;
+    const int digits = options.digits;
+    const bool randomSN = options.randomSN;
+    const bool qSusyAudit = options.qSusyAudit;
+    const uint64_t snSeed = options.snSeed;
 
     const std::string & inputPath = singlePath.empty() ? batchPath : singlePath;
     if (sameExistingFile(inputPath, outputPath)) {
@@ -306,10 +292,25 @@ int main(int argc, char ** argv) {
     }
 
     std::ifstream list;
+    std::vector<std::string> batchEntries;
     if (!batchPath.empty()) {
         list.open(batchPath);
         if (!list.good()) {
             std::cerr << "error: cannot open batch list: " << batchPath << "\n";
+            return 1;
+        }
+        std::string line;
+        while (std::getline(list, line)) {
+            if (line.empty() || line[0] == '#') continue;
+            if (sameExistingFile(line, outputPath)) {
+                std::cerr << "error: --out FILE resolves to a spectrum in the batch list: "
+                          << line << "\n";
+                return 1;
+            }
+            batchEntries.push_back(std::move(line));
+        }
+        if (list.bad()) {
+            std::cerr << "error: failed while reading batch list: " << batchPath << "\n";
             return 1;
         }
     }
@@ -336,11 +337,11 @@ int main(int argc, char ** argv) {
         return r.ok ? 0 : 2;
     }
 
-    printHeader(cfg, randomSN, snSeed);
-    std::string line;
+    printHeader(cfg, randomSN, snSeed, qSusyAudit);
+    std::cerr << std::setprecision(17)
+              << "# q_susy_max_dlogq " << cfg.qSusyMaxDeltaLogQ << "\n";
     long done = 0, failed = 0;
-    while (std::getline(list, line)) {
-        if (line.empty() || line[0] == '#') continue;
+    for (const std::string& line : batchEntries) {
         natlha::Result r;
         if (randomSN) {
             uint64_t draw = 0;
@@ -357,7 +358,7 @@ int main(int argc, char ** argv) {
             cfg.slhaPath = line;
             r = natlha::evaluate(cfg);
         }
-        printRow(line, r, cfg, digits, randomSN);
+        printRow(line, r, cfg, digits, randomSN, qSusyAudit);
         std::cout.flush();
         ++done;
         if (!r.ok) {

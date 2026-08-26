@@ -1,21 +1,30 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <complex>
 #include <cmath>
 #include <algorithm>
-#include <gsl/gsl_sf_dilog.h>
+#include <boost/math/constants/constants.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include <boost/multiprecision/eigen.hpp>
 #include <eigen3/Eigen/Dense>
 #include "DEW_calc.hpp"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
+#include "radcorr_calc.hpp"
 
 using namespace boost::multiprecision;
 using namespace Eigen;
 typedef number<mpfr_float_backend<50>> high_prec_float;  // 50 decimal digits of precision
+
+namespace {
+
+#ifdef M_PI
+#undef M_PI
+#endif
+// Keep the legacy formula spelling below while ensuring every loop factor is evaluated
+// with the same 50-decimal-digit precision as the surrounding expressions.
+const high_prec_float M_PI = boost::math::constants::pi<high_prec_float>();
+const high_prec_float GPR_NORMALIZATION =
+    sqrt(high_prec_float(3) / high_prec_float(5));
+const high_prec_float SQRT_TWO = sqrt(high_prec_float(2));
 
 bool absValCompare(const LabeledValue& a, const LabeledValue& b) {
     return abs(a.value) < abs(b.value);
@@ -26,48 +35,6 @@ std::vector<LabeledValue> sortAndReturn(const std::vector<LabeledValue>& concate
     std::sort(sortedList.begin(), sortedList.end(), absValCompare);
     std::reverse(sortedList.begin(), sortedList.end());
     return sortedList;
-}
-
-high_prec_float spence(const high_prec_float& spenceinp) {
-    /*
-    Return spence's function, or dilogarithm(spencinp).
-
-    Parameters
-    ----------
-    spenceinp : high_prec_float.
-        Input value to evaluate dilogarithm of.
-    
-    Returns
-    -------
-    myspenceval : high_prec_float.
-        Return dilogarithm of spencinp.
-    */
-    double spenceinpdbl = double(spenceinp);
-    double myspenceval_dbl = gsl_sf_dilog(spenceinpdbl);
-    high_prec_float myspenceval = high_prec_float(myspenceval_dbl);
-    return myspenceval;
-}
-
-high_prec_float logfunc(const high_prec_float& mass, const high_prec_float& Q_renorm_sq) {
-    /*
-    Return F = m^2 * (ln(m^2 / Q^2) - 1.0), where input mass term is linear.
-
-    Parameters
-    ----------
-    mass : high_prec_float.
-        Input mass to be evaluated.
-    Q_renorm_sq : high_prec_float.
-        Squared renormalization scale, read in from supplied SLHA file.
-
-    Returns
-    -------
-    myf : high_prec_float.
-        Return F = m^2 * (ln(m^2 / Q^2) - 1.0),
-        where input mass term is linear.
-
-    */
-    high_prec_float myf = pow(mass, 2.0) * (log((pow(mass, 2.0)) / Q_renorm_sq) - 1.0);
-    return myf;
 }
 
 high_prec_float logfunc2(const high_prec_float& masssq, const high_prec_float& Q_renorm_sq) {
@@ -89,8 +56,8 @@ high_prec_float logfunc2(const high_prec_float& masssq, const high_prec_float& Q
         where input mass term is quadratic.
 
     */
-    high_prec_float myf2 = masssq * (log((abs(masssq) / Q_renorm_sq)) - 1.0);
-    return myf2;
+    return radcorr_detail::checkedLogFunctionFromSquaredMass(
+        masssq, Q_renorm_sq);
 }
 
 ////////// Radiative corrections from neutralino sector //////////
@@ -219,89 +186,7 @@ high_prec_float Deltafunc(const high_prec_float& x, const high_prec_float& y, co
 }
 
 high_prec_float Phifunc(const high_prec_float& x, const high_prec_float& y, const high_prec_float& z) {
-    /*
-    DOCFUNC HERE
-    */
-    std::complex<high_prec_float> myu, myv, mylambda, myxp, myxm, myphi;
-    if((abs(x) < abs(z)) && (abs(y) < abs(z))) {
-        myu = x / z;
-        myv = y / z;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0) - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = (std::complex<high_prec_float>(1.0) / mylambda) * ((std::complex<high_prec_float>(2.0) * log(myxp) * log(myxm))
-                                    - (log(myu) * log(myv))
-                                    - (std::complex<high_prec_float>(2.0) * (spence(real(myxp)) + spence(real(myxm))))
-                                    + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else if((abs(x) > abs(z)) && (abs(y) < abs(z))) {
-        myu = z / x;
-        myv = y / x;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / x) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else if((abs(x) > abs(z)) && (abs(y) > abs(z)) && (abs(x) > abs(y))) {
-        myu = z / x;
-        myv = y / x;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / x) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else if((abs(x) < abs(z)) && (abs(y) > abs(z))) {
-        myu = z / y;
-        myv = x / y;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / y) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else if ((abs(x) > abs(z)) && (abs(y) > abs(z)) && (abs(y) > abs(x))) {
-        myu = z / y;
-        myv = x / y;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / y) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else {
-        myphi = 0.0;
-    }
-    return high_prec_float(real(myphi));
+    return radcorr_detail::checkedPhiFunction(x, y, z);
 }
 
 high_prec_float sigmauu_2loop(const high_prec_float& myQ, const high_prec_float& mu_wk, const high_prec_float& beta_wk, const high_prec_float& yt_wk, const high_prec_float& yc_wk, const high_prec_float& yu_wk, const high_prec_float& yb_wk, const high_prec_float& ys_wk,
@@ -568,12 +453,12 @@ inline high_prec_float dew_funcd(const high_prec_float& inp, const high_prec_flo
     return mycontribdd;
 }
 
+}  // namespace
 
 std::vector<LabeledValue> DEW_calc(std::vector<high_prec_float> weak_boundary_conditions, high_prec_float myQ) {
     /*
     DOCSTRING HERE
     */
-    try {
         const high_prec_float mymZ = high_prec_float(91.1876);
         // Gauge couplings
         const high_prec_float g1_wk = weak_boundary_conditions[0];
@@ -626,7 +511,7 @@ std::vector<LabeledValue> DEW_calc(std::vector<high_prec_float> weak_boundary_co
         const high_prec_float mE2_sq_wk = weak_boundary_conditions[40];
         const high_prec_float mE3_sq_wk = weak_boundary_conditions[41];
         const high_prec_float b_wk = weak_boundary_conditions[42];
-        high_prec_float gpr_wk = g1_wk * sqrt(3.0 / 5.0);
+        high_prec_float gpr_wk = g1_wk * GPR_NORMALIZATION;
         // // cout << "gpr_wk: " << gpr_wk << endl;
         high_prec_float gpr_sq = pow(gpr_wk, 2.0);
         // // cout << "gpr_sq: " << gpr_sq << endl;
@@ -826,14 +711,19 @@ std::vector<LabeledValue> DEW_calc(std::vector<high_prec_float> weak_boundary_co
 
         // Neutralino mass eigenstate eigenvalues
         Eigen::Matrix<high_prec_float, 4, 4> neut_mass_mat(4, 4);
-        neut_mass_mat << high_prec_float(M1_wk), 0.0, (-1.0) * gpr_wk * vd / sqrt(2.0), gpr_wk * vu / sqrt(2.0),
-                        0.0, high_prec_float(M2_wk), g2_wk * vd / sqrt(2.0), (-1.0) * g2_wk * vu / sqrt(2.0),
-                        (-1.0) * gpr_wk * vd / sqrt(2.0), g2_wk * vd / sqrt(2.0), 0.0, (-1.0) * mu_wk,
-                        gpr_wk * vu / sqrt(2.0), (-1.0) * g2_wk * vu / sqrt(2.0), (-1.0) * mu_wk, 0.0;
+        neut_mass_mat << high_prec_float(M1_wk), 0.0, (-1.0) * gpr_wk * vd / SQRT_TWO, gpr_wk * vu / SQRT_TWO,
+                        0.0, high_prec_float(M2_wk), g2_wk * vd / SQRT_TWO, (-1.0) * g2_wk * vu / SQRT_TWO,
+                        (-1.0) * gpr_wk * vd / SQRT_TWO, g2_wk * vd / SQRT_TWO, 0.0, (-1.0) * mu_wk,
+                        gpr_wk * vu / SQRT_TWO, (-1.0) * g2_wk * vu / SQRT_TWO, (-1.0) * mu_wk, 0.0;
 
-        Eigen::EigenSolver<Eigen::Matrix<high_prec_float, 4, 4>> solver(neut_mass_mat);
-        Eigen::Matrix<high_prec_float, 4, 1> my_neut_mass_eigvals = solver.eigenvalues().real();
-        Eigen::Matrix<high_prec_float, 4, 4> my_neut_mass_eigvecs = solver.eigenvectors().real();
+        Eigen::SelfAdjointEigenSolver<Eigen::Matrix<high_prec_float, 4, 4>> solver(
+            neut_mass_mat, Eigen::EigenvaluesOnly);
+        if (solver.info() != Eigen::Success) {
+            throw NumericalFailure(
+                "DEW_calc/neutralino eigensolver", {"no convergence"});
+        }
+        const Eigen::Matrix<high_prec_float, 4, 1> my_neut_mass_eigvals =
+            solver.eigenvalues();
         Eigen::Matrix<high_prec_float, 4, 1> mneutrsq = my_neut_mass_eigvals.array().square();
 
         // Sort eigenvalues using Eigen's built-in functions
@@ -1233,6 +1123,12 @@ std::vector<LabeledValue> DEW_calc(std::vector<high_prec_float> weak_boundary_co
         concatenatedList.push_back({cHd, "H_d^2"});
         concatenatedList.insert(concatenatedList.end(), list_of_myuus.begin(), list_of_myuus.end());
         concatenatedList.insert(concatenatedList.end(), list_of_mydds.begin(), list_of_mydds.end());
+        std::vector<NamedRadiativeCorrection> finiteCheck;
+        finiteCheck.reserve(concatenatedList.size());
+        for (const auto& contribution : concatenatedList) {
+            finiteCheck.push_back({contribution.value, contribution.label});
+        }
+        requireFiniteRadiativeCorrections("DEW_calc", finiteCheck);
         
         /* contribs order:
          (0: C_mu, 1: C_Hu, 2: C_Hd, 3: Sigma_uu_stop1, 4: Sigma_uu_stop2, 5: Sigma_uu_sbot1,
@@ -1261,15 +1157,4 @@ std::vector<LabeledValue> DEW_calc(std::vector<high_prec_float> weak_boundary_co
         //     std::cout << item.value << ": " << item.label << std::endl;
         // }
         return sortedList;
-    }
-    catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
-        std::vector<LabeledValue> retval = {{NAN, "Error"}};
-        return retval;
-    }
-    catch (...) {
-        std::cerr << "An unknown exception occurred within DEW_calc.cpp." << std::endl;
-        std::vector<LabeledValue> retval = {{NAN, "Error"}};
-        return retval;
-    }
 }

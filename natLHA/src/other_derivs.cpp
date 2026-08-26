@@ -7,16 +7,24 @@
 #include <thread>
 #include <chrono>
 #include <stdexcept>
+#include <boost/math/constants/constants.hpp>
 #include <boost/math/special_functions/next.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include "radcorr_calc.hpp"
 #include "other_derivs.hpp"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 using namespace boost::multiprecision;
 typedef number<mpfr_float_backend<50>> high_prec_float;
+
+namespace {
+
+#ifdef M_PI
+#undef M_PI
+#endif
+
+const high_prec_float M_PI = boost::math::constants::pi<high_prec_float>();
+
+}  // namespace
 
 high_prec_float first_derivative(high_prec_float hStep, high_prec_float pm4h, high_prec_float pm3h, high_prec_float pm2h, high_prec_float pmh, high_prec_float pph, high_prec_float pp2h, high_prec_float pp3h, high_prec_float pp4h) {
     return (high_prec_float(1.0) / hStep) * ((pm4h / high_prec_float(280.0)) - (high_prec_float(4.0) * pm3h / high_prec_float(105.0)) + (pm2h / high_prec_float(5.0)) - (high_prec_float(4.0) * pmh / high_prec_float(5.0))

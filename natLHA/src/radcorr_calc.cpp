@@ -3,83 +3,319 @@
 #include <complex>
 #include <cmath>
 #include <algorithm>
+#include <limits>
+#include <sstream>
+#include <utility>
+#include <boost/math/constants/constants.hpp>
+#include <boost/math/quadrature/tanh_sinh.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include <boost/multiprecision/eigen.hpp>
-#include <gsl/gsl_sf_dilog.h>
 #include <eigen3/Eigen/Dense>
 #include "radcorr_calc.hpp"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 using namespace boost::multiprecision;
 using namespace Eigen;
 typedef number<mpfr_float_backend<50>> high_prec_float;  // 50 decimal digits of precision
 
+namespace {
 
-high_prec_float spence(const high_prec_float& spenceinp) {
-    /*
-    Return spence's function, or dilogarithm(spencinp).
+#ifdef M_PI
+#undef M_PI
+#endif
+// Keep the legacy formula spelling below while ensuring every loop factor is evaluated
+// with the same 50-decimal-digit precision as the surrounding expressions.
+const high_prec_float M_PI = boost::math::constants::pi<high_prec_float>();
+const high_prec_float GPR_NORMALIZATION =
+    sqrt(high_prec_float(3) / high_prec_float(5));
+const high_prec_float SQRT_TWO = sqrt(high_prec_float(2));
 
-    Parameters
-    ----------
-    spenceinp : high_prec_float.
-        Input value to evaluate dilogarithm of.
-    
-    Returns
-    -------
-    myspenceval : high_prec_float.
-        Return dilogarithm of spencinp.
-    */
-    double spenceinpdbl = double(spenceinp);
-    double myspenceval_dbl = gsl_sf_dilog(spenceinpdbl);
-    high_prec_float myspenceval = high_prec_float(myspenceval_dbl);
-    return myspenceval;
+std::string numericalFailureMessage(const std::string& stage,
+                                    const std::vector<std::string>& invalidTerms) {
+    std::ostringstream out;
+    out << "invalid numerical state at " << stage << ": ";
+    for (std::size_t i = 0; i < invalidTerms.size(); ++i) {
+        if (i != 0) out << ", ";
+        out << invalidTerms[i];
+    }
+    return out.str();
 }
 
-high_prec_float logfunc(const high_prec_float& mass, const high_prec_float& Q_renorm_sq) {
-    /*
-    Return F = m^2 * (ln(m^2 / Q^2) - 1.0), where input mass term is linear.
-
-    Parameters
-    ----------
-    mass : high_prec_float.
-        Input mass to be evaluated.
-    Q_renorm_sq : high_prec_float.
-        Squared renormalization scale, read in from supplied SLHA file.
-
-    Returns
-    -------
-    myf : high_prec_float.
-        Return F = m^2 * (ln(m^2 / Q^2) - 1.0),
-        where input mass term is linear.
-
-    */
-    high_prec_float myf = pow(mass, 2.0) * (log((pow(mass, 2.0)) / Q_renorm_sq) - 1.0);
-    return myf;
+std::vector<NamedRadiativeCorrection> indexedTerms(
+        const std::string& prefix,
+        const std::vector<high_prec_float>& values) {
+    std::vector<NamedRadiativeCorrection> terms;
+    terms.reserve(values.size());
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        terms.push_back({values[i], prefix + "[" + std::to_string(i) + "]"});
+    }
+    return terms;
 }
 
-high_prec_float logfunc2(const high_prec_float& masssq, const high_prec_float& Q_renorm_sq) {
-    /*
-    Return F = m^2 * (ln(m^2 / Q^2) - 1.0), where input mass term is
-    quadratic.
+}  // namespace
 
-    Parameters
-    ----------
-    mass : high_prec_float.
-        Input mass to be evaluated.
-    Q_renorm_sq : high_prec_float.
-        Squared renormalization scale, read in from supplied SLHA file.
+NumericalFailure::NumericalFailure(std::string failureStage,
+                                   std::vector<std::string> failureTerms)
+    : std::runtime_error(numericalFailureMessage(failureStage, failureTerms)),
+      stage(std::move(failureStage)),
+      invalidTerms(std::move(failureTerms)) {}
 
-    Returns
-    -------
-    myf2 : high_prec_float.
-        Return F = m^2 * (ln(m^2 / Q^2) - 1.0),
-        where input mass term is quadratic.
+void requireFiniteRadiativeCorrections(
+        const std::string& stage,
+        const std::vector<NamedRadiativeCorrection>& terms) {
+    std::vector<std::string> invalid;
+    for (const auto& term : terms) {
+        if (!(boost::math::isfinite)(term.value)) invalid.push_back(term.label);
+    }
+    if (!invalid.empty()) throw NumericalFailure(stage, invalid);
+}
 
-    */
-    high_prec_float myf2 = masssq * (log((abs(masssq) / Q_renorm_sq)) - 1.0);
-    return myf2;
+high_prec_float sumFiniteRadiativeCorrections(
+        const std::string& stage,
+        const std::vector<NamedRadiativeCorrection>& terms) {
+    requireFiniteRadiativeCorrections(stage, terms);
+    high_prec_float total = 0;
+    for (const auto& term : terms) total += term.value;
+    if (!(boost::math::isfinite)(total)) {
+        throw NumericalFailure(stage, {"aggregate"});
+    }
+    return total;
+}
+
+
+namespace radcorr_detail {
+
+namespace {
+
+struct DilogarithmEvaluation {
+    std::complex<high_prec_float> value;
+    high_prec_float absoluteError;
+};
+
+DilogarithmEvaluation evaluateDilogarithm(
+        const std::complex<high_prec_float>& input) {
+    using Complex = std::complex<high_prec_float>;
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/dilog input",
+        {{real(input), "real"}, {imag(input), "imaginary"}});
+    const high_prec_float pi = boost::math::constants::pi<high_prec_float>();
+    const high_prec_float radius = abs(input);
+    const high_prec_float tolerance("1e-40");
+
+    auto integrateUnitDisk = [&](const Complex& argument) {
+        if (argument == Complex(0)) return DilogarithmEvaluation{Complex(0), 0};
+        if (argument == Complex(1)) {
+            return DilogarithmEvaluation{Complex(pi * pi / 6), 0};
+        }
+
+        auto seriesUnitDisk = [&](const Complex& seriesArgument) {
+            const high_prec_float seriesRadius = abs(seriesArgument);
+            const high_prec_float seriesGate("1e-42");
+            const std::size_t maximumTerms = 100000;
+            Complex power = seriesArgument;
+            Complex sum(0);
+            high_prec_float remainder = 0;
+            const high_prec_float geometricDenominator = 1 - seriesRadius;
+
+            if (seriesRadius <= high_prec_float("0.25")) {
+                // DLMF 25.12.1, with the geometric majorant used as an explicit
+                // absolute remainder bound.
+                sum = power;
+                for (std::size_t n = 1; n < maximumTerms; ++n) {
+                    const high_prec_float nextIndex(n + 1);
+                    power *= seriesArgument;
+                    const high_prec_float denominator = nextIndex * nextIndex;
+                    sum += power / denominator;
+                    const high_prec_float tailDenominator =
+                        (nextIndex + 1) * (nextIndex + 1)
+                        * geometricDenominator;
+                    remainder = abs(power * seriesArgument)
+                        / tailDenominator;
+                    if (remainder <= seriesGate) {
+                        return DilogarithmEvaluation{sum, remainder};
+                    }
+                }
+            } else {
+                // Splitting one elementary term from the defining series gives
+                // Li2(z) = 1 + (1-z)log(1-z)/z
+                //          + sum z^k/[k^2(k+1)].
+                for (std::size_t n = 1; n < maximumTerms; ++n) {
+                    const high_prec_float index(n);
+                    const high_prec_float denominator =
+                        index * index * (index + 1);
+                    sum += power / denominator;
+                    power *= seriesArgument;
+                    const high_prec_float nextIndex(n + 1);
+                    const high_prec_float tailDenominator =
+                        nextIndex * nextIndex * (nextIndex + 1)
+                        * geometricDenominator;
+                    remainder = abs(power)
+                        / tailDenominator;
+                    if (remainder <= seriesGate) {
+                        const Complex value = Complex(1)
+                            + (Complex(1) - seriesArgument)
+                                * log(Complex(1) - seriesArgument) / seriesArgument
+                            + sum;
+                        return DilogarithmEvaluation{value, remainder};
+                    }
+                }
+            }
+            throw NumericalFailure(
+                "radcorr_calc/dilog series", {"term budget exhausted"});
+        };
+
+        const high_prec_float argumentRadius = abs(argument);
+        if (argumentRadius < high_prec_float("0.98")) {
+            return seriesUnitDisk(argument);
+        }
+        const Complex reflected = Complex(1) - argument;
+        if (real(argument) > high_prec_float("0.5")
+                && abs(reflected) < high_prec_float("0.98")) {
+            const DilogarithmEvaluation reflectedValue = seriesUnitDisk(reflected);
+            const Complex value = Complex(pi * pi / 6) - reflectedValue.value
+                - log(argument) * log(reflected);
+            return DilogarithmEvaluation{value, reflectedValue.absoluteError};
+        }
+
+        // Near the unit circle, use DLMF 25.12.2 on the straight path t = s*z.
+        // Arguments passed here lie in the closed unit disk, so the path does not
+        // cross the principal-branch cut [1, infinity).
+        boost::math::quadrature::tanh_sinh<high_prec_float> integrator(15);
+        auto integrand = [&](const high_prec_float& s) {
+                if (s == 0) return argument;
+                return -log(Complex(1) - argument * s) / s;
+        };
+        high_prec_float realError = 0;
+        high_prec_float imaginaryError = 0;
+        const high_prec_float realValue = integrator.integrate(
+            [&](const high_prec_float& s) { return real(integrand(s)); },
+            high_prec_float(0), high_prec_float(1), tolerance,
+            &realError);
+        const high_prec_float imaginaryValue = integrator.integrate(
+            [&](const high_prec_float& s) { return imag(integrand(s)); },
+            high_prec_float(0), high_prec_float(1), tolerance,
+            &imaginaryError);
+        const Complex value(realValue, imaginaryValue);
+        const high_prec_float error = sqrt(
+            realError * realError + imaginaryError * imaginaryError);
+        requireFiniteRadiativeCorrections(
+            "radcorr_calc/dilog quadrature",
+            {{real(value), "real"}, {imag(value), "imaginary"},
+             {error, "error estimate"}});
+        const high_prec_float errorGate = high_prec_float("1e-35")
+            * max(abs(value), high_prec_float(1));
+        if (error < 0 || error > errorGate) {
+            throw NumericalFailure(
+                "radcorr_calc/dilog quadrature", {"error estimate exceeds gate"});
+        }
+        return DilogarithmEvaluation{value, error};
+    };
+
+    DilogarithmEvaluation result;
+    if (radius <= 1) {
+        result = integrateUnitDisk(input);
+    } else if (imag(input) == 0 && real(input) > 1) {
+        // An exactly real argument on the principal-branch cut selects the lower-lip
+        // limit, whose imaginary part is -pi*log(x). Inputs with either nonzero imaginary
+        // sign take the general inversion branch below and retain that side of the cut.
+        const DilogarithmEvaluation inverse =
+            integrateUnitDisk(Complex(1 / real(input), 0));
+        const high_prec_float logarithm = log(real(input));
+        result.value = Complex(
+            pi * pi / 3 - real(inverse.value) - logarithm * logarithm / 2,
+            -pi * logarithm);
+        result.absoluteError = inverse.absoluteError;
+    } else {
+        // DLMF 25.12.4 reduces the principal branch to the open unit disk.  The
+        // explicit phase matches the side of the branch cut selected by the input.
+        const high_prec_float radiusSquared = norm(input);
+        const Complex inverse = conj(input) / radiusSquared;
+        const DilogarithmEvaluation inverseResult = integrateUnitDisk(inverse);
+        const high_prec_float theta = atan2(imag(input), real(input));
+        const high_prec_float thetaSign = theta < 0 ? -1 : 1;
+        const Complex logMinusInput(
+            log(radius), thetaSign * (abs(theta) - pi));
+        result.value = -inverseResult.value - Complex(pi * pi / 6)
+            - logMinusInput * logMinusInput * high_prec_float("0.5");
+        result.absoluteError = inverseResult.absoluteError;
+    }
+
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/dilog output",
+        {{real(result.value), "real"}, {imag(result.value), "imaginary"},
+         {result.absoluteError, "absolute error"}});
+    return result;
+}
+
+}  // namespace
+
+std::complex<high_prec_float> checkedDilogarithm(
+        const std::complex<high_prec_float>& input) {
+    return evaluateDilogarithm(input).value;
+}
+
+high_prec_float checkedLogFunctionFromSquaredMass(
+        const high_prec_float& massSquared,
+        const high_prec_float& renormalizationScaleSquared) {
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/log input",
+        {{massSquared, "mass squared"},
+         {renormalizationScaleSquared, "renormalization scale squared"}});
+    std::vector<std::string> invalidDomain;
+    if (massSquared <= 0) invalidDomain.push_back("non-positive mass squared");
+    if (renormalizationScaleSquared <= 0) {
+        invalidDomain.push_back("non-positive renormalization scale squared");
+    }
+    if (!invalidDomain.empty()) {
+        throw NumericalFailure("radcorr_calc/log input", invalidDomain);
+    }
+    const high_prec_float result = massSquared
+        * (log(massSquared / renormalizationScaleSquared) - 1);
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/log output", {{result, "value"}});
+    return result;
+}
+
+high_prec_float checkedSignedMZ2ContinuationLog(
+        const high_prec_float& signedMZSquared,
+        const high_prec_float& renormalizationScaleSquared) {
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/signed mZ2 continuation log input",
+        {{signedMZSquared, "signed mZ squared"},
+         {renormalizationScaleSquared, "renormalization scale squared"}});
+    std::vector<std::string> invalidDomain;
+    if (signedMZSquared == 0) invalidDomain.push_back("zero signed mZ squared");
+    if (renormalizationScaleSquared <= 0) {
+        invalidDomain.push_back("non-positive renormalization scale squared");
+    }
+    if (!invalidDomain.empty()) {
+        throw NumericalFailure(
+            "radcorr_calc/signed mZ2 continuation log input", invalidDomain);
+    }
+    const high_prec_float result = signedMZSquared
+        * (log(abs(signedMZSquared) / renormalizationScaleSquared) - 1);
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/signed mZ2 continuation log output", {{result, "value"}});
+    return result;
+}
+
+high_prec_float logfunc2(
+        const high_prec_float& massSquared,
+        const high_prec_float& renormalizationScaleSquared) {
+    return checkedLogFunctionFromSquaredMass(
+        massSquared, renormalizationScaleSquared);
+}
+
+void requireNegligiblePhiImaginaryPart(
+        const std::complex<high_prec_float>& value,
+        const high_prec_float& tolerance) {
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/Phifunc imaginary gate",
+        {{real(value), "real"}, {imag(value), "imaginary"}, {tolerance, "tolerance"}});
+    if (tolerance < 0 || abs(imag(value)) > tolerance) {
+        throw NumericalFailure(
+            "radcorr_calc/Phifunc imaginary gate", {"imaginary residue"});
+    }
 }
 
 ////////// Radiative corrections from neutralino sector //////////
@@ -207,89 +443,67 @@ high_prec_float Deltafunc(const high_prec_float& x, const high_prec_float& y, co
     return mydelta;
 }
 
-high_prec_float Phifunc(const high_prec_float& x, const high_prec_float& y, const high_prec_float& z) {
-    /*
-    DOCFUNC HERE
-    */
-    std::complex<high_prec_float> myu, myv, mylambda, myxp, myxm, myphi;
-    if((abs(x) < abs(z)) && (abs(y) < abs(z))) {
-        myu = x / z;
-        myv = y / z;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0) - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = (std::complex<high_prec_float>(1.0) / mylambda) * ((std::complex<high_prec_float>(2.0) * log(myxp) * log(myxm))
-                                    - (log(myu) * log(myv))
-                                    - (std::complex<high_prec_float>(2.0) * (spence(real(myxp)) + spence(real(myxm))))
-                                    + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
+high_prec_float checkedPhiFunction(const high_prec_float& x, const high_prec_float& y, const high_prec_float& z) {
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/Phifunc input", {{x, "x"}, {y, "y"}, {z, "z"}});
+    if (x <= 0 || y <= 0 || z <= 0) {
+        throw NumericalFailure("radcorr_calc/Phifunc input", {"non-positive mass square"});
     }
-    else if((abs(x) > abs(z)) && (abs(y) < abs(z))) {
-        myu = z / x;
-        myv = y / x;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / x) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
+
+    using Complex = std::complex<high_prec_float>;
+    const high_prec_float pi = boost::math::constants::pi<high_prec_float>();
+    high_prec_float first;
+    high_prec_float second;
+    high_prec_float scale;
+    high_prec_float prefactor;
+    // The normalization follows the Phi symmetries in Appendix A of
+    // Dedes and Slavich, arXiv:hep-ph/0212132.  Non-strict comparisons make
+    // equal-magnitude branches deterministic instead of returning zero.
+    if (abs(z) >= abs(x) && abs(z) >= abs(y)) {
+        first = x;
+        second = y;
+        scale = z;
+        prefactor = 1;
+    } else if (abs(x) >= abs(y)) {
+        first = z;
+        second = y;
+        scale = x;
+        prefactor = z / x;
+    } else {
+        first = z;
+        second = x;
+        scale = y;
+        prefactor = z / y;
     }
-    else if((abs(x) > abs(z)) && (abs(y) > abs(z)) && (abs(x) > abs(y))) {
-        myu = z / x;
-        myv = y / x;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / x) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
+
+    const Complex myu(high_prec_float(first / scale));
+    const Complex myv(high_prec_float(second / scale));
+    const Complex mylambda = sqrt(
+        pow(Complex(1) - myu - myv, 2) - Complex(4) * myu * myv);
+    if (mylambda == Complex(0)) {
+        throw NumericalFailure("radcorr_calc/Phifunc branch", {"zero lambda"});
     }
-    else if((abs(x) < abs(z)) && (abs(y) > abs(z))) {
-        myu = z / y;
-        myv = x / y;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / y) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else if ((abs(x) > abs(z)) && (abs(y) > abs(z)) && (abs(y) > abs(x))) {
-        myu = z / y;
-        myv = x / y;
-        mylambda = sqrt(pow((std::complex<high_prec_float>(1.0) - myu - myv), 2.0)
-                                  - (std::complex<high_prec_float>(4.0) * myu * myv));
-        myxp = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) + myu - myv - mylambda);
-        myxm = std::complex<high_prec_float>(0.5) * (std::complex<high_prec_float>(1.0) - myu + myv - mylambda);
-        myphi = std::complex<high_prec_float>(z / y) * (std::complex<high_prec_float>(1.0) / mylambda)\
-            * ((std::complex<high_prec_float>(2.0) * log(myxp)
-                * log(myxm))
-               - (log(myu)
-                  * log(myv))
-               - (std::complex<high_prec_float>(2.0) * (spence(real(myxp))
-                       + spence(real(myxm))))
-               + std::complex<high_prec_float>(pow(M_PI, 2.0) / 3.0));
-    }
-    else {
-        myphi = 0.0;
-    }
+    const Complex myxp = Complex(0.5) * (Complex(1) + myu - myv - mylambda);
+    const Complex myxm = Complex(0.5) * (Complex(1) - myu + myv - mylambda);
+    const DilogarithmEvaluation dilogPlus = evaluateDilogarithm(myxp);
+    const DilogarithmEvaluation dilogMinus = evaluateDilogarithm(myxm);
+    const Complex phiMultiplier = Complex(prefactor) / mylambda;
+    const Complex myphi = phiMultiplier
+        * (Complex(2) * log(myxp) * log(myxm)
+           - log(myu) * log(myv)
+           - Complex(2) * (dilogPlus.value + dilogMinus.value)
+           + Complex(pi * pi / 3));
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/Phifunc output",
+        {{real(myphi), "real"}, {imag(myphi), "imaginary"}});
+    const high_prec_float dilogError = abs(phiMultiplier) * 2
+        * (dilogPlus.absoluteError + dilogMinus.absoluteError);
+    const high_prec_float realMagnitude = abs(real(myphi));
+    const high_prec_float roundoffAllowance = 64
+        * std::numeric_limits<high_prec_float>::epsilon()
+        * std::max(realMagnitude, high_prec_float(1));
+    requireNegligiblePhiImaginaryPart(
+        myphi, dilogError + roundoffAllowance);
     return high_prec_float(real(myphi));
 }
 
@@ -346,7 +560,7 @@ high_prec_float sigmauu_2loop(const high_prec_float& myQ, const high_prec_float&
                     + ((4.0 * c2sqtheta * (M3_wk) * mymt
                         * Deltafunc(mglsq, pow(mymt, 2.0), m_stop_1sq))
                        / (s2theta * m_stop_1sq * (m_stop_1sq - m_stop_2sq))))
-                   * Phifunc(mglsq, pow(mymt, 2.0), m_stop_1sq)))
+                   * checkedPhiFunction(mglsq, pow(mymt, 2.0), m_stop_1sq)))
              - ((((4.0 * (mglsq + pow(mymt, 2.0) + (2.0 * m_stop_2sq)))
                   - (s2sqtheta * ((3.0 * m_stop_2sq) + m_stop_1sq))
                   - ((16.0 * c2sqtheta * (M3_wk) * mymt * m_stop_2sq)
@@ -375,7 +589,7 @@ high_prec_float sigmauu_2loop(const high_prec_float& myQ, const high_prec_float&
                     + ((4.0 * c2sqtheta * (M3_wk) * mymt
                         * Deltafunc(mglsq, pow(mymt, 2.0), m_stop_2sq))
                        / (s2theta * m_stop_2sq * (m_stop_1sq - m_stop_2sq))))
-                   * Phifunc(mglsq, pow(mymt, 2.0), m_stop_2sq))));
+                   * checkedPhiFunction(mglsq, pow(mymt, 2.0), m_stop_2sq))));
     high_prec_float myG = myunits\
         * ((5.0 * (M3_wk) * s2theta * (m_stop_1sq - m_stop_2sq) / mymt)
            - (10.0 * (m_stop_1sq + m_stop_2sq - (2.0 * pow(mymt, 2.0))))
@@ -407,7 +621,7 @@ high_prec_float sigmauu_2loop(const high_prec_float& myQ, const high_prec_float&
                                 - (2.0 * (M3_wk) * mymt * s2theta)) / m_stop_1sq)
                   + (((M3_wk) * s2theta / (mymt * m_stop_1sq))
                      * Deltafunc(mglsq, pow(mymt, 2.0), m_stop_1sq)))
-                 * Phifunc(mglsq, pow(mymt, 2.0), m_stop_1sq)))
+                 * checkedPhiFunction(mglsq, pow(mymt, 2.0), m_stop_1sq)))
            + ((((4.0 * (mglsq + pow(mymt, 2.0) + (2.0 * m_stop_2sq)))
                 + (s2sqtheta * (m_stop_2sq - m_stop_1sq))
                 - (((-4.0) * (M3_wk) * s2theta / mymt) * (pow(mymt, 2.0) + m_stop_2sq)))
@@ -429,7 +643,7 @@ high_prec_float sigmauu_2loop(const high_prec_float& myQ, const high_prec_float&
                       + (2.0 * (M3_wk) * mymt * s2theta)) / m_stop_2sq)
                   + (((M3_wk) * (-1.0) * s2theta / (mymt * m_stop_2sq))
                      * Deltafunc(mglsq, pow(mymt, 2.0), m_stop_2sq)))
-                 * Phifunc(mglsq, pow(mymt, 2.0), m_stop_2sq))));
+                 * checkedPhiFunction(mglsq, pow(mymt, 2.0), m_stop_2sq))));
     high_prec_float sinsqb = pow(sin(beta_wk), 2.0);
     high_prec_float mysigmauu_2loop = ((mymt * (at_wk / yt_wk) * s2theta * myF)
                        + 2.0 * pow(mymt, 2.0) * myG)\
@@ -494,7 +708,7 @@ high_prec_float sigmadd_2loop(const high_prec_float& myQ, const high_prec_float&
                   + ((4.0 * c2sqtheta * (M3_wk) * mymt
                       * Deltafunc(mglsq, pow(mymt, 2.0), m_stop_1sq))
                      / (s2theta * m_stop_1sq * (m_stop_1sq - m_stop_2sq))))
-                 * Phifunc(mglsq, pow(mymt, 2.0), m_stop_1sq)))
+                 * checkedPhiFunction(mglsq, pow(mymt, 2.0), m_stop_1sq)))
            - ((((4.0 * (mglsq + pow(mymt, 2.0) + (2.0 * m_stop_2sq)))
                - (s2sqtheta * ((3.0 * m_stop_2sq) + m_stop_1sq))
                - ((16.0 * c2sqtheta * (M3_wk) * mymt * m_stop_2sq)
@@ -523,7 +737,7 @@ high_prec_float sigmadd_2loop(const high_prec_float& myQ, const high_prec_float&
                   + ((4.0 * c2sqtheta * (M3_wk) * mymt
                       * Deltafunc(mglsq, pow(mymt, 2.0), m_stop_2sq))
                      / (s2theta * m_stop_2sq * (m_stop_1sq - m_stop_2sq))))
-                 * Phifunc(mglsq, pow(mymt, 2.0), m_stop_2sq))));
+                 * checkedPhiFunction(mglsq, pow(mymt, 2.0), m_stop_2sq))));
     high_prec_float cossqb = (pow(cos(beta_wk), 2.0));
     high_prec_float mysigmadd_2loop = (mymt * (-1.0 * mu_wk) * (1.0 / tan(beta_wk))
                        * s2theta * myF)\
@@ -557,15 +771,24 @@ high_prec_float dew_funcd(const high_prec_float& inp, const high_prec_float& tan
     return mycontribdd;
 }
 
+}  // namespace radcorr_detail
+
 std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boundary_conditions, high_prec_float myQ, high_prec_float mymZsq) {
     /*
     DOCSTRING HERE
     */
-    // Gauge couplings
-    if (mymZsq < 0) {
-        //cout << "Warning! mZ^2 < 0 in radcorr_calc, using abs(mZ^2)" << endl;
+    using namespace radcorr_detail;
+    requireFiniteRadiativeCorrections(
+        "radcorr_calc/mZ2 continuation input", {{mymZsq, "signed mZ squared"}});
+    if (mymZsq == 0) {
+        throw NumericalFailure(
+            "radcorr_calc/mZ2 continuation input", {"zero signed mZ squared"});
     }
+    // The bounded root solver searches a signed mathematical mZ^2 domain.  The Higgs vev
+    // uses its magnitude while neutral-Higgs and Z-sector expressions retain the sign;
+    // invalid continuation points still fail through the checked terms below.
     const high_prec_float mymZ = sqrt(abs(mymZsq));
+    // Gauge couplings
     const high_prec_float g1_wk = weak_boundary_conditions[0];
     const high_prec_float g2_wk = weak_boundary_conditions[1];
     const high_prec_float g3_wk = weak_boundary_conditions[2];
@@ -616,7 +839,7 @@ std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boun
     const high_prec_float mE2_sq_wk = weak_boundary_conditions[40];
     const high_prec_float mE3_sq_wk = weak_boundary_conditions[41];
     const high_prec_float b_wk = weak_boundary_conditions[42];
-    high_prec_float gpr_wk = g1_wk * sqrt(3.0 / 5.0);
+    high_prec_float gpr_wk = g1_wk * GPR_NORMALIZATION;
     // // cout << "gpr_wk: " << gpr_wk << endl;
     high_prec_float gpr_sq = pow(gpr_wk, 2.0);
     // // cout << "gpr_sq: " << gpr_sq << endl;
@@ -827,14 +1050,19 @@ std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boun
 
     // Neutralino mass eigenstate eigenvalues
     Eigen::Matrix<high_prec_float, 4, 4> neut_mass_mat(4, 4);
-    neut_mass_mat << high_prec_float(M1_wk), 0.0, (-1.0) * gpr_wk * vd / sqrt(2.0), gpr_wk * vu / sqrt(2.0),
-                    0.0, high_prec_float(M2_wk), g2_wk * vd / sqrt(2.0), (-1.0) * g2_wk * vu / sqrt(2.0),
-                    (-1.0) * gpr_wk * vd / sqrt(2.0), g2_wk * vd / sqrt(2.0), 0.0, (-1.0) * mu_wk,
-                    gpr_wk * vu / sqrt(2.0), (-1.0) * g2_wk * vu / sqrt(2.0), (-1.0) * mu_wk, 0.0;
+    neut_mass_mat << high_prec_float(M1_wk), 0.0, (-1.0) * gpr_wk * vd / SQRT_TWO, gpr_wk * vu / SQRT_TWO,
+                    0.0, high_prec_float(M2_wk), g2_wk * vd / SQRT_TWO, (-1.0) * g2_wk * vu / SQRT_TWO,
+                    (-1.0) * gpr_wk * vd / SQRT_TWO, g2_wk * vd / SQRT_TWO, 0.0, (-1.0) * mu_wk,
+                    gpr_wk * vu / SQRT_TWO, (-1.0) * g2_wk * vu / SQRT_TWO, (-1.0) * mu_wk, 0.0;
 
-    Eigen::EigenSolver<Eigen::Matrix<high_prec_float, 4, 4>> solver(neut_mass_mat);
-    Eigen::Matrix<high_prec_float, 4, 1> my_neut_mass_eigvals = solver.eigenvalues().real();
-    Eigen::Matrix<high_prec_float, 4, 4> my_neut_mass_eigvecs = solver.eigenvectors().real();
+    Eigen::SelfAdjointEigenSolver<Eigen::Matrix<high_prec_float, 4, 4>> solver(
+        neut_mass_mat, Eigen::EigenvaluesOnly);
+    if (solver.info() != Eigen::Success) {
+        throw NumericalFailure(
+            "radcorr_calc/neutralino eigensolver", {"no convergence"});
+    }
+    const Eigen::Matrix<high_prec_float, 4, 1> my_neut_mass_eigvals =
+        solver.eigenvalues();
     Eigen::Matrix<high_prec_float, 4, 1> mneutrsq = my_neut_mass_eigvals.array().square();
 
     // Sort eigenvalues using Eigen's built-in functions
@@ -1116,7 +1344,7 @@ std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boun
     high_prec_float sigmauu_w_pm = (3.0 * g2_sq * (1.0 / (16.0 * (pow(M_PI, 2.0)))) / 2.0) * logfunc2(m_w_sq, pow(myQ, 2.0));
     high_prec_float sigmadd_w_pm = sigmauu_w_pm;
     high_prec_float sigmauu_z0 = (3.0 / 4.0) * (1.0 / (16.0 * (pow(M_PI, 2.0)))) * (gpr_sq + g2_sq)\
-        * logfunc2(mz_q_sq, pow(myQ, 2.0));
+        * checkedSignedMZ2ContinuationLog(mz_q_sq, pow(myQ, 2.0));
     high_prec_float sigmadd_z0 = sigmauu_z0;
 
     ////////// Radiative corrections from SM fermions sector //////////
@@ -1172,9 +1400,6 @@ std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boun
     high_prec_float sigmaddZ3 = sigmadd_neutralino(msN3, M1_wk, M2_wk, mu_wk, g2_sq, gpr_sq, v_sq, vu, vd, beta_wk, myQ);
     high_prec_float sigmaddZ4 = sigmadd_neutralino(msN4, M1_wk, M2_wk, mu_wk, g2_sq, gpr_sq, v_sq, vu, vd, beta_wk, myQ);                     
     ////////// Total radiative corrections //////////
-    // Include successful radiative corrections
-    high_prec_float sigmauu_tot = 0.0;
-    high_prec_float sigmadd_tot = 0.0;
     std::vector<high_prec_float> list_of_myuus = {sigmauu_stop_1, sigmauu_stop_2, sigmauu_sbot_1,
                                             sigmauu_sbot_2, sigmauu_stau_1, sigmauu_stau_2,
                                             sigmauu_stau_sneut, sigmauu_scharm_1+sigmauu_scharm_2+sigmauu_sstrange_1+sigmauu_sstrange_2,
@@ -1209,22 +1434,10 @@ std::vector<high_prec_float> radcorr_calc(std::vector<high_prec_float> weak_boun
     // for (high_prec_float value : list_of_mydds) {
     //     cout << value << endl;
     // }
-    //std::cout << "Sigma_d contribs:" << std::endl;
-    for (const auto& value : list_of_mydds) {
-        // Check if value is not NaN
-        if (!boost::math::isnan(value)) {
-            //std::cout << value << std::endl;
-            sigmadd_tot += value;
-        }
-    }
-    //std::cout << "Sigma_u contribs:" << std::endl;
-    for (const auto& value : list_of_myuus) {
-        // Check if value is not NaN
-        if (!boost::math::isnan(value)) {
-            //std::cout << value << std::endl;
-            sigmauu_tot += value;
-        }
-    }
+    const high_prec_float sigmauu_tot = sumFiniteRadiativeCorrections(
+        "radcorr_calc/Sigma_u", indexedTerms("Sigma_u", list_of_myuus));
+    const high_prec_float sigmadd_tot = sumFiniteRadiativeCorrections(
+        "radcorr_calc/Sigma_d", indexedTerms("Sigma_d", list_of_mydds));
     std::vector<high_prec_float> listofres = {sigmauu_tot, sigmadd_tot};
     return listofres;
     

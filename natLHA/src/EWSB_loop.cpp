@@ -3,17 +3,28 @@
 #include <complex>
 #include <cmath>
 #include <algorithm>
+#include <boost/math/constants/constants.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <boost/multiprecision/mpfr.hpp>
 #include <boost/multiprecision/eigen.hpp>
 #include <eigen3/Eigen/Dense>
 #include "EWSB_loop.hpp"
-#ifndef M_PI
-#define M_PI 3.14159265358979323846
-#endif
 
 using namespace boost::multiprecision;
 using namespace Eigen;
 typedef number<mpfr_float_backend<50>> high_prec_float;  // 50 decimal digits of precision
+
+namespace {
+
+#ifdef M_PI
+#undef M_PI
+#endif
+
+const high_prec_float M_PI = boost::math::constants::pi<high_prec_float>();
+const high_prec_float GPR_NORMALIZATION =
+    sqrt(high_prec_float(3) / high_prec_float(5));
+
+}  // namespace
 
 high_prec_float mylogSq(high_prec_float& x, high_prec_float& Qsq) {
     return (log(abs(x) / Qsq) - 1.0);
@@ -37,7 +48,16 @@ high_prec_float neut_UD_2deriv(high_prec_float& sLambda, high_prec_float& g2Sq, 
     return (myNum / myDenom);
 }
 
-bool Hessian_check(vector<high_prec_float> weak_boundary_conditions, high_prec_float myQ) {
+std::vector<high_prec_float> ewsb_detail::loopHessianTerms(
+        const vector<high_prec_float>& weak_boundary_conditions, high_prec_float myQ) {
+    if (weak_boundary_conditions.size() < 44) {
+        throw EWSBNumericalFailure(
+            "EWSB Hessian received fewer than 44 weak-scale parameters");
+    }
+    if (!(boost::math::isfinite)(myQ) || myQ <= 0) {
+        throw EWSBNumericalFailure(
+            "EWSB Hessian received a non-finite or non-positive scale");
+    }
     high_prec_float Sigmauu2, Sigmadd2, Sigmaud2;
     //high_prec_float mymZ = sqrt(abs(mymZsq));
     high_prec_float g1_wk = weak_boundary_conditions[0];
@@ -89,8 +109,7 @@ bool Hessian_check(vector<high_prec_float> weak_boundary_conditions, high_prec_f
     high_prec_float mE1_sq_wk = weak_boundary_conditions[39];
     high_prec_float mE2_sq_wk = weak_boundary_conditions[40];
     high_prec_float mE3_sq_wk = weak_boundary_conditions[41];
-    high_prec_float b_wk = weak_boundary_conditions[42];
-    high_prec_float gpr_wk = g1_wk * sqrt(3.0 / 5.0);
+    high_prec_float gpr_wk = g1_wk * GPR_NORMALIZATION;
     // // cout << "gpr_wk: " << gpr_wk << endl;
     high_prec_float gpr_sq = pow(gpr_wk, 2.0);
     // // cout << "gpr_sq: " << gpr_sq << endl;
@@ -213,12 +232,12 @@ bool Hessian_check(vector<high_prec_float> weak_boundary_conditions, high_prec_f
         * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ3_sq_wk - mU3_sq_wk)) - (24.0 * at_wk * at_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yt_wk * yt_wk)) * (abs(mQ3_sq_wk - mU3_sq_wk))));
     high_prec_float Sigmauu2_scharm1 = (m_scharm1_sq / (64.0 * M_PI * M_PI * abs(mQ2_sq_wk - mU2_sq_wk))) * mylogSq(m_scharm1_sq, Q2)\
         * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ2_sq_wk - mU2_sq_wk)) - (24.0 * ac_wk * ac_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yc_wk * yc_wk)) * (abs(mQ2_sq_wk - mU2_sq_wk))));
-    high_prec_float Sigmauu2_scharm2 = ((-3.0) * m_scharm2_sq / (64.0 * M_PI * M_PI * abs(mQ2_sq_wk - mU2_sq_wk))) * mylogSq(m_scharm2_sq, Q2)\
+    high_prec_float Sigmauu2_scharm2 = ((-1.0) * m_scharm2_sq / (64.0 * M_PI * M_PI * abs(mQ2_sq_wk - mU2_sq_wk))) * mylogSq(m_scharm2_sq, Q2)\
         * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ2_sq_wk - mU2_sq_wk)) - (24.0 * ac_wk * ac_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yc_wk * yc_wk)) * (abs(mQ2_sq_wk - mU2_sq_wk))));
     high_prec_float Sigmauu2_sup1 = (m_sup1_sq / (64.0 * M_PI * M_PI * abs(mQ1_sq_wk - mU1_sq_wk))) * mylogSq(m_sup1_sq, Q2)\
-        * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ1_sq_wk - mU1_sq_wk)) + (24.0 * au_wk * au_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yu_wk * yu_wk)) * (abs(mQ1_sq_wk - mU1_sq_wk))));
+        * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ1_sq_wk - mU1_sq_wk)) - (24.0 * au_wk * au_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yu_wk * yu_wk)) * (abs(mQ1_sq_wk - mU1_sq_wk))));
     high_prec_float Sigmauu2_sup2 = ((-1.0) * m_sup2_sq / (64.0 * M_PI * M_PI * abs(mQ1_sq_wk - mU1_sq_wk))) * mylogSq(m_sup2_sq, Q2)\
-        * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ1_sq_wk - mU1_sq_wk)) + (24.0 * au_wk * au_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yu_wk * yu_wk)) * (abs(mQ1_sq_wk - mU1_sq_wk))));
+        * ((((3.0 * g2_sq) - (10.0 * gpr_sq)) * (mQ1_sq_wk - mU1_sq_wk)) - (24.0 * au_wk * au_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yu_wk * yu_wk)) * (abs(mQ1_sq_wk - mU1_sq_wk))));
 
     high_prec_float Sigmauu2_sbot1 = ((-1.0) * m_sbot1_sq / (64.0 * M_PI * M_PI * abs(mQ3_sq_wk - mD3_sq_wk))) * mylogSq(m_sbot1_sq, Q2)\
         * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ3_sq_wk - mD3_sq_wk)) + (24.0 * yb_wk * yb_wk * mu_wk_sq) - (3.0 * (g2_sq + (2.0 * gpr_sq)) * (abs(mQ3_sq_wk - mD3_sq_wk))));
@@ -248,16 +267,16 @@ bool Hessian_check(vector<high_prec_float> weak_boundary_conditions, high_prec_f
         
     high_prec_float Sigmadd2_sbot1 = (m_sbot1_sq / (64.0 * M_PI * M_PI * abs(mQ3_sq_wk - mD3_sq_wk))) * mylogSq(m_sbot1_sq, Q2)\
         * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ3_sq_wk - mD3_sq_wk)) - (24.0 * ab_wk * ab_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yb_wk * yb_wk)) * (abs(mQ3_sq_wk - mD3_sq_wk))));
-    high_prec_float Sigmadd2_sbot2 = (m_sbot2_sq / (64.0 * M_PI * M_PI * abs(mQ3_sq_wk - mD3_sq_wk))) * mylogSq(m_sbot2_sq, Q2)\
+    high_prec_float Sigmadd2_sbot2 = ((-1.0) * m_sbot2_sq / (64.0 * M_PI * M_PI * abs(mQ3_sq_wk - mD3_sq_wk))) * mylogSq(m_sbot2_sq, Q2)\
         * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ3_sq_wk - mD3_sq_wk)) - (24.0 * ab_wk * ab_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yb_wk * yb_wk)) * (abs(mQ3_sq_wk - mD3_sq_wk))));
     high_prec_float Sigmadd2_sstrange1 = (m_sstrange1_sq / (64.0 * M_PI * M_PI * abs(mQ2_sq_wk - mD2_sq_wk))) * mylogSq(m_sstrange1_sq, Q2)\
-        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ2_sq_wk - mD2_sq_wk)) - (24.0 * as_wk * as_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yb_wk * yb_wk)) * (abs(mQ2_sq_wk - mD2_sq_wk))));
-    high_prec_float Sigmadd2_sstrange2 = (m_sstrange2_sq / (64.0 * M_PI * M_PI * abs(mQ2_sq_wk - mD2_sq_wk))) * mylogSq(m_sstrange2_sq, Q2)\
-        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ2_sq_wk - mD2_sq_wk)) - (24.0 * as_wk * as_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yb_wk * yb_wk)) * (abs(mQ2_sq_wk - mD2_sq_wk))));
+        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ2_sq_wk - mD2_sq_wk)) - (24.0 * as_wk * as_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * ys_wk * ys_wk)) * (abs(mQ2_sq_wk - mD2_sq_wk))));
+    high_prec_float Sigmadd2_sstrange2 = ((-1.0) * m_sstrange2_sq / (64.0 * M_PI * M_PI * abs(mQ2_sq_wk - mD2_sq_wk))) * mylogSq(m_sstrange2_sq, Q2)\
+        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ2_sq_wk - mD2_sq_wk)) - (24.0 * as_wk * as_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * ys_wk * ys_wk)) * (abs(mQ2_sq_wk - mD2_sq_wk))));
     high_prec_float Sigmadd2_sdown1 = (m_sdown1_sq / (64.0 * M_PI * M_PI * abs(mQ1_sq_wk - mD1_sq_wk))) * mylogSq(m_sdown1_sq, Q2)\
-        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ1_sq_wk - mD1_sq_wk)) - (24.0 * ad_wk * ad_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yb_wk * yb_wk)) * (abs(mQ1_sq_wk - mD1_sq_wk))));
-    high_prec_float Sigmadd2_sdown2 = (m_sdown2_sq / (64.0 * M_PI * M_PI * abs(mQ1_sq_wk - mD1_sq_wk))) * mylogSq(m_sdown2_sq, Q2)\
-        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ1_sq_wk - mD1_sq_wk)) - (24.0 * ad_wk * ad_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yb_wk * yb_wk)) * (abs(mQ1_sq_wk - mD1_sq_wk))));
+        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ1_sq_wk - mD1_sq_wk)) - (24.0 * ad_wk * ad_wk) - (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yd_wk * yd_wk)) * (abs(mQ1_sq_wk - mD1_sq_wk))));
+    high_prec_float Sigmadd2_sdown2 = ((-1.0) * m_sdown2_sq / (64.0 * M_PI * M_PI * abs(mQ1_sq_wk - mD1_sq_wk))) * mylogSq(m_sdown2_sq, Q2)\
+        * ((((3.0 * g2_sq) - (2.0 * gpr_sq)) * (mQ1_sq_wk - mD1_sq_wk)) - (24.0 * ad_wk * ad_wk) + (3.0 * (g2_sq + (2.0 * gpr_sq) - (8.0 * yd_wk * yd_wk)) * (abs(mQ1_sq_wk - mD1_sq_wk))));
 
     high_prec_float Sigmaud2_stop1 = ((3.0) * at_wk * yt_wk * mu_wk * m_stop1_sq / (8.0 * M_PI * M_PI * abs(mQ3_sq_wk - mU3_sq_wk))) * mylogSq(m_stop1_sq, Q2);
     high_prec_float Sigmaud2_stop2 = ((-3.0) * at_wk * yt_wk * mu_wk * m_stop2_sq / (8.0 * M_PI * M_PI * abs(mQ3_sq_wk - mU3_sq_wk))) * mylogSq(m_stop2_sq, Q2);
@@ -331,30 +350,65 @@ bool Hessian_check(vector<high_prec_float> weak_boundary_conditions, high_prec_f
     Sigmauu2 += Sigmauu2_H0 + Sigmauu2_Hpm + Sigmauu2_N1 + Sigmauu2_N2 + Sigmauu2_N3 + Sigmauu2_N4\
         + Sigmauu2_C1 + Sigmauu2_C2 + Sigmauu2_stop1 + Sigmauu2_stop2 + Sigmauu2_scharm1 + Sigmauu2_scharm2\
         + Sigmauu2_sup1 + Sigmauu2_sup2 + Sigmauu2_sbot1 + Sigmauu2_sbot2 + Sigmauu2_sstrange1 + Sigmauu2_sstrange2\
+        + Sigmauu2_sdown1 + Sigmauu2_sdown2\
         + Sigmauu2_stau1 + Sigmauu2_stau2 + Sigmauu2_smu1 + Sigmauu2_smu2 + Sigmauu2_se1 + Sigmauu2_se2 + Sigmauu2_tau_sneut\
         + Sigmauu2_mu_sneut + Sigmauu2_e_sneut;
     Sigmadd2 += Sigmadd2_H0 + Sigmadd2_Hpm + Sigmadd2_N1 + Sigmadd2_N2 + Sigmadd2_N3 + Sigmadd2_N4\
         + Sigmadd2_C1 + Sigmadd2_C2 + Sigmadd2_stop1 + Sigmadd2_stop2 + Sigmadd2_scharm1 + Sigmadd2_scharm2\
         + Sigmadd2_sup1 + Sigmadd2_sup2 + Sigmadd2_sbot1 + Sigmadd2_sbot2 + Sigmadd2_sstrange1 + Sigmadd2_sstrange2\
+        + Sigmadd2_sdown1 + Sigmadd2_sdown2\
         + Sigmadd2_stau1 + Sigmadd2_stau2 + Sigmadd2_smu1 + Sigmadd2_smu2 + Sigmadd2_se1 + Sigmadd2_se2 + Sigmadd2_tau_sneut\
         + Sigmadd2_mu_sneut + Sigmadd2_e_sneut;
     Sigmaud2 += Sigmaud2_H0 + Sigmaud2_N1 + Sigmaud2_N2 + Sigmaud2_N3 + Sigmaud2_N4\
         + Sigmaud2_C1 + Sigmaud2_C2 + Sigmaud2_stop1 + Sigmaud2_stop2 + Sigmaud2_scharm1 + Sigmaud2_scharm2\
         + Sigmaud2_sup1 + Sigmaud2_sup2 + Sigmaud2_sbot1 + Sigmaud2_sbot2 + Sigmaud2_sstrange1 + Sigmaud2_sstrange2\
+        + Sigmaud2_sdown1 + Sigmaud2_sdown2\
         + Sigmaud2_stau1 + Sigmaud2_stau2 + Sigmaud2_smu1 + Sigmaud2_smu2 + Sigmaud2_se1 + Sigmaud2_se2;
-    vector<high_prec_float> HessianTerms = {Sigmauu2, Sigmadd2, Sigmaud2};
-    bool OriginCheck = true;
-    high_prec_float bval = weak_boundary_conditions[42];
-    if ((pow((((-1.0) * bval) + Sigmaud2), 2.0) < ((mHu_sq_wk + mu_wk_sq + Sigmauu2) * (mHd_sq_wk + mu_wk_sq + Sigmadd2))) && ((mHu_sq_wk + mHd_sq_wk + (2.0 * mu_wk_sq) + Sigmauu2 + Sigmadd2) > 0)) {
-            OriginCheck = false;
+    vector<high_prec_float> result = {Sigmauu2, Sigmadd2, Sigmaud2};
+    for (const high_prec_float& term : result) {
+        if (!(boost::math::isfinite)(term)) {
+            throw EWSBNumericalFailure(
+                "EWSB Hessian produced a non-finite aggregate term");
+        }
     }
-    if (OriginCheck == false) {
-        // std::cout << "Origin failed to destabilize at loop-level" << endl;
+    return result;
+}
+
+bool Hessian_check(vector<high_prec_float> weak_boundary_conditions, high_prec_float myQ) {
+    const vector<high_prec_float> HessianTerms =
+        ewsb_detail::loopHessianTerms(weak_boundary_conditions, myQ);
+    if (HessianTerms.size() != 3) {
+        throw EWSBNumericalFailure(
+            "EWSB Hessian returned an invalid aggregate-term count");
     }
-    return OriginCheck;
+    const high_prec_float& Sigmauu2 = HessianTerms[0];
+    const high_prec_float& Sigmadd2 = HessianTerms[1];
+    const high_prec_float& Sigmaud2 = HessianTerms[2];
+    const high_prec_float mu_wk_sq = pow(weak_boundary_conditions[6], 2.0);
+    const high_prec_float& mHu_sq_wk = weak_boundary_conditions[25];
+    const high_prec_float& mHd_sq_wk = weak_boundary_conditions[26];
+    const high_prec_float& bval = weak_boundary_conditions[42];
+    const high_prec_float offDiagonalSquared =
+        pow(((-1.0) * bval) + Sigmaud2, 2.0);
+    const high_prec_float diagonalProduct =
+        (mHu_sq_wk + mu_wk_sq + Sigmauu2)
+        * (mHd_sq_wk + mu_wk_sq + Sigmadd2);
+    const high_prec_float trace = mHu_sq_wk + mHd_sq_wk
+        + (2.0 * mu_wk_sq) + Sigmauu2 + Sigmadd2;
+    if (!(boost::math::isfinite)(offDiagonalSquared)
+            || !(boost::math::isfinite)(diagonalProduct)
+            || !(boost::math::isfinite)(trace)) {
+        throw EWSBNumericalFailure(
+            "EWSB Hessian produced a non-finite determinant or trace term");
+    }
+    return !(offDiagonalSquared < diagonalProduct && trace > 0);
 }
 
 bool BFB_check(vector<high_prec_float> weak_boundary_conditions) {
+    if (weak_boundary_conditions.size() < 44) {
+        throw EWSBNumericalFailure(
+            "EWSB bounded-from-below check received fewer than 44 weak-scale parameters");
+    }
     high_prec_float Yt, Yc, Yu, Yb, Ys, Yd, Ytau, Ymu, Ye, Gp, G2, G3, Cos2Beta, LHS, RHS;
     Cos2Beta = cos(2.0 * atan(weak_boundary_conditions[43]));
     Yt = weak_boundary_conditions[7];
@@ -366,7 +420,7 @@ bool BFB_check(vector<high_prec_float> weak_boundary_conditions) {
     Ytau = weak_boundary_conditions[13];
     Ymu = weak_boundary_conditions[14];
     Ye = weak_boundary_conditions[15];
-    Gp = sqrt(0.6) * weak_boundary_conditions[0];
+    Gp = GPR_NORMALIZATION * weak_boundary_conditions[0];
     G2 = weak_boundary_conditions[1];
     G3 = weak_boundary_conditions[2];
     LHS = 8.0 * ((G2 * G2) + (2.0 * Gp * Gp))\
@@ -380,6 +434,10 @@ bool BFB_check(vector<high_prec_float> weak_boundary_conditions) {
                      + ((Ys * Ys) + (Yc * Yc))
                      + ((Yd * Yd) + (Yu * Yu)))));
     RHS *= Cos2Beta;
+    if (!(boost::math::isfinite)(LHS) || !(boost::math::isfinite)(RHS)) {
+        throw EWSBNumericalFailure(
+            "EWSB bounded-from-below check produced a non-finite comparison term");
+    }
     if (LHS < RHS) {
         std::cout << "Potential not BFB at loop-level" << endl;
     }

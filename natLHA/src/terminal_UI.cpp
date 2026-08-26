@@ -173,11 +173,7 @@ void savedeltaSNResults(const std::vector<DSNLabeledValue>& dsnlist, const high_
 }
 
 void clearScreen() {
-    #ifdef _WIN32
-    system("cls");
-    #else
-    system("clear");
-    #endif
+    std::cout << "\x1b[2J\x1b[H" << std::flush;
 }
 
 std::vector<high_prec_float> beta_g1g2(const high_prec_float& g1val, const high_prec_float& g2val, const high_prec_float& g3val,
@@ -277,7 +273,7 @@ void terminalUI() {
          << "as calculated at tree level from the SLHA file to minimize logarithmic contributions.\n\n"
          << "Supported models for the local solvers are MSSM EFT models for\n"
          << "Delta_EW, Delta_SN, and Delta_HS, but only the CMSSM, NUHM(1,2,3,4),\n"
-         << "and pMSSM-19 for Delta_BG.\n\n"
+         << "and pMSSM-30 plus mu for Delta_BG.\n\n"
          << "Press Enter to begin." << endl;
     string input;
     input = promptLine(); // User reads intro and presses enter
@@ -421,15 +417,15 @@ void terminalUI() {
                 << "3: NUHM2\n"
                 << "4: NUHM3\n"
                 << "5: NUHM4\n"
-                << "6: pMSSM-19\n\n";
+                << "6: pMSSM-30 plus mu (31 independent directions)\n\n";
             modinp = promptInt("From the list above, input the number of the model your SLHA file corresponds to: ",
                                1, 6, "Invalid model number selected, please try again.");
             std::cout << "\n####################################################\n"
                     << "Please select the level of precision you want for the Delta_BG calculation.\n"
                     << "Below are the options: \n"
-                    << "1: High precision, slowest calculation.\n"
-                    << "2: Medium precision, twice as fast as high precision mode.\n"
-                    << "3: Lowest precision, four times as fast as high precision mode.\n\n";
+                    << "1: Fixed 8-point diagnostic stencil.\n"
+                    << "2: Fixed 4-point diagnostic stencil.\n"
+                    << "3: Adaptive 2-point production mode (default).\n\n";
 
             precinp = promptInt("From the list above, input the number corresponding to the precision you want: ",
                                 1, 3, "Invalid Delta_BG precision setting selected, please try again.");
@@ -520,8 +516,10 @@ void terminalUI() {
         // THE PIPELINE LIVES IN natlha::evaluate() NOW, not here.
         //
         // What used to be inlined at this point -- parse the SLHA, run to
-        // Q_SUSY = sqrt(mst1 * mst2), re-solve EWSB for mu, fill b = B*mu, and iterate to
-        // the g1 = g2 scale -- is one function, and src/main_cli.cpp calls that same function
+        // exactly one positive-stop sign-changing or exact Q_SUSY root at the declared
+        // maximum log(Q) scan spacing, jointly converge it with the EWSB mu solve,
+        // fill b = B*mu, and iterate to the g1 = g2 scale -- is one function, and
+        // src/main_cli.cpp calls that same function
         // for its non-interactive modes. One implementation, so a fix to the pipeline reaches
         // both front ends instead of only the one it was made in.
         //
@@ -529,7 +527,6 @@ void terminalUI() {
         // and reporting and saving the results below.
         natlha::Config apiCfg;
         apiCfg.slhaPath = direc;
-        apiCfg.verbose = true;
         // The measures are left OFF here on purpose, so this call performs the shared setup
         // only. The reporting code below invokes DEW_calc, DHS_calc, DBG_calc and DSN_calc
         // itself, because it interleaves each result with its own prompts and save handling.
@@ -571,7 +568,7 @@ void terminalUI() {
         high_prec_float SLHAQSUSY = apiResult.qSusy;
         high_prec_float curr_iter_QGUT = apiResult.logQGut;
         high_prec_float currentmZ2 = apiResult.mZ2;
-        high_prec_float getmZ2_value = apiResult.mZ2FromSolver;
+        high_prec_float solverMZ2Value = apiResult.mZ2FromSolver;
         high_prec_float tanb = first_SUSY_BCs[43];
 
         /******************************************************************
@@ -708,8 +705,14 @@ void terminalUI() {
             high_prec_float logQSUSY = log(SLHAQSUSY);
             std::cout << "\n########## Computing Delta_BG... ##########\n" << endl;
             std::cout << "(This can take a while...)\n";
-            vector<LabeledValueBG> myDBGlist = DBG_calc(modinp, precinp, curr_iter_QGUT,
-                                                        logQSUSY, tanb, first_GUT_BCs, currentmZ2);
+            const BGResult bgResult = DBG_calc(modinp, precinp, curr_iter_QGUT,
+                                               logQSUSY, tanb, first_GUT_BCs, currentmZ2);
+            if (!bgResult.ok) {
+                std::cout << "Delta_BG failed: " << bgResult.failure << "\n"
+                          << "Returning to the configuration screen.\n";
+                continue;
+            }
+            const vector<LabeledValueBG>& myDBGlist = bgResult.contributions;
             this_thread::sleep_for(chrono::seconds(1));
             std::cout << "\n########## Delta_BG Results ##########\n";
             this_thread::sleep_for(chrono::seconds(1));
@@ -770,7 +773,7 @@ void terminalUI() {
 
         if (DSNcalc) {
             high_prec_float logQSUSY = log(SLHAQSUSY);
-            std::vector<DSNLabeledValue> myDSNlist = DSN_calc(DSNcalcSelect, first_SUSY_BCs, getmZ2_value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
+            std::vector<DSNLabeledValue> myDSNlist = DSN_calc(DSNcalcSelect, first_SUSY_BCs, solverMZ2Value, logQSUSY, curr_iter_QGUT, nF_input, nD_input);
             high_prec_float totalN = 0.0;
             for (const auto& item : myDSNlist) {
                 totalN += item.value;

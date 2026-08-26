@@ -3434,6 +3434,28 @@ void MSSMRGESolver( const std::vector<double>& x, std::vector<double>& dxdt, con
 
 typedef boost::numeric::odeint::runge_kutta_dopri5<std::vector<double>> stepper_type;
 
+const ODETolerances& odeTolerances() {
+    struct TolEnv {
+        static double read(const char * name, double fallback) {
+            const char * e = std::getenv(name);
+            if (e == nullptr || *e == '\0') return fallback;
+            char * end = nullptr;
+            const double value = std::strtod(e, &end);
+            if (end == e || *end != '\0' || !std::isfinite(value) || value <= 0.0) {
+                std::cerr << "natLHA: " << name << "='" << e
+                          << "' is not a finite positive number; refusing to guess.\n";
+                std::exit(4);
+            }
+            return value;
+        }
+    };
+    static const ODETolerances tolerances = {
+        TolEnv::read("NATLHA_ODE_ABS_ERR", 1.0E-12),
+        TolEnv::read("NATLHA_ODE_REL_ERR", 1.0E-12)
+    };
+    return tolerances;
+}
+
 std::vector<double> solveODEs(std::vector<double> initialConditions, double startTime, double endTime, double timeStep) {
     using state_type = std::vector<double>;
     state_type x = initialConditions;
@@ -3488,7 +3510,8 @@ std::vector<double> solveODEs(std::vector<double> initialConditions, double star
     // behaviour is unchanged unless one of the environment variables below is set. They exist
     // so the tolerances can be varied WITHOUT rebuilding, which is what makes it practical to
     // test whether stepper control explains the pathologically slow points seen during
-    // labelling. Each is read once into a function-local static.
+    // labelling. The shared `odeTolerances()` accessor reads each once into a
+    // function-local static so the trajectory and joint-convergence gate use one contract.
     //
     // NOT ESTABLISHED: that these tolerances cause any slow point. They are made adjustable so
     // the question can be answered, not because it has been.
@@ -3500,26 +3523,11 @@ std::vector<double> solveODEs(std::vector<double> initialConditions, double star
     // diverges and the stepper shrinks dt without limit -- a typo in an environment variable
     // would then look exactly like the pathology being investigated. Anything that is not a
     // fully consumed, finite, strictly positive number is therefore refused loudly.
-    struct TolEnv {
-        static double read(const char * name, double fallback) {
-            const char * e = std::getenv(name);
-            if (e == nullptr || *e == '\0') return fallback;
-            char * end = nullptr;
-            const double v = std::strtod(e, &end);
-            if (end == e || *end != '\0' || !std::isfinite(v) || v <= 0.0) {
-                std::cerr << "natLHA: " << name << "='" << e
-                          << "' is not a finite positive number; refusing to guess.\n";
-                std::exit(4);
-            }
-            return v;
-        }
-    };
-    static const double absErr = TolEnv::read("NATLHA_ODE_ABS_ERR", 1.0E-12);
-    static const double relErr = TolEnv::read("NATLHA_ODE_REL_ERR", 1.0E-12);
+    const ODETolerances& tolerances = odeTolerances();
 
     // Integrate
     boost::numeric::odeint::integrate_adaptive(
-        make_controlled( absErr, relErr, stepper_type() ),
+        make_controlled(tolerances.absolute, tolerances.relative, stepper_type()),
         MSSMRGESolver, x, startTime, endTime, timeStep, myObserver
     );
 
@@ -3539,7 +3547,8 @@ std::vector<double> solveODEs(std::vector<double> initialConditions, double star
                   << "  span " << (endTime - startTime)
                   << "  min_dt " << stats.minDt
                   << "  min_dt_at " << stats.minDtAt
-                  << "  eps_abs " << absErr << "  eps_rel " << relErr << "\n";
+                  << "  eps_abs " << tolerances.absolute
+                  << "  eps_rel " << tolerances.relative << "\n";
     }
 
     // Return final solution
