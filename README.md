@@ -1,4 +1,97 @@
-# The next generation of DEW4SLHA will be called NatLHA. Development of computational routines is in the testing stage, current code may be found in this repository and soon at www.natLHA.com. This README will be updated soon!
+# natLHA
+
+natLHA computes electroweak, high-scale, Barbieri-Giudice, and differential
+stringy naturalness measures from SLHA spectra. The current C++ implementation
+supports an optional CUDA backend for ordered, large-population scans. CUDA
+accelerates both repeated 44-state MSSM RGE integrations and the fused Q_SUSY
+evolution/scan/root-refinement stage. Final contribution labels and failure
+strings are constructed on the CPU, and tier disagreement or audit mismatch is
+CPU-adjudicated.
+
+The historical DEW4SLHA v1.3 documentation follows this current quick start.
+For CUDA validation methodology, measured performance, and known boundaries,
+see [the CUDA batch validation report](docs/cuda-batch-validation.md).
+
+## Build the current C++ implementation
+
+Run these commands from the repository root. A CPU-only build is the default and
+does not require a CUDA installation:
+
+```bash
+(
+  mkdir -p build/cpu
+  cd build/cpu
+  cmake ../../natLHA -G Ninja \
+    -DNATLHA_STATIC_LINK=OFF -DCMAKE_BUILD_TYPE=Release
+  cmake --build .
+  ctest --output-on-failure
+)
+```
+
+The CUDA build requires CMake 3.24 or newer, a CUDA 12.8-or-newer toolkit, and a
+supported NVIDIA GPU. First run `/path/to/cuda-12.8-or-newer/bin/nvcc --version`
+and substitute that verified compiler path below. Setting it explicitly avoids
+accidentally using an older `nvcc` earlier on `PATH`:
+
+```bash
+cmake -S natLHA -B build/cuda -G Ninja \
+  -DNATLHA_STATIC_LINK=OFF \
+  -DNATLHA_ENABLE_CUDA=ON \
+  -DCMAKE_CUDA_COMPILER=/path/to/cuda-12.8-or-newer/bin/nvcc \
+  -DCMAKE_BUILD_TYPE=Release
+cmake --build build/cuda
+ctest --test-dir build/cuda --output-on-failure
+```
+
+Both builds require Boost, Eigen, MPFR, and GMP development packages. The CUDA
+build additionally links Boost.Fiber and Boost.Context for bounded logical-point
+scheduling. SLHAea is pinned and vendored under `third_party/slhaea`;
+configuration does not download dependencies or rely on a machine-specific
+include path.
+
+## Run an ordered batch
+
+Create a text file containing one SLHA path per line, then select a backend:
+
+```bash
+build/cuda/natlha-cli \
+  --batch spectra.txt \
+  --dbg --bg-model 1 --bg-precision 3 \
+  --backend cuda \
+  --cuda-device 0 \
+  --cuda-workers 0 \
+  --cuda-batch-size 0 \
+  --out results.tsv
+```
+
+Input order is preserved in the output. Explicit CPU batches emit and flush each
+row incrementally. CUDA and auto batches emit ordered rows only after batch
+evaluation completes. Interruption during CUDA/auto evaluation may leave the
+already-written header, but it cannot leave a prefix of completed data rows. The
+whole input list need not fit on the GPU: natLHA streams independent RGE and
+Q_SUSY requests through memory-bounded launch chunks. Point state machines are
+lightweight fibers scheduled across no more OS threads than the machine's
+reported hardware-thread count, rather than one blocked OS thread per point.
+`--cuda-workers` controls the maximum live logical point state machines in a
+wave; `--cuda-batch-size` separately caps trajectories in one kernel launch.
+Zero asks the backend to choose automatically. On a new machine, start at zero
+and sweep both controls while measuring points per second.
+
+Backend behavior is explicit:
+
+- `--backend cpu` uses the established CPU/MPFR path and remains the default.
+- `--backend cuda` fails closed if the requested CUDA device is unavailable.
+- `--backend auto` uses CUDA when available and otherwise records a CPU fallback.
+- `--backend-audit` compares every executed CUDA result with CPU, appends
+  execution-tier and adjudication columns, and replaces a mismatching result
+  with the CPU result. It is a validation mode, not a performance mode.
+
+CUDA candidates near a numerical or branch boundary are retried with device
+double-double arithmetic. Tier disagreement is adjudicated by CPU/MPFR. Because
+exact Delta_BG contribution order is part of the CPU semantic contract, the
+generic boundary detector also escalates adjacent contributions whose
+magnitudes are close enough to reorder. This preserves label semantics but can
+remove the speed benefit for affected rows in any model.
 
 ---
 
@@ -165,7 +258,11 @@ Lastly, the user can either choose to try again with a new SLHA file from the be
 
 This software makes use of several third-party libraries:
 
-- **Boost Libraries** (Boost Software License): [Boost website](https://www.boost.org/)
-- **Eigen Libraries** (LGPL3+ License): [Eigen website](https://eigen.tuxfamily.org/)
+- **Boost Libraries** (Boost Software License 1.0): [Boost website](https://www.boost.org/).
+  CUDA dense-output and TOMS748 adaptations retain their notices and full license
+  under `third_party/boost-derived`.
+- **SLHAea** (Boost Software License 1.0), pinned under `third_party/slhaea`.
+- **Eigen Libraries** (MPL 2.0, with LGPL-2.1+/MPL-2 and BSD-3-Clause terms
+  applying to identified files in the distribution): [Eigen website](https://eigen.tuxfamily.org/)
 
 Special thanks to the developers of these libraries for their invaluable contributions to the open source community.

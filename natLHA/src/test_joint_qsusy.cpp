@@ -3,6 +3,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "MSSM_RGE_solver.hpp"
@@ -27,6 +28,7 @@ QSusyResult rootAt(double logScale, double stateMarker) {
     root.residual = 0.0;
     root.stop1Squared = 1.0e6;
     root.stop2Squared = 4.0e6;
+    root.refinedBracketWidth = 0.0;
     root.acceptedSteps = 10;
     root.rootsFound = 1;
     root.declaredMaxDeltaLogQ = 0.05;
@@ -225,6 +227,28 @@ int main(int argc, char** argv) {
         ok &= expect(contains(failure.what(), "immutable high-search state")
                          && rootCalls == 0 && tuneCalls == 0 && stopCalls == 0,
                      "non-finite immutable high-search state crossed the input boundary");
+    }
+    const std::vector<std::pair<double, std::string>> invalidRootWidths = {
+        {-1.0, "negative"},
+        {std::numeric_limits<double>::quiet_NaN(), "NaN"},
+        {std::numeric_limits<double>::infinity(), "infinite"},
+    };
+    for (const auto& invalidWidth : invalidRootWidths) {
+        QSusyResult invalidRoot = rootAt(8.0, 80.0);
+        invalidRoot.refinedBracketWidth = invalidWidth.first;
+        try {
+            natlha::detail::solveJointQSusyMu(
+                invalidRoot, 20.0, 1.0e-6, 0.05, 2, operations);
+            ok &= expect(
+                false, "a " + invalidWidth.second + " root width was accepted");
+        } catch (const NumericalFailure& failure) {
+            ok &= expect(
+                failure.stage == "joint Q_SUSY/mu solve"
+                    && contains(failure.what(), "invalid root returned by root search")
+                    && rootCalls == 0 && tuneCalls == 0 && stopCalls == 0,
+                invalidWidth.second
+                    + " root width crossed the validated root boundary");
+        }
     }
     const natlha::detail::JointQSusySolution synthetic =
         natlha::detail::solveJointQSusyMu(

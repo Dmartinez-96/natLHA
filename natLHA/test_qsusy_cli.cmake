@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-foreach(required CLI SOURCE WORK)
+foreach(required CLI SOURCE WORK CUDA_ENABLED)
     if(NOT DEFINED ${required})
         message(FATAL_ERROR "missing required test argument: ${required}")
     endif()
@@ -80,6 +80,120 @@ if(NOT batch_stdout MATCHES "^# ok Delta_EW Q_SUSY logQ_GUT mZ2 slha_path\n")
     message(FATAL_ERROR "batch stdout schema changed: ${batch_stdout}")
 endif()
 require_requested_spacing("${batch_stderr}" "q_susy_max_dlogq")
+if(batch_stderr MATCHES "# backend requested" OR batch_stderr MATCHES "# cuda_profile")
+    message(FATAL_ERROR
+        "default CPU batch gained backend/profile stderr output: ${batch_stderr}")
+endif()
+
+execute_process(
+    COMMAND "${CLI}" --batch "${batch}" --qsusy-max-dlogq 0.05
+            --backend auto --backend-audit
+    RESULT_VARIABLE backend_audit_result
+    OUTPUT_VARIABLE backend_audit_stdout
+    ERROR_VARIABLE backend_audit_stderr)
+if(NOT backend_audit_result EQUAL 0)
+    message(FATAL_ERROR
+        "backend-audited batch failed: ${backend_audit_result}; "
+        "stdout=${backend_audit_stdout}; stderr=${backend_audit_stderr}")
+endif()
+if(NOT backend_audit_stderr MATCHES "# backend requested")
+    message(FATAL_ERROR
+        "backend-audited batch lost its backend summary: ${backend_audit_stderr}")
+endif()
+if(CUDA_ENABLED AND NOT backend_audit_stderr MATCHES "# cuda_profile")
+    message(FATAL_ERROR
+        "CUDA-audited batch lost its stage profiles: ${backend_audit_stderr}")
+endif()
+string(REGEX MATCHALL "[^\n]+" backend_audit_lines "${backend_audit_stdout}")
+list(LENGTH backend_audit_lines backend_audit_line_count)
+if(NOT backend_audit_line_count EQUAL 2)
+    message(FATAL_ERROR
+        "backend audit emitted an unexpected row count: ${backend_audit_stdout}")
+endif()
+list(GET backend_audit_lines 0 backend_audit_header)
+if(NOT backend_audit_header STREQUAL
+        "# ok Delta_EW Q_SUSY logQ_GUT mZ2 backend_executed selected_backend candidate_tier final_tier adjudication_reasons cpu_adjudicated backend_audit_match slha_path")
+    message(FATAL_ERROR "backend audit header changed: ${backend_audit_stdout}")
+endif()
+list(GET backend_audit_lines 1 backend_audit_row)
+string(REGEX REPLACE " +" ";" backend_audit_fields "${backend_audit_row}")
+list(LENGTH backend_audit_fields backend_audit_field_count)
+if(NOT backend_audit_field_count EQUAL 13)
+    message(FATAL_ERROR "backend audit row is not rectangular: ${backend_audit_row}")
+endif()
+list(GET backend_audit_fields 5 backend_executed)
+list(GET backend_audit_fields 6 selected_backend)
+list(GET backend_audit_fields 7 candidate_tier)
+list(GET backend_audit_fields 8 final_tier)
+list(GET backend_audit_fields 11 backend_audit_match)
+list(GET backend_audit_fields 12 backend_audit_path)
+if(NOT backend_executed STREQUAL "1"
+        OR NOT selected_backend MATCHES "^(cpu|cuda)$"
+        OR candidate_tier STREQUAL "none"
+        OR final_tier STREQUAL "none"
+        OR NOT backend_audit_path STREQUAL "${SOURCE}")
+    message(FATAL_ERROR
+        "executed backend audit lost its provenance: ${backend_audit_row}")
+endif()
+if(CUDA_ENABLED)
+    if(NOT selected_backend STREQUAL "cuda"
+            OR NOT backend_audit_match STREQUAL "1")
+        message(FATAL_ERROR
+            "CUDA build did not execute and match a CUDA audit: ${backend_audit_row}")
+    endif()
+else()
+    if(NOT selected_backend STREQUAL "cpu"
+            OR NOT backend_audit_match STREQUAL "-1")
+        message(FATAL_ERROR
+            "CPU build did not record automatic CPU fallback: ${backend_audit_row}")
+    endif()
+endif()
+
+execute_process(
+    COMMAND "${CLI}" --batch "${batch}" --dsn --sn-random-seed 1
+            --backend auto --backend-audit
+    RESULT_VARIABLE preexecution_result
+    OUTPUT_VARIABLE preexecution_stdout
+    ERROR_VARIABLE preexecution_stderr)
+if(NOT preexecution_result EQUAL 2)
+    message(FATAL_ERROR
+        "pre-execution filename rejection returned ${preexecution_result}, expected 2; "
+        "stdout=${preexecution_stdout}; stderr=${preexecution_stderr}")
+endif()
+string(REGEX MATCHALL "[^\n]+" preexecution_lines "${preexecution_stdout}")
+list(LENGTH preexecution_lines preexecution_line_count)
+if(NOT preexecution_line_count EQUAL 3)
+    message(FATAL_ERROR
+        "pre-execution rejection emitted an unexpected row count: ${preexecution_stdout}")
+endif()
+list(GET preexecution_lines 1 preexecution_header)
+if(NOT preexecution_header STREQUAL
+        "# ok Delta_EW delta_SN dN_vac sn_nF sn_nD Q_SUSY logQ_GUT mZ2 backend_executed selected_backend candidate_tier final_tier adjudication_reasons cpu_adjudicated backend_audit_match slha_path")
+    message(FATAL_ERROR
+        "pre-execution rejection header changed: ${preexecution_stdout}")
+endif()
+list(GET preexecution_lines 2 preexecution_row)
+string(REGEX REPLACE " +" ";" preexecution_fields "${preexecution_row}")
+list(LENGTH preexecution_fields preexecution_field_count)
+if(NOT preexecution_field_count EQUAL 17)
+    message(FATAL_ERROR
+        "pre-execution rejection row is not rectangular: ${preexecution_row}")
+endif()
+list(GET preexecution_fields 9 preexecution_executed)
+list(GET preexecution_fields 10 preexecution_backend)
+list(GET preexecution_fields 11 preexecution_candidate)
+list(GET preexecution_fields 12 preexecution_final)
+list(GET preexecution_fields 15 preexecution_audit_match)
+list(GET preexecution_fields 16 preexecution_path)
+if(NOT preexecution_executed STREQUAL "0"
+        OR NOT preexecution_backend STREQUAL "cpu"
+        OR NOT preexecution_candidate STREQUAL "none"
+        OR NOT preexecution_final STREQUAL "none"
+        OR NOT preexecution_audit_match STREQUAL "-1"
+        OR NOT preexecution_path STREQUAL "${SOURCE}")
+    message(FATAL_ERROR
+        "pre-execution rejection falsely claimed execution: ${preexecution_row}")
+endif()
 
 execute_process(
     COMMAND "${CLI}" --batch "${batch}" --qsusy-max-dlogq 0.05

@@ -14,6 +14,7 @@
 #define NATLHA_API_HPP
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -23,6 +24,49 @@
 #include "DSN_calc.hpp"   // DSNLabeledValue
 
 namespace natlha {
+
+/// Execution backend requested for a batch. CPU remains the default so adding CUDA support
+/// cannot silently change the established single-point or batch semantics.
+enum class Backend {
+    Cpu,
+    Cuda,
+    Auto
+};
+
+/// Numerical tier that produced a candidate or final row.
+enum class ExecutionTier {
+    None,
+    CpuMpfr,
+    CudaFp64,
+    CudaDoubleDouble
+};
+
+/// Bit values describing selection, numerical-boundary, tier-disagreement, audit, or
+/// infrastructure conditions that affected a point's execution. Multiple reasons can apply
+/// to one point; inspect them with `hasAdjudicationReason`.
+enum class AdjudicationReason : std::uint32_t {
+    None = 0,
+    BackendUnavailable = UINT32_C(1) << 0,
+    NonFiniteState = UINT32_C(1) << 1,
+    OdeStepLimit = UINT32_C(1) << 2,
+    ErrorEstimate = UINT32_C(1) << 3,
+    RootBoundary = UINT32_C(1) << 4,
+    BranchBoundary = UINT32_C(1) << 5,
+    TierDisagreement = UINT32_C(1) << 6,
+    AuditMismatch = UINT32_C(1) << 7,
+    InfrastructureFailure = UINT32_C(1) << 8
+};
+
+using AdjudicationReasons = std::uint32_t;
+
+constexpr AdjudicationReasons adjudicationReason(AdjudicationReason reason) {
+    return static_cast<AdjudicationReasons>(reason);
+}
+
+constexpr bool hasAdjudicationReason(
+        AdjudicationReasons reasons, AdjudicationReason reason) {
+    return (reasons & adjudicationReason(reason)) != 0;
+}
 
 /// What to compute, and how.
 struct Config {
@@ -78,6 +122,7 @@ struct QSusyIterationDiagnostic {
     high_prec_float mu = 0;
     double stop1Squared = 0.0;
     double stop2Squared = 0.0;
+    double refinedBracketWidth = 0.0;
     std::size_t acceptedSteps = 0;
     double declaredMaxDeltaLogQ = 0.0;
     std::size_t scanSegments = 0;
@@ -140,6 +185,8 @@ struct Result {
     high_prec_float qSusyResidual = 0;
     double qSusyStop1Squared = 0.0;
     double qSusyStop2Squared = 0.0;
+    /// Nonnegative width in log(Q) reported for the final Q_SUSY root interval.
+    double qSusyRootBracketWidth = 0.0;
 
     /// The 44-entry running state at the jointly converged Q_SUSY, after the mu solve and
     /// after b = B*mu is filled in. The slot numbering is 0-based: positions 0-5 hold
@@ -203,6 +250,101 @@ struct Result {
     high_prec_float snTotalNvac = 0;
 };
 
+/// Runtime controls shared by the C++ batch API and the non-interactive CLI.
+struct BatchOptions {
+    Backend backend = Backend::Cpu;
+    /// Zero-based CUDA device ordinal. It is ignored when CPU is selected.
+    int cudaDevice = 0;
+    /// Maximum number of trajectories submitted together. In a CUDA-enabled implementation,
+    /// zero requires the backend to choose from device memory and the workload size.
+    std::size_t cudaBatchSize = 0;
+    /// Maximum live logical point state machines in one bounded scheduling wave. They run as
+    /// fibers on a hardware-bounded OS-thread pool and submit RGE and Q_SUSY stages to the
+    /// coalescing CUDA schedulers. Zero selects an automatic value; automatic and explicit
+    /// values are both capped at 4096.
+    /// This is distinct from cudaBatchSize, which bounds one device launch.
+    std::size_t cudaWorkers = 0;
+    /// Require a CUDA-enabled implementation to compare every CUDA result with the
+    /// authoritative CPU implementation and retain the outcome in
+    /// `PointExecutionDiagnostic`. Off by default because it removes the speed benefit and is
+    /// intended for validation populations.
+    bool backendAudit = false;
+};
+
+struct CudaDeviceInfo {
+    bool compiled = false;
+    bool available = false;
+    int device = 0;
+    int computeCapabilityMajor = 0;
+    int computeCapabilityMinor = 0;
+    int multiprocessorCount = 0;
+    std::size_t totalMemoryBytes = 0;
+    std::string name;
+    std::string diagnostic;
+};
+
+/// Per-point execution provenance. Entries align one-for-one with `BatchRun::results` and the
+/// input configurations, including rows that fail.
+struct PointExecutionDiagnostic {
+    Backend requestedBackend = Backend::Cpu;
+    Backend selectedBackend = Backend::Cpu;
+    /// First precision tier that returned a candidate Result. `CpuMpfr` identifies direct CPU
+    /// execution; the CUDA values identify the first CUDA candidate tier. `finalTier`
+    /// identifies the accepted tier, including subsequent CPU/MPFR adjudication.
+    ExecutionTier candidateTier = ExecutionTier::None;
+    ExecutionTier finalTier = ExecutionTier::None;
+    AdjudicationReasons adjudicationReasons = adjudicationReason(AdjudicationReason::None);
+    /// True when the selected backend path produced a point Result, including an ordinary
+    /// numerical or input failure row. False when selection failed or infrastructure aborted
+    /// before such a row was produced.
+    bool executed = false;
+    bool cpuAdjudicated = false;
+    bool auditCompared = false;
+    bool auditMatched = false;
+    std::string detail;
+};
+
+/// Aggregate host-observed timing for one CUDA numerical stage. Queue wait is cumulative
+/// across requests and therefore may exceed batch wall time; allocation, transfer, and
+/// synchronized-kernel values are serialized scheduler wall times.
+struct CudaStageProfile {
+    std::size_t requests = 0;
+    std::size_t launches = 0;
+    std::size_t trajectories = 0;
+    double cumulativeQueueWaitSeconds = 0.0;
+    double allocationSeconds = 0.0;
+    double hostToDeviceSeconds = 0.0;
+    double kernelAndSyncSeconds = 0.0;
+    double deviceToHostSeconds = 0.0;
+};
+
+struct BatchSummary {
+    std::size_t points = 0;
+    std::size_t succeeded = 0;
+    std::size_t failed = 0;
+    /// Points for which the selected CUDA path returned a candidate Result at some precision
+    /// tier. This excludes selection and infrastructure failures that produced no candidate.
+    std::size_t cudaCandidates = 0;
+    /// Largest FP64 scheduler launch limit selected across the RGE and Q_SUSY stages after a
+    /// successful candidate pass. Zero means that no limit was recorded (for example, CPU
+    /// execution, an empty batch, unavailable CUDA, or infrastructure failure before the
+    /// pass completed).
+    std::size_t cudaFp64LaunchLimit = 0;
+    /// Largest trajectory count actually observed in any FP64 or double-double launch.
+    std::size_t maximumCudaLaunchSize = 0;
+    std::size_t doubleDoubleRetries = 0;
+    std::size_t cpuAdjudications = 0;
+    std::size_t auditMismatches = 0;
+    CudaStageProfile rgeProfile;
+    CudaStageProfile qSusyProfile;
+};
+
+struct BatchRun {
+    std::vector<Result> results;
+    std::vector<PointExecutionDiagnostic> diagnostics;
+    BatchSummary summary;
+};
+
 namespace detail {
 
 /// Invalidate every label in a requested multi-label row while retaining setup state and
@@ -216,6 +358,28 @@ void failLabelRow(Result& result, std::string error);
 ///
 /// Never throws: failures are reported through Result::ok and Result::error.
 Result evaluate(const Config & cfg);
+
+/// Report whether this build and machine can execute the CUDA batch backend. CUDA runtime
+/// failures are returned through `diagnostic`, as are an unavailable device or CPU-only build.
+CudaDeviceInfo queryCudaDevice(int device = 0);
+
+/// Evaluate a heterogeneous ordered batch. One Result and one diagnostic are returned for
+/// every input Config, in the same order. The CPU-only build implements CPU execution,
+/// fail-closed explicit CUDA selection, and automatic CPU fallback. A CUDA-enabled backend
+/// must escalate candidates near numerical or branch boundaries; the existing CPU/MPFR path
+/// remains authoritative.
+BatchRun evaluateBatch(
+    const std::vector<Config>& configs,
+    const BatchOptions& options = BatchOptions{});
+
+/// Convenience overload for scans whose points differ only by SLHA path.
+BatchRun evaluateBatch(
+    const Config& commonConfig,
+    const std::vector<std::string>& slhaPaths,
+    const BatchOptions& options = BatchOptions{});
+
+const char* backendName(Backend backend);
+const char* executionTierName(ExecutionTier tier);
 
 }  // namespace natlha
 

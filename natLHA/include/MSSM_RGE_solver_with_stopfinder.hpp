@@ -34,6 +34,7 @@ struct QSusyResult {
     double residual = 0.0;
     double stop1Squared = 0.0;
     double stop2Squared = 0.0;
+    double refinedBracketWidth = 0.0;
     std::size_t acceptedSteps = 0;
     double declaredMaxDeltaLogQ = 0.0;
     std::size_t scanSegments = 0;
@@ -50,6 +51,13 @@ QSusyResult findQSusy(const std::vector<double>& highScaleState,
                       double highLogScale,
                       double timeStep,
                       double maxDeltaLogQ);
+
+/// Host implementation used directly by parity tests and by `findQSusy` when no CUDA
+/// Q_SUSY submit hook is installed.
+QSusyResult findQSusyCpu(const std::vector<double>& highScaleState,
+                         double highLogScale,
+                         double timeStep,
+                         double maxDeltaLogQ);
 
 namespace qsusy_detail {
 
@@ -72,6 +80,7 @@ struct RootCandidate {
     double logScale = 0.0;
     std::vector<double> state;
     StopScalePoint point;
+    double refinedBracketWidth = 0.0;
 };
 
 std::vector<ScanEvent> classifySegment(

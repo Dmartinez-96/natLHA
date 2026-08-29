@@ -70,9 +70,12 @@ int main() {
                         "--dhs", "--dbg", "--dsn", "--bg-model", "6",
                         "--bg-precision", "2", "--sn-mode", "3", "--sn-nf", "10",
                         "--sn-nd", "5", "--qsusy-max-dlogq", "0.05",
-                        "--qsusy-audit",
+                        "--qsusy-audit", "--backend", "cuda", "--cuda-device", "2",
+                        "--cuda-batch-size", "4096", "--cuda-workers", "512",
+                        "--backend-audit",
                         "--digits", "30"},
                        allOptions, error) == natlha_cli::ParseStatus::Ok
+                     && error.empty()
                      && allOptions.batchPath == "points.txt"
                      && allOptions.outputPath == "labels.tsv"
                      && allOptions.config.computeDHS && allOptions.config.computeDBG
@@ -83,6 +86,11 @@ int main() {
                      && allOptions.config.snNF == 10 && allOptions.config.snND == 5
                      && allOptions.config.qSusyMaxDeltaLogQ == 0.05
                      && allOptions.qSusyAudit
+                     && allOptions.batchOptions.backend == natlha::Backend::Cuda
+                     && allOptions.batchOptions.cudaDevice == 2
+                     && allOptions.batchOptions.cudaBatchSize == 4096
+                     && allOptions.batchOptions.cudaWorkers == 512
+                     && allOptions.batchOptions.backendAudit
                      && allOptions.digits == 30,
                  "the refactored parser changed an existing accepted option: " + error);
 
@@ -91,6 +99,73 @@ int main() {
                        singleAudit, error) == natlha_cli::ParseStatus::Error
                      && error.find("requires --batch") != std::string::npos,
                  "single-point --qsusy-audit was accepted without a batch: " + error);
+
+    for (const std::string backend : {"cuda", "auto"}) {
+        natlha_cli::Options singleGpu;
+        ok &= expect(parse({"natlha-cli", "--slha", "point.slha",
+                            "--backend", backend},
+                           singleGpu, error) == natlha_cli::ParseStatus::Error
+                         && error.find("require --batch") != std::string::npos,
+                     "single-point " + backend + " backend was accepted: " + error);
+    }
+    natlha_cli::Options unknownBackend;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt",
+                        "--backend", "gpu"},
+                       unknownBackend, error) == natlha_cli::ParseStatus::Error
+                     && error.find("cpu, cuda, or auto") != std::string::npos,
+                 "unknown backend spelling was accepted: " + error);
+    natlha_cli::Options cpuCudaControl;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt",
+                        "--cuda-device", "0"},
+                       cpuCudaControl, error) == natlha_cli::ParseStatus::Error
+                     && error.find("require --backend cuda") != std::string::npos,
+                 "CUDA device control was accepted by the CPU backend: " + error);
+    natlha_cli::Options cpuAudit;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend-audit"},
+                       cpuAudit, error) == natlha_cli::ParseStatus::Error
+                     && error.find("requires --batch with") != std::string::npos,
+                 "backend audit was accepted without a CUDA-capable selection: " + error);
+    natlha_cli::Options tooManyCudaWorkers;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",
+                        "--cuda-workers", "4097"},
+                       tooManyCudaWorkers, error) == natlha_cli::ParseStatus::Error
+                     && error.find("must be in [0, 4096]") != std::string::npos,
+                 "excessive CUDA worker count was accepted: " + error);
+
+    natlha_cli::Options autoBoundaryControls;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "auto",
+                        "--cuda-device", "0", "--cuda-batch-size", "0",
+                        "--cuda-workers", "4096", "--backend-audit"},
+                       autoBoundaryControls, error) == natlha_cli::ParseStatus::Ok
+                     && error.empty()
+                     && autoBoundaryControls.batchOptions.backend == natlha::Backend::Auto
+                     && autoBoundaryControls.batchOptions.cudaDevice == 0
+                     && autoBoundaryControls.batchOptions.cudaBatchSize == 0
+                     && autoBoundaryControls.batchOptions.cudaWorkers == 4096
+                     && autoBoundaryControls.batchOptions.backendAudit,
+                 "valid automatic-backend boundary controls were rejected: " + error);
+
+    natlha_cli::Options missingBackendValue;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend"},
+                       missingBackendValue, error) == natlha_cli::ParseStatus::Error
+                     && error.find("needs a value") != std::string::npos,
+                 "missing backend value was not rejected: " + error);
+
+    natlha_cli::Options negativeCudaDevice;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",
+                        "--cuda-device", "-1"},
+                       negativeCudaDevice, error) == natlha_cli::ParseStatus::Error
+                     && error.find("must be in [0,") != std::string::npos,
+                 "negative CUDA device ordinal was accepted: " + error);
+
+    for (const std::string option : {"--cuda-batch-size", "--cuda-workers"}) {
+        natlha_cli::Options negativeUnsignedControl;
+        ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",
+                            option, "-1"},
+                           negativeUnsignedControl, error) == natlha_cli::ParseStatus::Error
+                         && error.find("not an unsigned integer") != std::string::npos,
+                     "negative " + option + " value was accepted: " + error);
+    }
 
     for (const std::string value : {"0", "-0.1", "nan", "inf"}) {
         natlha_cli::Options badSpacing;

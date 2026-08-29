@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <cmath>
 #include <exception>
+#include <limits>
 #include <ostream>
 #include <string>
 
@@ -19,6 +20,7 @@ enum class ParseStatus {
 
 struct Options {
     natlha::Config config;
+    natlha::BatchOptions batchOptions;
     std::string singlePath;
     std::string batchPath;
     std::string outputPath;
@@ -27,8 +29,29 @@ struct Options {
     bool fixedNF = false;
     bool fixedND = false;
     bool qSusyAudit = false;
+    bool cudaDeviceSet = false;
+    bool cudaBatchSizeSet = false;
+    bool cudaWorkersSet = false;
     uint64_t snSeed = 0;
 };
+
+inline bool parseBackend(int argc, char** argv, int& index, natlha::Backend& destination,
+                         const char* option, std::ostream& error) {
+    if (index + 1 >= argc) {
+        error << "error: " << option << " needs a value\n";
+        return false;
+    }
+    const std::string raw = argv[++index];
+    if (raw == "cpu") destination = natlha::Backend::Cpu;
+    else if (raw == "cuda") destination = natlha::Backend::Cuda;
+    else if (raw == "auto") destination = natlha::Backend::Auto;
+    else {
+        error << "error: " << option << " must be cpu, cuda, or auto; got "
+              << raw << "\n";
+        return false;
+    }
+    return true;
+}
 
 inline bool parseInt(int argc, char** argv, int& index, int& destination,
                      const char* option, int minimum, int maximum,
@@ -161,6 +184,41 @@ inline ParseStatus parseArgs(int argc, char** argv, Options& options,
                     argument.c_str(), error)) return ParseStatus::Error;
         } else if (argument == "--qsusy-audit") {
             options.qSusyAudit = true;
+        } else if (argument == "--backend") {
+            if (!parseBackend(argc, argv, i, options.batchOptions.backend,
+                              argument.c_str(), error)) return ParseStatus::Error;
+        } else if (argument == "--cuda-device") {
+            if (!parseInt(argc, argv, i, options.batchOptions.cudaDevice,
+                          argument.c_str(), 0, std::numeric_limits<int>::max(), error)) {
+                return ParseStatus::Error;
+            }
+            options.cudaDeviceSet = true;
+        } else if (argument == "--cuda-batch-size") {
+            uint64_t value = 0;
+            if (!parseUint64(argc, argv, i, value, argument.c_str(), error)) {
+                return ParseStatus::Error;
+            }
+            if (value > std::numeric_limits<std::size_t>::max()) {
+                error << "error: --cuda-batch-size exceeds this platform's size range\n";
+                return ParseStatus::Error;
+            }
+            options.batchOptions.cudaBatchSize = static_cast<std::size_t>(value);
+            options.cudaBatchSizeSet = true;
+        } else if (argument == "--cuda-workers") {
+            uint64_t value = 0;
+            if (!parseUint64(argc, argv, i, value, argument.c_str(), error)) {
+                return ParseStatus::Error;
+            }
+            constexpr uint64_t maximumWorkers = 4096;
+            if (value > maximumWorkers) {
+                error << "error: --cuda-workers must be in [0, "
+                      << maximumWorkers << "], got " << value << "\n";
+                return ParseStatus::Error;
+            }
+            options.batchOptions.cudaWorkers = static_cast<std::size_t>(value);
+            options.cudaWorkersSet = true;
+        } else if (argument == "--backend-audit") {
+            options.batchOptions.backendAudit = true;
         } else if (argument == "--digits") {
             if (!parseInt(argc, argv, i, options.digits,
                           argument.c_str(), 1, 50, error)) return ParseStatus::Error;
@@ -196,6 +254,24 @@ inline ParseStatus parseArgs(int argc, char** argv, Options& options,
     }
     if (options.qSusyAudit && options.batchPath.empty()) {
         error << "error: --qsusy-audit requires --batch\n";
+        return ParseStatus::Error;
+    }
+    if (options.batchOptions.backend != natlha::Backend::Cpu
+            && options.batchPath.empty()) {
+        error << "error: CUDA and auto backends require --batch\n";
+        return ParseStatus::Error;
+    }
+    if ((options.cudaDeviceSet || options.cudaBatchSizeSet || options.cudaWorkersSet)
+            && options.batchOptions.backend == natlha::Backend::Cpu) {
+        error << "error: --cuda-device, --cuda-batch-size, and --cuda-workers require "
+                 "--backend cuda or --backend auto\n";
+        return ParseStatus::Error;
+    }
+    if (options.batchOptions.backendAudit
+            && (options.batchPath.empty()
+                || options.batchOptions.backend == natlha::Backend::Cpu)) {
+        error << "error: --backend-audit requires --batch with "
+                 "--backend cuda or --backend auto\n";
         return ParseStatus::Error;
     }
     return ParseStatus::Ok;

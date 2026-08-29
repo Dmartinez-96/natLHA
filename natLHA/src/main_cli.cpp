@@ -64,7 +64,15 @@ void usage() {
         "                       (provisional audit candidate default 0.1)\n"
         "  --qsusy-audit       append structured Q_SUSY freeze-audit columns\n"
         "                       to batch rows without changing default output\n"
-        "  --digits N           printed significant digits     (default 12)\n";
+        "  --backend MODE      batch backend: cpu, cuda, or auto (default cpu)\n"
+        "  --cuda-device N     zero-based CUDA device ordinal (default 0)\n"
+        "  --cuda-batch-size N maximum trajectories per launch; 0=automatic\n"
+        "  --cuda-workers N    live logical points per wave; 0=automatic (maximum 4096)\n"
+        "  --backend-audit     append execution provenance and compare CUDA rows\n"
+        "                       with CPU; requires --batch and --backend cuda or auto\n"
+        "  --digits N           printed significant digits     (default 12)\n"
+        "\nCPU batch rows stream in input order. CUDA/auto rows are emitted in order\n"
+        "after batch evaluation completes.\n";
 }
 
 class CoutRedirect {
@@ -137,7 +145,9 @@ void randomSNPair(uint64_t seed, uint64_t draw, int & nF, int & nD) {
 }
 
 void printRow(const std::string & path, const natlha::Result & r, const natlha::Config & cfg,
-              int digits, bool randomSN, bool qSusyAudit) {
+              int digits, bool randomSN, bool qSusyAudit,
+              const natlha::PointExecutionDiagnostic* backendDiagnostic,
+              bool backendAudit) {
     std::cout << std::setprecision(digits) << std::scientific
               << (r.ok ? 1 : 0) << " " << r.deltaEW;
     if (cfg.computeDHS) std::cout << " " << r.deltaHS;
@@ -164,11 +174,21 @@ void printRow(const std::string & path, const natlha::Result & r, const natlha::
             std::cout << " " << 0.0;
         }
     }
+    if (backendAudit && backendDiagnostic != nullptr) {
+        std::cout << " " << (backendDiagnostic->executed ? 1 : 0)
+                  << " " << natlha::backendName(backendDiagnostic->selectedBackend)
+                  << " " << natlha::executionTierName(backendDiagnostic->candidateTier)
+                  << " " << natlha::executionTierName(backendDiagnostic->finalTier)
+                  << " " << backendDiagnostic->adjudicationReasons
+                  << " " << (backendDiagnostic->cpuAdjudicated ? 1 : 0)
+                  << " " << (backendDiagnostic->auditCompared
+                                  ? (backendDiagnostic->auditMatched ? 1 : 0) : -1);
+    }
     std::cout << " " << path << "\n";
 }
 
 void printHeader(const natlha::Config & cfg, bool randomSN, uint64_t snSeed,
-                 bool qSusyAudit) {
+                 bool qSusyAudit, bool backendAudit) {
     if (randomSN) std::cout << "# sn_random_seed " << snSeed << "\n";
     std::cout << "# ok Delta_EW";
     if (cfg.computeDHS) std::cout << " Delta_HS";
@@ -181,6 +201,11 @@ void printHeader(const natlha::Config & cfg, bool randomSN, uint64_t snSeed,
     if (qSusyAudit) {
         std::cout << " Q_SUSY_search_ok Q_SUSY_roots Q_SUSY_scan_complete"
                      " Q_SUSY_searches Q_SUSY_search_logQ";
+    }
+    if (backendAudit) {
+        std::cout << " backend_executed selected_backend candidate_tier final_tier"
+                     " adjudication_reasons"
+                     " cpu_adjudicated backend_audit_match";
     }
     std::cout << " slha_path\n";
 }
@@ -283,6 +308,7 @@ int main(int argc, char ** argv) {
     const int digits = options.digits;
     const bool randomSN = options.randomSN;
     const bool qSusyAudit = options.qSusyAudit;
+    const natlha::BatchOptions& batchOptions = options.batchOptions;
     const uint64_t snSeed = options.snSeed;
 
     const std::string & inputPath = singlePath.empty() ? batchPath : singlePath;
@@ -337,35 +363,130 @@ int main(int argc, char ** argv) {
         return r.ok ? 0 : 2;
     }
 
-    printHeader(cfg, randomSN, snSeed, qSusyAudit);
+    printHeader(
+        cfg, randomSN, snSeed, qSusyAudit, batchOptions.backendAudit);
     std::cerr << std::setprecision(17)
               << "# q_susy_max_dlogq " << cfg.qSusyMaxDeltaLogQ << "\n";
-    long done = 0, failed = 0;
-    for (const std::string& line : batchEntries) {
-        natlha::Result r;
+    if (batchOptions.backend == natlha::Backend::Cpu) {
+        long done = 0;
+        long failed = 0;
+        for (const std::string& line : batchEntries) {
+            natlha::Config pointConfig = cfg;
+            pointConfig.slhaPath = line;
+            natlha::Result result;
+            if (randomSN) {
+                uint64_t draw = 0;
+                if (!drawIndex(line, draw)) {
+                    pointConfig.snNF = 0;
+                    pointConfig.snND = 0;
+                    result.error = "SLHA filename stem is not a global draw index";
+                } else {
+                    randomSNPair(snSeed, draw, pointConfig.snNF, pointConfig.snND);
+                    result = natlha::evaluate(pointConfig);
+                }
+            } else {
+                result = natlha::evaluate(pointConfig);
+            }
+            printRow(
+                line, result, pointConfig, digits, randomSN, qSusyAudit,
+                nullptr, false);
+            std::cout.flush();
+            ++done;
+            if (!result.ok) {
+                ++failed;
+                std::cerr << "point failed: " << line << ": " << result.error << "\n";
+            }
+        }
+        std::cerr << "# points " << done << ", failed " << failed << "\n";
+        return failed ? 2 : 0;
+    }
+
+    std::vector<natlha::Config> pointConfigs(batchEntries.size(), cfg);
+    std::vector<natlha::Result> pointResults(batchEntries.size());
+    std::vector<natlha::PointExecutionDiagnostic> pointDiagnostics(batchEntries.size());
+    std::vector<std::size_t> evaluatedIndices;
+    std::vector<natlha::Config> evaluatedConfigs;
+    evaluatedIndices.reserve(batchEntries.size());
+    evaluatedConfigs.reserve(batchEntries.size());
+    for (std::size_t point = 0; point < batchEntries.size(); ++point) {
+        const std::string& line = batchEntries[point];
+        natlha::Config& pointConfig = pointConfigs[point];
+        pointConfig.slhaPath = line;
         if (randomSN) {
             uint64_t draw = 0;
             if (!drawIndex(line, draw)) {
-                cfg.snNF = 0;
-                cfg.snND = 0;
-                r.error = "SLHA filename stem is not a global draw index";
+                pointConfig.snNF = 0;
+                pointConfig.snND = 0;
+                pointResults[point].error =
+                    "SLHA filename stem is not a global draw index";
+                pointDiagnostics[point].requestedBackend = batchOptions.backend;
+                pointDiagnostics[point].detail = pointResults[point].error;
             } else {
-                randomSNPair(snSeed, draw, cfg.snNF, cfg.snND);
-                cfg.slhaPath = line;
-                r = natlha::evaluate(cfg);
+                randomSNPair(snSeed, draw, pointConfig.snNF, pointConfig.snND);
+                evaluatedIndices.push_back(point);
+                evaluatedConfigs.push_back(pointConfig);
             }
         } else {
-            cfg.slhaPath = line;
-            r = natlha::evaluate(cfg);
-        }
-        printRow(line, r, cfg, digits, randomSN, qSusyAudit);
-        std::cout.flush();
-        ++done;
-        if (!r.ok) {
-            ++failed;
-            std::cerr << "point failed: " << line << ": " << r.error << "\n";
+            evaluatedIndices.push_back(point);
+            evaluatedConfigs.push_back(pointConfig);
         }
     }
-    std::cerr << "# points " << done << ", failed " << failed << "\n";
+
+    const natlha::BatchRun batch =
+        natlha::evaluateBatch(evaluatedConfigs, batchOptions);
+    if (batch.results.size() != evaluatedIndices.size()
+            || batch.diagnostics.size() != evaluatedIndices.size()) {
+        std::cerr << "error: batch backend returned misaligned result arrays\n";
+        return 2;
+    }
+    for (std::size_t evaluated = 0; evaluated < evaluatedIndices.size(); ++evaluated) {
+        const std::size_t point = evaluatedIndices[evaluated];
+        pointResults[point] = batch.results[evaluated];
+        pointDiagnostics[point] = batch.diagnostics[evaluated];
+    }
+
+    long failed = 0;
+    for (std::size_t point = 0; point < batchEntries.size(); ++point) {
+        const std::string& line = batchEntries[point];
+        const natlha::Result& result = pointResults[point];
+        printRow(
+            line, result, pointConfigs[point], digits, randomSN, qSusyAudit,
+            &pointDiagnostics[point], batchOptions.backendAudit);
+        std::cout.flush();
+        if (!result.ok) {
+            ++failed;
+            std::cerr << "point failed: " << line << ": " << result.error << "\n";
+        }
+        if (batchOptions.backendAudit
+                && pointDiagnostics[point].auditCompared
+                && !pointDiagnostics[point].auditMatched) {
+            std::cerr << "backend audit mismatch: " << line << ": "
+                      << pointDiagnostics[point].detail << "\n";
+        }
+    }
+    std::cerr << "# backend requested " << natlha::backendName(batchOptions.backend)
+              << ", cuda_candidates " << batch.summary.cudaCandidates
+              << ", fp64_launch_limit " << batch.summary.cudaFp64LaunchLimit
+              << ", max_cuda_launch " << batch.summary.maximumCudaLaunchSize
+              << ", double_double_retries " << batch.summary.doubleDoubleRetries
+              << ", cpu_adjudications " << batch.summary.cpuAdjudications
+              << ", audit_mismatches " << batch.summary.auditMismatches << "\n";
+    const auto printCudaProfile = [](const char* stage,
+                                     const natlha::CudaStageProfile& profile) {
+        if (profile.requests == 0) return;
+        std::cerr << "# cuda_profile stage " << stage
+                  << ", requests " << profile.requests
+                  << ", launches " << profile.launches
+                  << ", trajectories " << profile.trajectories
+                  << ", cumulative_queue_wait_seconds "
+                  << profile.cumulativeQueueWaitSeconds
+                  << ", allocation_seconds " << profile.allocationSeconds
+                  << ", h2d_seconds " << profile.hostToDeviceSeconds
+                  << ", kernel_sync_seconds " << profile.kernelAndSyncSeconds
+                  << ", d2h_seconds " << profile.deviceToHostSeconds << "\n";
+    };
+    printCudaProfile("rge", batch.summary.rgeProfile);
+    printCudaProfile("q_susy", batch.summary.qSusyProfile);
+    std::cerr << "# points " << batchEntries.size() << ", failed " << failed << "\n";
     return failed ? 2 : 0;
 }

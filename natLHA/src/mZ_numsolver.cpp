@@ -162,7 +162,7 @@ MZ2SolveResult solveMZ2Residual(const MZ2ResidualFunction& residual,
                                          bracket.lower.point, 0});
             continue;
         }
-        boost::math::uintmax_t iterations = options.refinementSteps;
+        boost::uintmax_t iterations = options.refinementSteps;
         try {
             auto callback = [&](const high_prec_float& point) {
                 const Sample sample = evaluate(point);

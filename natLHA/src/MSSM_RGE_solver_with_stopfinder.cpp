@@ -1,6 +1,8 @@
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
 
+#include "MSSM_QSUSY_helpers.inl"
 #include "MSSM_RGE_solver.hpp"
+#include "natlha_execution_context.hpp"
 #include "radcorr_calc.hpp"
 
 #include <boost/math/tools/roots.hpp>
@@ -22,10 +24,6 @@ using State = std::vector<double>;
 using Stepper = boost::numeric::odeint::runge_kutta_dopri5<State>;
 
 constexpr std::size_t kStateSize = 44;
-constexpr double kMZ = 91.1876;
-constexpr double kSearchLowerScale = 500.0;
-constexpr double kRootUpperScale = 1.0e11;
-
 bool traceEnabled() {
     static const bool enabled = [] {
         const char * value = std::getenv("NATLHA_ODE_TRACE");
@@ -97,21 +95,16 @@ double qsusy_detail::nextScanLogScale(
     double currentLogScale,
     double lowerLogScale,
     double maxDeltaLogQ) {
-    if (!std::isfinite(currentLogScale) || !std::isfinite(lowerLogScale)
-            || !std::isfinite(maxDeltaLogQ) || maxDeltaLogQ <= 0.0
-            || currentLogScale <= lowerLogScale) {
+    double nextLogScale = 0.0;
+    const natlha::qsusy_numeric::ScanStepStatus status =
+        natlha::qsusy_numeric::nextScanLogScale(
+            currentLogScale, lowerLogScale, maxDeltaLogQ, nextLogScale);
+    if (status == natlha::qsusy_numeric::ScanStepStatus::InvalidInput) {
         throw NumericalFailure(
             "Q_SUSY scan spacing", {"invalid scan bounds or maximum spacing"});
     }
-
-    const double remaining = currentLogScale - lowerLogScale;
-    const double nextLogScale = remaining <= maxDeltaLogQ
-        ? lowerLogScale
-        : std::nextafter(currentLogScale - maxDeltaLogQ, currentLogScale);
-    const double observed = currentLogScale - nextLogScale;
-    if (!std::isfinite(remaining) || !std::isfinite(nextLogScale)
-            || !std::isfinite(observed) || nextLogScale < lowerLogScale
-            || nextLogScale >= currentLogScale || observed > maxDeltaLogQ) {
+    if (status != natlha::qsusy_numeric::ScanStepStatus::Success) {
+        const double observed = currentLogScale - nextLogScale;
         throw NumericalFailure(
             "Q_SUSY scan spacing",
             {"current=" + std::to_string(currentLogScale),
@@ -144,43 +137,39 @@ std::vector<qsusy_detail::ScanEvent> qsusy_detail::classifySegment(
     double lowLogScale,
     const StopScalePoint& lowPoint,
     ScanState& scanState) {
-    const auto recordDomain = [&](const StopScalePoint& point) {
-        if (!point.numericallyValid) {
-            if (!scanState.inNonFiniteDomain) {
-                incrementBoundaryCount(
-                    scanState.nonFiniteBoundaries, "nonfinite-boundary");
-            }
-            scanState.inNonFiniteDomain = true;
-        } else {
-            scanState.inNonFiniteDomain = false;
-        }
-        if (!point.numericallyValid || !point.physical) {
-            if (!scanState.inInvalidDomain) {
-                incrementBoundaryCount(
-                    scanState.invalidBoundaries, "invalid-boundary");
-            }
-            scanState.inInvalidDomain = true;
-        } else {
-            scanState.inInvalidDomain = false;
-        }
+    const auto toCore = [](const StopScalePoint& point) {
+        natlha::qsusy_numeric::StopPoint core;
+        core.numericallyValid = point.numericallyValid;
+        core.physical = point.physical;
+        core.stop1Squared = point.stop1Squared;
+        core.stop2Squared = point.stop2Squared;
+        core.logResidual = point.logResidual;
+        return core;
     };
-    recordDomain(highPoint);
-    recordDomain(lowPoint);
+    natlha::qsusy_numeric::ScanState coreState;
+    coreState.inInvalidDomain = scanState.inInvalidDomain;
+    coreState.inNonFiniteDomain = scanState.inNonFiniteDomain;
+    coreState.invalidBoundaries = scanState.invalidBoundaries;
+    coreState.nonFiniteBoundaries = scanState.nonFiniteBoundaries;
+    unsigned eventBits = natlha::qsusy_numeric::NoEvent;
+    if (!natlha::qsusy_numeric::classifySegment(
+            toCore(highPoint), toCore(lowPoint), coreState, eventBits)) {
+        throw NumericalFailure("Q_SUSY root search", {"boundary counter overflow"});
+    }
+    scanState.inInvalidDomain = coreState.inInvalidDomain;
+    scanState.inNonFiniteDomain = coreState.inNonFiniteDomain;
+    scanState.invalidBoundaries = static_cast<std::size_t>(coreState.invalidBoundaries);
+    scanState.nonFiniteBoundaries =
+        static_cast<std::size_t>(coreState.nonFiniteBoundaries);
 
-    const auto validRootPoint = [](const StopScalePoint& point) {
-        return point.numericallyValid && point.physical;
-    };
     std::vector<ScanEvent> events;
-    if (validRootPoint(highPoint) && highPoint.logResidual == 0.0) {
+    if ((eventBits & natlha::qsusy_numeric::ExactHigh) != 0) {
         events.push_back({ScanEventKind::exactHigh, highLogScale, highLogScale});
     }
-    if (validRootPoint(lowPoint) && lowPoint.logResidual == 0.0) {
+    if ((eventBits & natlha::qsusy_numeric::ExactLow) != 0) {
         events.push_back({ScanEventKind::exactLow, lowLogScale, lowLogScale});
     }
-    if (validRootPoint(highPoint) && validRootPoint(lowPoint)
-            && highPoint.logResidual != 0.0 && lowPoint.logResidual != 0.0
-            && std::signbit(highPoint.logResidual)
-                   != std::signbit(lowPoint.logResidual)) {
+    if ((eventBits & natlha::qsusy_numeric::SignBracket) != 0) {
         events.push_back({ScanEventKind::signBracket, highLogScale, lowLogScale});
     }
     return events;
@@ -192,49 +181,26 @@ StopScalePoint evaluateStopScalePoint(const std::vector<double>& state, double l
         throw NumericalFailure("Q_SUSY stop matrix input", {"log scale"});
     }
 
-    const double gPrime = std::sqrt(3.0 / 5.0) * state[0];
-    const double g2 = state[1];
-    const double vevDenominator = (3.0 * state[0] * state[0] / 5.0) + g2 * g2;
-    const double higgsVev = std::sqrt(2.0 / vevDenominator) * kMZ;
-    const double beta = std::atan(state[43]);
-    const double vu = higgsVev * std::sqrt(std::pow(std::sin(beta), 2.0));
-    const double vd = higgsVev * std::sqrt(std::pow(std::cos(beta), 2.0));
-    const double mt = state[7] * vu;
-    const double vevDifference = vu * vu - vd * vd;
-    const double deltaL = vevDifference * ((gPrime * gPrime / 12.0) - (g2 * g2 / 4.0));
-    const double deltaR = -vevDifference * gPrime * gPrime / 3.0;
-    const double mixing = state[16] * vu - state[6] * state[7] * vd;
-    const double mLL = state[29] + mt * mt + deltaL;
-    const double mRR = state[35] + mt * mt + deltaR;
-    const double discriminant = (mLL - mRR) * (mLL - mRR) + 4.0 * mixing * mixing;
-    const double splitting = std::sqrt(discriminant);
-
+    const natlha::qsusy_numeric::StopPoint core =
+        natlha::qsusy_numeric::evaluateStopPoint(
+            state.data(), state.size(), logScale,
+            natlha::qsusy_numeric::kMZ);
     StopScalePoint point;
-    point.stop1Squared = 0.5 * (mLL + mRR - splitting);
-    point.stop2Squared = 0.5 * (mLL + mRR + splitting);
-    if (!std::isfinite(point.stop1Squared) || !std::isfinite(point.stop2Squared)) {
-        point.numericallyValid = false;
-        return point;
-    }
-    if (point.stop1Squared <= 0.0 || point.stop2Squared <= 0.0) return point;
-
-    point.physical = true;
-    point.logResidual = logScale
-                        - 0.25 * (std::log(point.stop1Squared)
-                                  + std::log(point.stop2Squared));
-    if (!std::isfinite(point.logResidual)) {
-        point.numericallyValid = false;
-        point.physical = false;
-    }
+    point.numericallyValid = core.numericallyValid;
+    point.physical = core.physical;
+    point.stop1Squared = core.stop1Squared;
+    point.stop2Squared = core.stop2Squared;
+    point.logResidual = core.logResidual;
     return point;
 }
 
-QSusyResult findQSusy(const std::vector<double>& highScaleState,
-                      double highLogScale,
-                      double timeStep,
-                      double maxDeltaLogQ) {
+QSusyResult findQSusyCpu(const std::vector<double>& highScaleState,
+                         double highLogScale,
+                         double timeStep,
+                         double maxDeltaLogQ) {
     requireFiniteState(highScaleState, "Q_SUSY root search input");
-    const double lowerLogScale = std::log(kSearchLowerScale);
+    const double lowerLogScale = std::log(
+        natlha::qsusy_numeric::kSearchLowerScale);
     if (!std::isfinite(highLogScale) || highLogScale <= lowerLogScale) {
         throw NumericalFailure("Q_SUSY root search input", {"high log scale"});
     }
@@ -253,7 +219,8 @@ QSusyResult findQSusy(const std::vector<double>& highScaleState,
 
     const double scanUpper = std::min(
         highLogScale,
-        std::nextafter(std::log(kRootUpperScale), lowerLogScale));
+        std::nextafter(
+            std::log(natlha::qsusy_numeric::kRootUpperScale), lowerLogScale));
     std::vector<qsusy_detail::RootCandidate> roots;
     std::size_t acceptedSteps = 0;
     std::size_t scanSegments = 0;
@@ -388,7 +355,8 @@ QSusyResult findQSusy(const std::vector<double>& highScaleState,
                         }
                         qsusy_detail::addRoot(
                             roots,
-                            {rootLogScale, std::move(rootState), rootPoint});
+                            {rootLogScale, std::move(rootState), rootPoint,
+                             refined.second - refined.first});
                     } catch (const UnusableNumericalBoundary&) {
                         qsusy_detail::recordIsolatedNumericalBoundary(scanState);
                     }
@@ -421,6 +389,7 @@ QSusyResult findQSusy(const std::vector<double>& highScaleState,
     result.residual = roots.front().point.logResidual;
     result.stop1Squared = roots.front().point.stop1Squared;
     result.stop2Squared = roots.front().point.stop2Squared;
+    result.refinedBracketWidth = roots.front().refinedBracketWidth;
     result.acceptedSteps = acceptedSteps;
     result.declaredMaxDeltaLogQ = maxDeltaLogQ;
     result.scanSegments = scanSegments;
@@ -441,6 +410,7 @@ QSusyResult findQSusy(const std::vector<double>& highScaleState,
                   << "  t_from " << highLogScale << "  t_to " << lowerLogScale
                   << "  t_root " << result.logScale
                   << "  residual " << result.residual
+                  << "  bracket_width " << result.refinedBracketWidth
                   << "  accepted_steps " << result.acceptedSteps
                   << "  max_dlogQ " << result.declaredMaxDeltaLogQ
                   << "  scan_segments " << result.scanSegments
@@ -452,4 +422,19 @@ QSusyResult findQSusy(const std::vector<double>& highScaleState,
                   << "  eps_rel " << tolerances.relative << "\n";
     }
     return result;
+}
+
+QSusyResult findQSusy(const std::vector<double>& highScaleState,
+                      double highLogScale,
+                      double timeStep,
+                      double maxDeltaLogQ) {
+    const natlha::detail::CudaExecutionContext* context =
+        natlha::detail::currentCudaExecutionContext();
+    if (context != nullptr && context->submitQSusy != nullptr) {
+        natlha::detail::ScopedCudaDispatchCall dispatch("Q_SUSY search");
+        return (*context->submitQSusy)(
+            highScaleState, highLogScale, timeStep, maxDeltaLogQ);
+    }
+    return findQSusyCpu(
+        highScaleState, highLogScale, timeStep, maxDeltaLogQ);
 }

@@ -203,6 +203,8 @@ void requireValidJointRoot(
             || !std::isfinite(root.residual) || std::abs(root.residual) > rootTolerance
             || !std::isfinite(root.stop1Squared) || root.stop1Squared <= 0.0
             || !std::isfinite(root.stop2Squared) || root.stop2Squared <= 0.0
+            || !std::isfinite(root.refinedBracketWidth)
+            || root.refinedBracketWidth < 0.0
             || root.acceptedSteps == 0 || root.scanSegments == 0
             || !std::isfinite(root.declaredMaxDeltaLogQ)
             || root.declaredMaxDeltaLogQ != maxDeltaLogQ
@@ -288,6 +290,7 @@ QSusyIterationDiagnostic makeQSusyDiagnostic(
     diagnostic.mu = tuned.state[6];
     diagnostic.stop1Squared = retunedPoint.stop1Squared;
     diagnostic.stop2Squared = retunedPoint.stop2Squared;
+    diagnostic.refinedBracketWidth = root.refinedBracketWidth;
     diagnostic.acceptedSteps = root.acceptedSteps;
     diagnostic.declaredMaxDeltaLogQ = root.declaredMaxDeltaLogQ;
     diagnostic.scanSegments = root.scanSegments;
@@ -752,6 +755,7 @@ Result evaluate(const Config & cfg) {
         out.qSusyResidual = joint.retunedPoint.logResidual;
         out.qSusyStop1Squared = joint.retunedPoint.stop1Squared;
         out.qSusyStop2Squared = joint.retunedPoint.stop2Squared;
+        out.qSusyRootBracketWidth = joint.root.refinedBracketWidth;
         std::vector<high_prec_float> weakBCs = joint.tuned.state;
         std::vector<double> weakDbl = joint.tuned.doubleState;
         std::vector<high_prec_float> radCorrs = joint.tuned.radCorrs;
