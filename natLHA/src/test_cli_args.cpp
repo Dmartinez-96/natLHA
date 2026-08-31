@@ -67,6 +67,7 @@ int main() {
 
     natlha_cli::Options allOptions;
     ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--out", "labels.tsv",
+                        "--backend-provenance-out", "backend.tsv",
                         "--dhs", "--dbg", "--dsn", "--bg-model", "6",
                         "--bg-precision", "2", "--sn-mode", "3", "--sn-nf", "10",
                         "--sn-nd", "5", "--qsusy-max-dlogq", "0.05",
@@ -78,6 +79,8 @@ int main() {
                      && error.empty()
                      && allOptions.batchPath == "points.txt"
                      && allOptions.outputPath == "labels.tsv"
+                     && allOptions.backendProvenanceSet
+                     && allOptions.backendProvenancePath == "backend.tsv"
                      && allOptions.config.computeDHS && allOptions.config.computeDBG
                      && allOptions.config.computeDSN
                      && allOptions.config.bgModelIndex == 6
@@ -125,6 +128,27 @@ int main() {
                        cpuAudit, error) == natlha_cli::ParseStatus::Error
                      && error.find("requires --batch with") != std::string::npos,
                  "backend audit was accepted without a CUDA-capable selection: " + error);
+    natlha_cli::Options cpuProvenance;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt",
+                        "--backend-provenance-out", "backend.tsv"},
+                       cpuProvenance, error) == natlha_cli::ParseStatus::Error
+                     && error.find("requires --batch with") != std::string::npos,
+                 "backend provenance was accepted without a CUDA-capable selection: "
+                     + error);
+    natlha_cli::Options singleProvenance;
+    ok &= expect(parse({"natlha-cli", "--slha", "point.slha", "--backend", "cpu",
+                        "--backend-provenance-out", "backend.tsv"},
+                       singleProvenance, error) == natlha_cli::ParseStatus::Error
+                     && error.find("requires --batch with") != std::string::npos,
+                 "single-point backend provenance was accepted: " + error);
+    natlha_cli::Options autoProvenance;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "auto",
+                        "--backend-provenance-out", "backend.tsv"},
+                       autoProvenance, error) == natlha_cli::ParseStatus::Ok
+                     && error.empty()
+                     && autoProvenance.backendProvenanceSet
+                     && autoProvenance.backendProvenancePath == "backend.tsv",
+                 "automatic-backend provenance was rejected: " + error);
     natlha_cli::Options tooManyCudaWorkers;
     ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",
                         "--cuda-workers", "4097"},
@@ -150,6 +174,18 @@ int main() {
                        missingBackendValue, error) == natlha_cli::ParseStatus::Error
                      && error.find("needs a value") != std::string::npos,
                  "missing backend value was not rejected: " + error);
+    natlha_cli::Options missingProvenanceValue;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",
+                        "--backend-provenance-out"},
+                       missingProvenanceValue, error) == natlha_cli::ParseStatus::Error
+                     && error.find("needs a value") != std::string::npos,
+                 "missing backend-provenance path was not rejected: " + error);
+    natlha_cli::Options emptyProvenance;
+    ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",
+                        "--backend-provenance-out", ""},
+                       emptyProvenance, error) == natlha_cli::ParseStatus::Error
+                     && error.find("path must not be empty") != std::string::npos,
+                 "empty backend-provenance path was accepted: " + error);
 
     natlha_cli::Options negativeCudaDevice;
     ok &= expect(parse({"natlha-cli", "--batch", "points.txt", "--backend", "cuda",

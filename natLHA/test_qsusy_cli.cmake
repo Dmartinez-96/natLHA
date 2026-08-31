@@ -149,6 +149,121 @@ else()
     endif()
 endif()
 
+set(provenance_path "${WORK}/backend-provenance.tsv")
+file(REMOVE "${provenance_path}")
+execute_process(
+    COMMAND "${CLI}" --batch "${batch}" --qsusy-max-dlogq 0.05
+            --backend auto --backend-provenance-out "${provenance_path}"
+    RESULT_VARIABLE provenance_result
+    OUTPUT_VARIABLE provenance_stdout
+    ERROR_VARIABLE provenance_stderr)
+if(NOT provenance_result EQUAL 0)
+    message(FATAL_ERROR
+        "backend-provenance batch failed: ${provenance_result}; "
+        "stdout=${provenance_stdout}; stderr=${provenance_stderr}")
+endif()
+if(NOT provenance_stdout MATCHES
+        "^# ok Delta_EW Q_SUSY logQ_GUT mZ2 slha_path\n")
+    message(FATAL_ERROR
+        "backend provenance changed the primary row schema: ${provenance_stdout}")
+endif()
+if(provenance_stdout MATCHES "backend_executed")
+    message(FATAL_ERROR
+        "backend provenance leaked into the primary rows: ${provenance_stdout}")
+endif()
+file(READ "${provenance_path}" provenance_text)
+string(REGEX MATCHALL "[^\n]+" provenance_lines "${provenance_text}")
+list(LENGTH provenance_lines provenance_line_count)
+if(NOT provenance_line_count EQUAL 2)
+    message(FATAL_ERROR
+        "backend provenance emitted an unexpected row count: ${provenance_text}")
+endif()
+list(GET provenance_lines 0 provenance_header)
+if(NOT provenance_header STREQUAL
+        "# backend_executed selected_backend candidate_tier final_tier adjudication_reasons cpu_adjudicated slha_path")
+    message(FATAL_ERROR "backend provenance header changed: ${provenance_text}")
+endif()
+list(GET provenance_lines 1 provenance_row)
+string(REGEX REPLACE " +" ";" provenance_fields "${provenance_row}")
+list(LENGTH provenance_fields provenance_field_count)
+if(NOT provenance_field_count EQUAL 7)
+    message(FATAL_ERROR "backend provenance row is not rectangular: ${provenance_row}")
+endif()
+list(GET provenance_fields 0 provenance_executed)
+list(GET provenance_fields 1 provenance_backend)
+list(GET provenance_fields 2 provenance_candidate)
+list(GET provenance_fields 3 provenance_final)
+list(GET provenance_fields 6 provenance_source)
+if(NOT provenance_executed STREQUAL "1"
+        OR provenance_candidate STREQUAL "none"
+        OR provenance_final STREQUAL "none"
+        OR NOT provenance_source STREQUAL "${SOURCE}")
+    message(FATAL_ERROR
+        "backend provenance lost executed-row diagnostics: ${provenance_row}")
+endif()
+if(CUDA_ENABLED)
+    if(NOT provenance_backend STREQUAL "cuda")
+        message(FATAL_ERROR
+            "CUDA provenance run did not select CUDA: ${provenance_row}")
+    endif()
+else()
+    if(NOT provenance_backend STREQUAL "cpu")
+        message(FATAL_ERROR
+            "CPU-only automatic provenance run did not record fallback: ${provenance_row}")
+    endif()
+endif()
+
+set(unavailable_provenance_path "${WORK}/unavailable-backend-provenance.tsv")
+file(REMOVE "${unavailable_provenance_path}")
+execute_process(
+    COMMAND "${CLI}" --batch "${batch}" --backend cuda
+            --cuda-device 2147483647
+            --backend-provenance-out "${unavailable_provenance_path}"
+    RESULT_VARIABLE unavailable_result
+    OUTPUT_VARIABLE unavailable_stdout
+    ERROR_VARIABLE unavailable_stderr)
+if(NOT unavailable_result EQUAL 2)
+    message(FATAL_ERROR
+        "unavailable CUDA provenance returned ${unavailable_result}, expected 2; "
+        "stdout=${unavailable_stdout}; stderr=${unavailable_stderr}")
+endif()
+file(READ "${unavailable_provenance_path}" unavailable_provenance_text)
+string(REGEX MATCHALL "[^\n]+" unavailable_provenance_lines
+    "${unavailable_provenance_text}")
+list(LENGTH unavailable_provenance_lines unavailable_provenance_line_count)
+if(NOT unavailable_provenance_line_count EQUAL 2)
+    message(FATAL_ERROR
+        "unavailable CUDA provenance emitted an unexpected row count: "
+        "${unavailable_provenance_text}")
+endif()
+list(GET unavailable_provenance_lines 1 unavailable_provenance_row)
+string(REGEX REPLACE " +" ";" unavailable_provenance_fields
+    "${unavailable_provenance_row}")
+list(LENGTH unavailable_provenance_fields unavailable_provenance_field_count)
+if(NOT unavailable_provenance_field_count EQUAL 7)
+    message(FATAL_ERROR
+        "unavailable CUDA provenance row is not rectangular: "
+        "${unavailable_provenance_row}")
+endif()
+list(GET unavailable_provenance_fields 0 unavailable_executed)
+list(GET unavailable_provenance_fields 1 unavailable_backend)
+list(GET unavailable_provenance_fields 2 unavailable_candidate)
+list(GET unavailable_provenance_fields 3 unavailable_final)
+list(GET unavailable_provenance_fields 4 unavailable_reasons)
+list(GET unavailable_provenance_fields 5 unavailable_cpu_adjudicated)
+list(GET unavailable_provenance_fields 6 unavailable_source)
+if(NOT unavailable_executed STREQUAL "0"
+        OR NOT unavailable_backend STREQUAL "cuda"
+        OR NOT unavailable_candidate STREQUAL "none"
+        OR NOT unavailable_final STREQUAL "none"
+        OR NOT unavailable_reasons STREQUAL "1"
+        OR NOT unavailable_cpu_adjudicated STREQUAL "0"
+        OR NOT unavailable_source STREQUAL "${SOURCE}")
+    message(FATAL_ERROR
+        "unavailable CUDA provenance lost its fail-closed diagnostics: "
+        "${unavailable_provenance_row}")
+endif()
+
 execute_process(
     COMMAND "${CLI}" --batch "${batch}" --dsn --sn-random-seed 1
             --backend auto --backend-audit

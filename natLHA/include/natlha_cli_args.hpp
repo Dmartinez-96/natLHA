@@ -24,6 +24,8 @@ struct Options {
     std::string singlePath;
     std::string batchPath;
     std::string outputPath;
+    std::string backendProvenancePath;
+    bool backendProvenanceSet = false;
     int digits = 12;
     bool randomSN = false;
     bool fixedNF = false;
@@ -151,6 +153,13 @@ inline ParseStatus parseArgs(int argc, char** argv, Options& options,
             options.batchPath = argv[++i];
         } else if (argument == "--out" && i + 1 < argc) {
             options.outputPath = argv[++i];
+        } else if (argument == "--backend-provenance-out") {
+            if (i + 1 >= argc) {
+                error << "error: --backend-provenance-out needs a value\n";
+                return ParseStatus::Error;
+            }
+            options.backendProvenanceSet = true;
+            options.backendProvenancePath = argv[++i];
         } else if (argument == "--dhs") {
             options.config.computeDHS = true;
         } else if (argument == "--dbg") {
@@ -271,6 +280,16 @@ inline ParseStatus parseArgs(int argc, char** argv, Options& options,
             && (options.batchPath.empty()
                 || options.batchOptions.backend == natlha::Backend::Cpu)) {
         error << "error: --backend-audit requires --batch with "
+                 "--backend cuda or --backend auto\n";
+        return ParseStatus::Error;
+    }
+    if (options.backendProvenanceSet && options.backendProvenancePath.empty()) {
+        error << "error: --backend-provenance-out path must not be empty\n";
+        return ParseStatus::Error;
+    }
+    if (options.backendProvenanceSet && (options.batchPath.empty()
+            || options.batchOptions.backend == natlha::Backend::Cpu)) {
+        error << "error: --backend-provenance-out requires --batch with "
                  "--backend cuda or --backend auto\n";
         return ParseStatus::Error;
     }

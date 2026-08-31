@@ -14,6 +14,11 @@
 namespace natlha {
 namespace {
 
+enum class BatchContract {
+    Full,
+    Row
+};
+
 BatchRun evaluateCpuBatch(
         const std::vector<Config>& configs,
         Backend requestedBackend,
@@ -76,6 +81,77 @@ BatchRun unavailableCudaBatch(
     return run;
 }
 
+BatchRowResult projectBatchRow(const Result& result) {
+    BatchRowResult row;
+    row.ok = result.ok;
+    row.error = result.error;
+    row.haveDEW = result.haveDEW;
+    row.haveDHS = result.haveDHS;
+    row.haveDBG = result.haveDBG;
+    row.haveDSN = result.haveDSN;
+    row.deltaEW = result.deltaEW;
+    row.deltaHS = result.deltaHS;
+    row.deltaBG = result.deltaBG;
+    row.deltaSN = result.deltaSN;
+    row.snTotalNvac = result.snTotalNvac;
+    row.qSusy = result.qSusy;
+    row.logQGut = result.logQGut;
+    row.mZ2 = result.mZ2;
+    row.qSusyAudit = summarizeQSusyAudit(result);
+    if (result.haveDBG && !result.dbgContributions.empty()) {
+        row.dbgIdentity.available = true;
+        row.dbgIdentity.label = result.dbgContributions.front().label;
+        row.dbgIdentity.ordinal = result.dbgContributions.front().ordinal;
+        row.dbgIdentity.tiedDirectionOrdinals =
+            result.dbgHeadline.tiedDirectionOrdinals;
+    }
+    return row;
+}
+
+BatchRowRun projectBatchRows(BatchRun run) {
+    BatchRowRun rows;
+    rows.results.reserve(run.results.size());
+    for (const Result& result : run.results) {
+        rows.results.push_back(projectBatchRow(result));
+    }
+    rows.diagnostics = std::move(run.diagnostics);
+    rows.summary = std::move(run.summary);
+    return rows;
+}
+
+BatchRun evaluateBatchContract(
+        const std::vector<Config>& configs,
+        const BatchOptions& options,
+        BatchContract contract) {
+    if (options.backend == Backend::Cpu) {
+        return evaluateCpuBatch(configs, options.backend, "CPU backend requested", 0);
+    }
+
+    const CudaDeviceInfo device = queryCudaDevice(options.cudaDevice);
+    if (!device.available) {
+        if (options.backend == Backend::Auto) {
+            return evaluateCpuBatch(
+                configs, options.backend,
+                "CUDA unavailable; auto selected the CPU backend: " + device.diagnostic,
+                adjudicationReason(AdjudicationReason::BackendUnavailable));
+        }
+        return unavailableCudaBatch(configs, options.backend, device);
+    }
+
+#ifdef NATLHA_HAS_CUDA
+    return detail::evaluateCudaBatch(
+        configs, options, device,
+        contract == BatchContract::Full
+            ? detail::CudaResultContract::Full
+            : detail::CudaResultContract::BatchRow);
+#else
+    // `device.available` is false in a CPU-only build. Keep a fail-closed return here so the
+    // compiler and static analysers do not have to infer that relationship across functions.
+    (void) contract;
+    return unavailableCudaBatch(configs, options.backend, device);
+#endif
+}
+
 }  // namespace
 
 const char* backendName(Backend backend) {
@@ -113,28 +189,7 @@ CudaDeviceInfo queryCudaDevice(int device) {
 BatchRun evaluateBatch(
         const std::vector<Config>& configs,
         const BatchOptions& options) {
-    if (options.backend == Backend::Cpu) {
-        return evaluateCpuBatch(configs, options.backend, "CPU backend requested", 0);
-    }
-
-    const CudaDeviceInfo device = queryCudaDevice(options.cudaDevice);
-    if (!device.available) {
-        if (options.backend == Backend::Auto) {
-            return evaluateCpuBatch(
-                configs, options.backend,
-                "CUDA unavailable; auto selected the CPU backend: " + device.diagnostic,
-                adjudicationReason(AdjudicationReason::BackendUnavailable));
-        }
-        return unavailableCudaBatch(configs, options.backend, device);
-    }
-
-#ifdef NATLHA_HAS_CUDA
-    return detail::evaluateCudaBatch(configs, options, device);
-#else
-    // `device.available` is false in a CPU-only build. Keep a fail-closed return here so the
-    // compiler and static analysers do not have to infer that relationship across functions.
-    return unavailableCudaBatch(configs, options.backend, device);
-#endif
+    return evaluateBatchContract(configs, options, BatchContract::Full);
 }
 
 BatchRun evaluateBatch(
@@ -149,6 +204,27 @@ BatchRun evaluateBatch(
         configs.push_back(std::move(config));
     }
     return evaluateBatch(configs, options);
+}
+
+BatchRowRun evaluateBatchRows(
+        const std::vector<Config>& configs,
+        const BatchOptions& options) {
+    return projectBatchRows(
+        evaluateBatchContract(configs, options, BatchContract::Row));
+}
+
+BatchRowRun evaluateBatchRows(
+        const Config& commonConfig,
+        const std::vector<std::string>& slhaPaths,
+        const BatchOptions& options) {
+    std::vector<Config> configs;
+    configs.reserve(slhaPaths.size());
+    for (const std::string& path : slhaPaths) {
+        Config config = commonConfig;
+        config.slhaPath = path;
+        configs.push_back(std::move(config));
+    }
+    return evaluateBatchRows(configs, options);
 }
 
 }  // namespace natlha

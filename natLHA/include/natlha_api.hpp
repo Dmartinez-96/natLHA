@@ -54,7 +54,15 @@ enum class AdjudicationReason : std::uint32_t {
     BranchBoundary = UINT32_C(1) << 5,
     TierDisagreement = UINT32_C(1) << 6,
     AuditMismatch = UINT32_C(1) << 7,
-    InfrastructureFailure = UINT32_C(1) << 8
+    InfrastructureFailure = UINT32_C(1) << 8,
+    FailedCandidateBoundary = UINT32_C(1) << 9,
+    HeadlineBoundary = UINT32_C(1) << 10,
+    ContributionOrderBoundary = UINT32_C(1) << 11,
+    AdaptiveWindowBoundary = UINT32_C(1) << 12,
+    HeadlineOrderBoundary = UINT32_C(1) << 13,
+    LowerContributionOrderBoundary = UINT32_C(1) << 14,
+    EmittedFieldTierDisagreement = UINT32_C(1) << 15,
+    ContributionTierDisagreement = UINT32_C(1) << 16
 };
 
 using AdjudicationReasons = std::uint32_t;
@@ -250,6 +258,71 @@ struct Result {
     high_prec_float snTotalNvac = 0;
 };
 
+/// The exact root-search fields emitted by the opt-in batch Q_SUSY audit columns.
+/// Keeping this projection in the API gives CUDA comparison and CLI formatting one
+/// implementation instead of two similar summaries that can drift apart.
+struct QSusyAuditSummary {
+    bool allAccepted = false;
+    bool allCountsKnown = false;
+    std::size_t searches = 0;
+    bool haveLastRootCount = false;
+    std::size_t lastRootsFound = 0;
+    bool haveAcceptedLogScale = false;
+    double acceptedLogScale = 0.0;
+};
+
+inline QSusyAuditSummary summarizeQSusyAudit(const Result& result) {
+    QSusyAuditSummary summary;
+    summary.searches = result.qSusySearchDiagnostics.size();
+    if (result.qSusySearchDiagnostics.empty()) return summary;
+
+    summary.allAccepted = true;
+    summary.allCountsKnown = true;
+    for (const auto& diagnostic : result.qSusySearchDiagnostics) {
+        summary.allAccepted = summary.allAccepted && diagnostic.accepted;
+        summary.allCountsKnown = summary.allCountsKnown && diagnostic.scanComplete;
+    }
+
+    const QSusySearchDiagnostic& last = result.qSusySearchDiagnostics.back();
+    if (last.scanComplete) {
+        summary.haveLastRootCount = true;
+        summary.lastRootsFound = last.rootsFound;
+    }
+    if (last.accepted) {
+        summary.haveAcceptedLogScale = true;
+        summary.acceptedLogScale = last.logScale;
+    }
+    return summary;
+}
+
+/// Stable Delta_BG identity retained by the tabular batch-row contract. The CLI does not
+/// print these fields, but CUDA tier comparison uses them to preserve the signed dominant
+/// contribution and lowest-ordinal exact-tie rule without exposing a partial `Result`.
+struct BatchRowBGIdentity {
+    bool available = false;
+    std::string label;
+    std::size_t ordinal = 0;
+    std::vector<std::size_t> tiedDirectionOrdinals;
+};
+
+/// The complete scientific payload emitted by one non-interactive batch row, plus the
+/// Delta_BG identity needed to validate that payload across numerical tiers. Full contribution
+/// arrays remain available only through `Result` and `evaluateBatch`.
+struct BatchRowResult {
+    bool ok = false;
+    std::string error;
+    bool haveDEW = false, haveDHS = false, haveDBG = false, haveDSN = false;
+    high_prec_float deltaEW = 0, deltaHS = 0, deltaBG = 0, deltaSN = 0;
+    high_prec_float snTotalNvac = 0;
+    high_prec_float qSusy = 0, logQGut = 0, mZ2 = 0;
+    QSusyAuditSummary qSusyAudit;
+    BatchRowBGIdentity dbgIdentity;
+};
+
+inline QSusyAuditSummary summarizeQSusyAudit(const BatchRowResult& result) {
+    return result.qSusyAudit;
+}
+
 /// Runtime controls shared by the C++ batch API and the non-interactive CLI.
 struct BatchOptions {
     Backend backend = Backend::Cpu;
@@ -345,6 +418,12 @@ struct BatchRun {
     BatchSummary summary;
 };
 
+struct BatchRowRun {
+    std::vector<BatchRowResult> results;
+    std::vector<PointExecutionDiagnostic> diagnostics;
+    BatchSummary summary;
+};
+
 namespace detail {
 
 /// Invalidate every label in a requested multi-label row while retaining setup state and
@@ -374,6 +453,18 @@ BatchRun evaluateBatch(
 
 /// Convenience overload for scans whose points differ only by SLHA path.
 BatchRun evaluateBatch(
+    const Config& commonConfig,
+    const std::vector<std::string>& slhaPaths,
+    const BatchOptions& options = BatchOptions{});
+
+/// Evaluate the exact row-level contract emitted by the non-interactive batch CLI. CUDA still
+/// retries boundary candidates at double-double precision; this API may omit CPU adjudication
+/// only when the independent tier agrees on every row field and Delta_BG headline identity.
+BatchRowRun evaluateBatchRows(
+    const std::vector<Config>& configs,
+    const BatchOptions& options = BatchOptions{});
+
+BatchRowRun evaluateBatchRows(
     const Config& commonConfig,
     const std::vector<std::string>& slhaPaths,
     const BatchOptions& options = BatchOptions{});

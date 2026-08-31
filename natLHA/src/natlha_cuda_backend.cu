@@ -1460,7 +1460,7 @@ std::string dbgContributionMismatch(
     return {};
 }
 
-std::string labelResultMismatch(const Result& candidate, const Result& reference) {
+std::string emittedResultMismatch(const Result& candidate, const Result& reference) {
     if (candidate.ok != reference.ok
             || candidate.haveDEW != reference.haveDEW
             || candidate.haveDHS != reference.haveDHS
@@ -1468,10 +1468,7 @@ std::string labelResultMismatch(const Result& candidate, const Result& reference
             || candidate.haveDSN != reference.haveDSN) {
         return "result success or requested-measure branch differs";
     }
-    if (!candidate.ok) {
-        return candidate.error == reference.error ? std::string{}
-                                                   : "failure diagnostic differs";
-    }
+    if (candidate.error != reference.error) return "failure diagnostic differs";
     if (!closeValue(candidate.qSusy, reference.qSusy)) return "Q_SUSY differs";
     if (!closeValue(candidate.logQGut, reference.logQGut)) return "log(Q_GUT) differs";
     if (!closeValue(candidate.mZ2, reference.mZ2)) return "mZ^2 differs";
@@ -1479,6 +1476,30 @@ std::string labelResultMismatch(const Result& candidate, const Result& reference
     if (!closeValue(candidate.deltaHS, reference.deltaHS)) return "Delta_HS differs";
     if (!closeDbgValue(candidate.deltaBG, reference.deltaBG)) return "Delta_BG differs";
     if (!closeValue(candidate.deltaSN, reference.deltaSN)) return "delta_SN differs";
+    if (!closeValue(candidate.snTotalNvac, reference.snTotalNvac)) {
+        return "dN_vac differs";
+    }
+    const QSusyAuditSummary candidateAudit = summarizeQSusyAudit(candidate);
+    const QSusyAuditSummary referenceAudit = summarizeQSusyAudit(reference);
+    if (candidateAudit.allAccepted != referenceAudit.allAccepted
+            || candidateAudit.allCountsKnown != referenceAudit.allCountsKnown
+            || candidateAudit.searches != referenceAudit.searches
+            || candidateAudit.haveLastRootCount != referenceAudit.haveLastRootCount
+            || candidateAudit.lastRootsFound != referenceAudit.lastRootsFound
+            || candidateAudit.haveAcceptedLogScale
+                != referenceAudit.haveAcceptedLogScale
+            || (candidateAudit.haveAcceptedLogScale
+                && !closeValue(
+                    candidateAudit.acceptedLogScale,
+                    referenceAudit.acceptedLogScale))) {
+        return "Q_SUSY audit summary differs";
+    }
+    return {};
+}
+
+std::string contributionResultMismatch(
+        const Result& candidate, const Result& reference) {
+    if (!candidate.ok || !reference.ok) return {};
     for (const auto& mismatch : {
              contributionMismatch(
                  "Delta_EW", candidate.dewContributions, reference.dewContributions),
@@ -1492,8 +1513,32 @@ std::string labelResultMismatch(const Result& candidate, const Result& reference
     return {};
 }
 
-bool sameLabelResult(const Result& candidate, const Result& reference) {
-    return labelResultMismatch(candidate, reference).empty();
+std::string labelResultMismatch(const Result& candidate, const Result& reference) {
+    const std::string emittedMismatch = emittedResultMismatch(candidate, reference);
+    if (!emittedMismatch.empty()) return emittedMismatch;
+    return contributionResultMismatch(candidate, reference);
+}
+
+std::string batchRowResultMismatch(
+        const Result& candidate, const Result& reference) {
+    const std::string emittedMismatch = emittedResultMismatch(candidate, reference);
+    if (!emittedMismatch.empty()) return emittedMismatch;
+    if (!candidate.ok || !candidate.haveDBG) return {};
+    if (candidate.dbgContributions.empty() || reference.dbgContributions.empty()) {
+        return "Delta_BG headline identity is unavailable";
+    }
+    const LabeledValueBG& candidateTop = candidate.dbgContributions.front();
+    const LabeledValueBG& referenceTop = reference.dbgContributions.front();
+    if (candidateTop.label != referenceTop.label
+            || candidateTop.ordinal != referenceTop.ordinal
+            || candidate.dbgHeadline.topLabel != reference.dbgHeadline.topLabel) {
+        return "Delta_BG headline label/ordinal differs";
+    }
+    if (candidate.dbgHeadline.tiedDirectionOrdinals
+            != reference.dbgHeadline.tiedDirectionOrdinals) {
+        return "Delta_BG exact-tie ordinal set differs";
+    }
+    return {};
 }
 
 bool nearQSusyBoundary(const Result& candidate) {
@@ -1505,15 +1550,18 @@ bool nearQSusyBoundary(const Result& candidate) {
         || candidate.qSusyRootBracketWidth > residualLimit;
 }
 
-bool nearBranchBoundary(const Result& candidate) {
-    if (!candidate.ok) return true;
+AdjudicationReasons branchBoundaryReasons(const Result& candidate) {
+    AdjudicationReasons reasons = 0;
+    if (!candidate.ok) {
+        reasons |= adjudicationReason(AdjudicationReason::FailedCandidateBoundary);
+    }
     if (candidate.haveDBG
             && (candidate.dbgHeadline.headlineSignFragileRootUncertainty
                 || (candidate.dbgHeadline.headlineMagnitudeGap >= 0
                     && candidate.dbgHeadline.headlineMagnitudeGap
                         <= candidate.dbgHeadline.topRootUncertainty
                             + candidate.dbgHeadline.secondRootUncertainty))) {
-        return true;
+        reasons |= adjudicationReason(AdjudicationReason::HeadlineBoundary);
     }
     for (std::size_t index = 1; index < candidate.dbgContributions.size(); ++index) {
         const LabeledValueBG& previous = candidate.dbgContributions[index - 1];
@@ -1528,12 +1576,25 @@ bool nearBranchBoundary(const Result& candidate) {
         // Exact contribution order is part of the CPU semantic contract. Retry any adjacent
         // pair whose magnitude gap is small enough that GPU arithmetic or root uncertainty
         // could reverse it, regardless of which Delta_BG model produced the pair.
-        if (magnitudeGap <= orderingRisk) return true;
+        if (magnitudeGap <= orderingRisk) {
+            reasons |= adjudicationReason(
+                AdjudicationReason::ContributionOrderBoundary);
+            reasons |= adjudicationReason(
+                index == 1
+                    ? AdjudicationReason::HeadlineOrderBoundary
+                    : AdjudicationReason::LowerContributionOrderBoundary);
+        }
     }
     for (const auto& direction : candidate.dbgDiagnostics) {
-        if (!direction.accepted || !direction.failure.empty()) return true;
+        if (!direction.accepted || !direction.failure.empty()) {
+            reasons |= adjudicationReason(
+                AdjudicationReason::AdaptiveWindowBoundary);
+        }
         for (const auto& window : direction.windows) {
-            if (!window.accepted && window.failure.empty()) return true;
+            if (!window.accepted && window.failure.empty()) {
+                reasons |= adjudicationReason(
+                    AdjudicationReason::AdaptiveWindowBoundary);
+            }
             if (window.accepted && window.agreementTolerance > 0
                     && (window.contributionSpan
                             > high_prec_float("0.5") * window.agreementTolerance
@@ -1543,14 +1604,52 @@ bool nearBranchBoundary(const Result& candidate) {
                                 window.rootUncertainties.end())
                                 > high_prec_float("0.5")
                                     * window.agreementTolerance))) {
-                return true;
+                reasons |= adjudicationReason(
+                    AdjudicationReason::AdaptiveWindowBoundary);
             }
         }
     }
-    return false;
+    if (reasons != 0) {
+        reasons |= adjudicationReason(AdjudicationReason::BranchBoundary);
+    }
+    return reasons;
 }
 
 }  // namespace
+
+AdjudicationReasons cudaBranchBoundaryReasons(const Result& candidate) {
+    return branchBoundaryReasons(candidate);
+}
+
+std::string cudaResultMismatch(
+        const Result& candidate, const Result& reference) {
+    return labelResultMismatch(candidate, reference);
+}
+
+std::string cudaBatchRowMismatch(
+        const Result& candidate, const Result& reference) {
+    return batchRowResultMismatch(candidate, reference);
+}
+
+bool cudaBatchRowAcceptsBranchReasons(AdjudicationReasons reasons) {
+    const AdjudicationReasons lowerOrderingOnly =
+        adjudicationReason(AdjudicationReason::BranchBoundary)
+        | adjudicationReason(AdjudicationReason::ContributionOrderBoundary)
+        | adjudicationReason(AdjudicationReason::LowerContributionOrderBoundary);
+    return reasons == 0 || reasons == lowerOrderingOnly;
+}
+
+bool cudaBatchRowAcceptsRelaxedDiagnosticReasons(AdjudicationReasons reasons) {
+    const AdjudicationReasons lowerOrderingOnly =
+        adjudicationReason(AdjudicationReason::BranchBoundary)
+        | adjudicationReason(AdjudicationReason::ContributionOrderBoundary)
+        | adjudicationReason(AdjudicationReason::LowerContributionOrderBoundary);
+    const AdjudicationReasons contributionTierOnly =
+        lowerOrderingOnly
+        | adjudicationReason(AdjudicationReason::TierDisagreement)
+        | adjudicationReason(AdjudicationReason::ContributionTierDisagreement);
+    return reasons == lowerOrderingOnly || reasons == contributionTierOnly;
+}
 
 CudaDeviceInfo queryCudaDevice(int device) {
     CudaDeviceInfo info;
@@ -1915,7 +2014,8 @@ CudaQSusyBatchResult solveCudaQSusyBatchDoubleDouble(
 BatchRun evaluateCudaBatch(
         const std::vector<Config>& configs,
         const BatchOptions& options,
-        const CudaDeviceInfo& device) {
+        const CudaDeviceInfo& device,
+        CudaResultContract contract) {
     BatchRun run;
     run.summary.points = configs.size();
     run.results.resize(configs.size());
@@ -2133,17 +2233,15 @@ BatchRun evaluateCudaBatch(
     std::vector<std::size_t> retryPoints;
     for (std::size_t point = 0; point < configs.size(); ++point) {
         const bool rootBoundary = nearQSusyBoundary(run.results[point]);
-        const bool branchBoundary = nearBranchBoundary(run.results[point]);
-        if (rootBoundary || branchBoundary) {
+        const AdjudicationReasons branchReasons =
+            cudaBranchBoundaryReasons(run.results[point]);
+        if (rootBoundary || branchReasons != 0) {
             retryPoints.push_back(point);
             if (rootBoundary) {
                 run.diagnostics[point].adjudicationReasons |=
                     adjudicationReason(AdjudicationReason::RootBoundary);
             }
-            if (branchBoundary) {
-                run.diagnostics[point].adjudicationReasons |=
-                    adjudicationReason(AdjudicationReason::BranchBoundary);
-            }
+            run.diagnostics[point].adjudicationReasons |= branchReasons;
         }
     }
 
@@ -2177,17 +2275,44 @@ BatchRun evaluateCudaBatch(
 
         const Result& fp64 = run.results[point];
         const Result& doubleDouble = doubleDoubleResults[point];
-        if (doubleDouble.ok && sameLabelResult(fp64, doubleDouble)
-                && !nearQSusyBoundary(doubleDouble)
-                && !nearBranchBoundary(doubleDouble)) {
-            run.results[point] = doubleDouble;
-            diagnostic.finalTier = ExecutionTier::CudaDoubleDouble;
-            diagnostic.detail += "; CUDA double-double accepted";
-            continue;
-        }
-        if (!sameLabelResult(fp64, doubleDouble)) {
+        const AdjudicationReasons doubleDoubleBranchReasons =
+            cudaBranchBoundaryReasons(doubleDouble);
+        diagnostic.adjudicationReasons |= doubleDoubleBranchReasons;
+        const std::string emittedTierMismatch =
+            emittedResultMismatch(fp64, doubleDouble);
+        const std::string contributionTierMismatch =
+            contributionResultMismatch(fp64, doubleDouble);
+        if (!emittedTierMismatch.empty() || !contributionTierMismatch.empty()) {
             diagnostic.adjudicationReasons |=
                 adjudicationReason(AdjudicationReason::TierDisagreement);
+            if (!emittedTierMismatch.empty()) {
+                diagnostic.adjudicationReasons |= adjudicationReason(
+                    AdjudicationReason::EmittedFieldTierDisagreement);
+            }
+            if (!contributionTierMismatch.empty()) {
+                diagnostic.adjudicationReasons |= adjudicationReason(
+                    AdjudicationReason::ContributionTierDisagreement);
+            }
+        }
+        const bool fullContractMatched =
+            emittedTierMismatch.empty() && contributionTierMismatch.empty();
+        const bool fullContractAccepted =
+            fullContractMatched && doubleDoubleBranchReasons == 0;
+        const bool relaxedRowContractAccepted =
+            contract == CudaResultContract::BatchRow
+            && batchRowResultMismatch(fp64, doubleDouble).empty()
+            && cudaBatchRowAcceptsBranchReasons(doubleDoubleBranchReasons)
+            && doubleDoubleBranchReasons != 0
+            && cudaBatchRowAcceptsRelaxedDiagnosticReasons(
+                diagnostic.adjudicationReasons);
+        if (doubleDouble.ok && !nearQSusyBoundary(doubleDouble)
+                && (fullContractAccepted || relaxedRowContractAccepted)) {
+            run.results[point] = doubleDouble;
+            diagnostic.finalTier = ExecutionTier::CudaDoubleDouble;
+            diagnostic.detail += !relaxedRowContractAccepted
+                ? "; CUDA double-double accepted"
+                : "; CUDA double-double batch-row contract accepted";
+            continue;
         }
         run.results[point] = evaluate(configs[point]);
         diagnostic.finalTier = ExecutionTier::CpuMpfr;
@@ -2208,7 +2333,9 @@ BatchRun evaluateCudaBatch(
         PointExecutionDiagnostic& diagnostic = run.diagnostics[point];
         if (options.backendAudit) {
             const Result reference = evaluate(configs[point]);
-            const std::string mismatch = labelResultMismatch(candidate, reference);
+            const std::string mismatch = contract == CudaResultContract::Full
+                ? labelResultMismatch(candidate, reference)
+                : batchRowResultMismatch(candidate, reference);
             const bool matched = mismatch.empty();
             diagnostic.auditCompared = true;
             diagnostic.auditMatched = matched;

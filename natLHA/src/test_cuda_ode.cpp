@@ -75,6 +75,152 @@ int main(int argc, char** argv) {
                             == natlha::ExecutionTier::CudaDoubleDouble
                      && fp64Escape.finalTier == natlha::ExecutionTier::None,
                  "double-double result did not recover after an FP64 escape");
+
+    const auto reason = [](natlha::AdjudicationReason value) {
+        return natlha::adjudicationReason(value);
+    };
+    natlha::Result failedBoundary;
+    const natlha::AdjudicationReasons failedReasons =
+        natlha::detail::cudaBranchBoundaryReasons(failedBoundary);
+    ok &= expect(
+        failedReasons
+            == (reason(natlha::AdjudicationReason::BranchBoundary)
+                | reason(natlha::AdjudicationReason::FailedCandidateBoundary)),
+        "failed CUDA candidate lost its structured branch-boundary reason");
+
+    natlha::Result headlineBoundary;
+    headlineBoundary.ok = true;
+    headlineBoundary.haveDBG = true;
+    headlineBoundary.dbgHeadline.headlineSignFragileRootUncertainty = true;
+    headlineBoundary.dbgHeadline.headlineMagnitudeGap = 10;
+    ok &= expect(
+        natlha::detail::cudaBranchBoundaryReasons(headlineBoundary)
+            == (reason(natlha::AdjudicationReason::BranchBoundary)
+                | reason(natlha::AdjudicationReason::HeadlineBoundary)),
+        "headline fragility was not distinguished from other branch boundaries");
+
+    natlha::Result orderingBoundary;
+    orderingBoundary.ok = true;
+    orderingBoundary.haveDBG = true;
+    orderingBoundary.dbgHeadline.headlineMagnitudeGap = 10;
+    orderingBoundary.dbgContributions = {
+        {high_prec_float("2.0"), "first", 0, 0},
+        {high_prec_float("1.9999"), "second", 1, 0}};
+    ok &= expect(
+        natlha::detail::cudaBranchBoundaryReasons(orderingBoundary)
+            == (reason(natlha::AdjudicationReason::BranchBoundary)
+                | reason(natlha::AdjudicationReason::ContributionOrderBoundary)
+                | reason(natlha::AdjudicationReason::HeadlineOrderBoundary)),
+        "top-two ordering ambiguity was not distinguished from other boundaries");
+
+    natlha::Result lowerOrderingBoundary;
+    lowerOrderingBoundary.ok = true;
+    lowerOrderingBoundary.haveDBG = true;
+    lowerOrderingBoundary.dbgHeadline.headlineMagnitudeGap = 10;
+    lowerOrderingBoundary.dbgContributions = {
+        {high_prec_float("10.0"), "first", 0, 0},
+        {high_prec_float("2.0"), "second", 1, 0},
+        {high_prec_float("1.9999"), "third", 2, 0}};
+    ok &= expect(
+        natlha::detail::cudaBranchBoundaryReasons(lowerOrderingBoundary)
+            == (reason(natlha::AdjudicationReason::BranchBoundary)
+                | reason(natlha::AdjudicationReason::ContributionOrderBoundary)
+                | reason(
+                    natlha::AdjudicationReason::LowerContributionOrderBoundary)),
+        "lower-ranked ordering ambiguity was not isolated from top-two ambiguity");
+    const natlha::AdjudicationReasons lowerOnlyReasons =
+        natlha::detail::cudaBranchBoundaryReasons(lowerOrderingBoundary);
+    ok &= expect(
+        natlha::detail::cudaBatchRowAcceptsBranchReasons(lowerOnlyReasons)
+            && natlha::detail::cudaBatchRowAcceptsBranchReasons(0)
+            && !natlha::detail::cudaBatchRowAcceptsBranchReasons(
+                natlha::detail::cudaBranchBoundaryReasons(orderingBoundary))
+            && !natlha::detail::cudaBatchRowAcceptsBranchReasons(
+                lowerOnlyReasons
+                | reason(natlha::AdjudicationReason::RootBoundary)),
+        "batch-row branch gate did not isolate the exact lower-order boundary");
+    const natlha::AdjudicationReasons lowerContributionTierReasons =
+        lowerOnlyReasons
+        | reason(natlha::AdjudicationReason::TierDisagreement)
+        | reason(natlha::AdjudicationReason::ContributionTierDisagreement);
+    ok &= expect(
+        natlha::detail::cudaBatchRowAcceptsRelaxedDiagnosticReasons(
+            lowerOnlyReasons)
+            && natlha::detail::cudaBatchRowAcceptsRelaxedDiagnosticReasons(
+                lowerContributionTierReasons)
+            && !natlha::detail::cudaBatchRowAcceptsRelaxedDiagnosticReasons(
+                lowerContributionTierReasons
+                | reason(natlha::AdjudicationReason::EmittedFieldTierDisagreement)),
+        "batch-row relaxed diagnostic gate admitted a non-lower-order reason set");
+
+    natlha::Result adaptiveBoundary;
+    adaptiveBoundary.ok = true;
+    adaptiveBoundary.dbgDiagnostics.emplace_back();
+    ok &= expect(
+        natlha::detail::cudaBranchBoundaryReasons(adaptiveBoundary)
+            == (reason(natlha::AdjudicationReason::BranchBoundary)
+                | reason(natlha::AdjudicationReason::AdaptiveWindowBoundary)),
+        "adaptive-window rejection was not distinguished from other branch boundaries");
+
+    natlha::Result comparisonReference;
+    comparisonReference.ok = true;
+    comparisonReference.snTotalNvac = high_prec_float("1e-6");
+    natlha::QSusySearchDiagnostic acceptedSearch;
+    acceptedSearch.scanComplete = true;
+    acceptedSearch.accepted = true;
+    acceptedSearch.logScale = 8.0;
+    acceptedSearch.rootsFound = 1;
+    comparisonReference.qSusySearchDiagnostics.push_back(acceptedSearch);
+    natlha::Result changedNvac = comparisonReference;
+    changedNvac.snTotalNvac = high_prec_float("2e-6");
+    ok &= expect(
+        natlha::detail::cudaResultMismatch(changedNvac, comparisonReference)
+            == "dN_vac differs",
+        "CUDA result comparison omitted the emitted dN_vac field");
+    natlha::Result changedAudit = comparisonReference;
+    changedAudit.qSusySearchDiagnostics.back().rootsFound = 2;
+    ok &= expect(
+        natlha::detail::cudaResultMismatch(changedAudit, comparisonReference)
+            == "Q_SUSY audit summary differs",
+        "CUDA result comparison omitted the emitted Q_SUSY audit fields");
+
+    natlha::Result contributionReference = comparisonReference;
+    contributionReference.dbgContributions = {
+        {high_prec_float("10.0"), "first", 0, 0},
+        {high_prec_float("2.0"), "second", 1, 0}};
+    natlha::Result changedContribution = contributionReference;
+    changedContribution.dbgContributions[1].label = "changed";
+    ok &= expect(
+        natlha::detail::cudaResultMismatch(
+            changedContribution, contributionReference)
+            == "Delta_BG label/ordinal differs at index 1 (candidate 'changed' ordinal 1, CPU 'second' ordinal 1)",
+        "CUDA result comparison lost full contribution-order coverage");
+
+    contributionReference.haveDBG = true;
+    contributionReference.deltaBG = high_prec_float("10.0");
+    contributionReference.dbgHeadline.topLabel = "first";
+    contributionReference.dbgHeadline.tiedDirectionOrdinals = {0};
+    natlha::Result changedLowerContribution = contributionReference;
+    changedLowerContribution.dbgContributions[1].label = "changed-lower";
+    ok &= expect(
+        natlha::detail::cudaBatchRowMismatch(
+            changedLowerContribution, contributionReference).empty()
+            && !natlha::detail::cudaResultMismatch(
+                changedLowerContribution, contributionReference).empty(),
+        "batch-row comparison did not exclude only lower contribution detail");
+    natlha::Result changedHeadlineOrdinal = contributionReference;
+    changedHeadlineOrdinal.dbgContributions[0].ordinal = 9;
+    ok &= expect(
+        natlha::detail::cudaBatchRowMismatch(
+            changedHeadlineOrdinal, contributionReference)
+            == "Delta_BG headline label/ordinal differs",
+        "batch-row comparison omitted the selected Delta_BG ordinal");
+    natlha::Result changedTieSet = contributionReference;
+    changedTieSet.dbgHeadline.tiedDirectionOrdinals = {0, 1};
+    ok &= expect(
+        natlha::detail::cudaBatchRowMismatch(changedTieSet, contributionReference)
+            == "Delta_BG exact-tie ordinal set differs",
+        "batch-row comparison omitted the Delta_BG exact-tie set");
     if (!ok) return 1;
 
     natlha::Config config;

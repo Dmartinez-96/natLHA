@@ -20,7 +20,8 @@
 // before evaluate() and its sn_nF/sn_nD fields are written as 0/0 sentinels. Diagnostics go
 // to stderr so the output stream stays parseable.
 //
-// Exit status: 0 if every requested point succeeded, 1 on usage error, 2 if any point failed.
+// Exit status: 0 if every requested point succeeded, 1 on usage/output error,
+// 2 if any point failed.
 
 #include <cstdint>
 #include <filesystem>
@@ -51,6 +52,9 @@ void usage() {
         "\n"
         "options:\n"
         "  --out FILE           write report or batch rows to FILE (default stdout)\n"
+        "  --backend-provenance-out FILE\n"
+        "                       write aligned per-row execution provenance; requires\n"
+        "                       --batch and --backend cuda or auto\n"
         "  --bg-model N         DBG_calc model index, 1-6; 6=pMSSM-30+mu (default 1)\n"
         "  --bg-precision N     1=8-point diagnostic, 2=4-point diagnostic,\n"
         "                       3=adaptive 2-point production (default 3)\n"
@@ -84,10 +88,7 @@ public:
     }
 
     ~CoutRedirect() {
-        if (original_ != nullptr) {
-            std::cout.flush();
-            std::cout.rdbuf(original_);
-        }
+        (void) finish();
     }
 
     CoutRedirect(const CoutRedirect &) = delete;
@@ -95,17 +96,56 @@ public:
 
     bool good() const { return !requested_ || output_.good(); }
 
+    bool finish() {
+        if (finished_) return success_;
+        finished_ = true;
+        if (!requested_) {
+            std::cout.flush();
+            success_ = std::cout.good();
+            return success_;
+        }
+        if (original_ == nullptr) return false;
+
+        std::cout.flush();
+        success_ = std::cout.good();
+        std::cout.rdbuf(original_);
+        original_ = nullptr;
+        std::cout.clear();
+        output_.close();
+        success_ = success_ && !output_.fail();
+        return success_;
+    }
+
 private:
     bool requested_ = false;
+    bool finished_ = false;
+    bool success_ = false;
     std::ofstream output_;
     std::streambuf * original_ = nullptr;
 };
 
-bool sameExistingFile(const std::string & inputPath, const std::string & outputPath) {
-    if (outputPath.empty()) return false;
-    std::error_code error;
-    const bool equivalent = std::filesystem::equivalent(inputPath, outputPath, error);
-    return !error && equivalent;
+bool finishOutput(CoutRedirect& output, const std::string& path) {
+    if (output.finish()) return true;
+    std::cerr << "error: failed while writing output";
+    if (!path.empty()) std::cerr << " file: " << path;
+    std::cerr << "\n";
+    return false;
+}
+
+bool sameResolvedPath(const std::string & leftPath, const std::string & rightPath) {
+    if (leftPath.empty() || rightPath.empty()) return false;
+    std::error_code equivalentError;
+    if (std::filesystem::equivalent(leftPath, rightPath, equivalentError)
+            && !equivalentError) {
+        return true;
+    }
+    std::error_code leftError;
+    std::error_code rightError;
+    const std::filesystem::path left =
+        std::filesystem::weakly_canonical(leftPath, leftError);
+    const std::filesystem::path right =
+        std::filesystem::weakly_canonical(rightPath, rightError);
+    return !leftError && !rightError && left == right;
 }
 
 uint64_t splitmix64(uint64_t & state) {
@@ -144,7 +184,8 @@ void randomSNPair(uint64_t seed, uint64_t draw, int & nF, int & nD) {
     nD = 1 + pair % 5;
 }
 
-void printRow(const std::string & path, const natlha::Result & r, const natlha::Config & cfg,
+template <typename RowResult>
+void printRow(const std::string & path, const RowResult & r, const natlha::Config & cfg,
               int digits, bool randomSN, bool qSusyAudit,
               const natlha::PointExecutionDiagnostic* backendDiagnostic,
               bool backendAudit) {
@@ -208,6 +249,30 @@ void printHeader(const natlha::Config & cfg, bool randomSN, uint64_t snSeed,
                      " cpu_adjudicated backend_audit_match";
     }
     std::cout << " slha_path\n";
+}
+
+bool writeBackendProvenance(
+        const std::string& path,
+        const std::vector<std::string>& entries,
+        const std::vector<natlha::PointExecutionDiagnostic>& diagnostics) {
+    if (path.empty()) return true;
+    if (entries.size() != diagnostics.size()) return false;
+    std::ofstream output(path, std::ios::out | std::ios::trunc);
+    if (!output.good()) return false;
+    output << "# backend_executed selected_backend candidate_tier final_tier"
+              " adjudication_reasons cpu_adjudicated slha_path\n";
+    for (std::size_t point = 0; point < entries.size(); ++point) {
+        const natlha::PointExecutionDiagnostic& diagnostic = diagnostics[point];
+        output << (diagnostic.executed ? 1 : 0)
+               << " " << natlha::backendName(diagnostic.selectedBackend)
+               << " " << natlha::executionTierName(diagnostic.candidateTier)
+               << " " << natlha::executionTierName(diagnostic.finalTier)
+               << " " << diagnostic.adjudicationReasons
+               << " " << (diagnostic.cpuAdjudicated ? 1 : 0)
+               << " " << entries[point] << "\n";
+    }
+    output.close();
+    return !output.fail();
 }
 
 void printReport(const natlha::Result & r, const natlha::Config & cfg, int digits,
@@ -305,6 +370,7 @@ int main(int argc, char ** argv) {
     const std::string& singlePath = options.singlePath;
     const std::string& batchPath = options.batchPath;
     const std::string& outputPath = options.outputPath;
+    const std::string& backendProvenancePath = options.backendProvenancePath;
     const int digits = options.digits;
     const bool randomSN = options.randomSN;
     const bool qSusyAudit = options.qSusyAudit;
@@ -312,8 +378,17 @@ int main(int argc, char ** argv) {
     const uint64_t snSeed = options.snSeed;
 
     const std::string & inputPath = singlePath.empty() ? batchPath : singlePath;
-    if (sameExistingFile(inputPath, outputPath)) {
+    if (sameResolvedPath(inputPath, outputPath)) {
         std::cerr << "error: --out FILE resolves to the input file\n";
+        return 1;
+    }
+    if (sameResolvedPath(inputPath, backendProvenancePath)) {
+        std::cerr << "error: --backend-provenance-out FILE resolves to the input file\n";
+        return 1;
+    }
+    if (sameResolvedPath(outputPath, backendProvenancePath)) {
+        std::cerr << "error: --out FILE and --backend-provenance-out FILE resolve "
+                     "to the same path\n";
         return 1;
     }
 
@@ -328,9 +403,14 @@ int main(int argc, char ** argv) {
         std::string line;
         while (std::getline(list, line)) {
             if (line.empty() || line[0] == '#') continue;
-            if (sameExistingFile(line, outputPath)) {
+            if (sameResolvedPath(line, outputPath)) {
                 std::cerr << "error: --out FILE resolves to a spectrum in the batch list: "
                           << line << "\n";
+                return 1;
+            }
+            if (sameResolvedPath(line, backendProvenancePath)) {
+                std::cerr << "error: --backend-provenance-out FILE resolves to a spectrum "
+                             "in the batch list: " << line << "\n";
                 return 1;
             }
             batchEntries.push_back(std::move(line));
@@ -341,13 +421,12 @@ int main(int argc, char ** argv) {
         }
     }
 
-    CoutRedirect output(outputPath);
-    if (!output.good()) {
-        std::cerr << "error: cannot open output file: " << outputPath << "\n";
-        return 1;
-    }
-
     if (!singlePath.empty()) {
+        CoutRedirect output(outputPath);
+        if (!output.good()) {
+            std::cerr << "error: cannot open output file: " << outputPath << "\n";
+            return 1;
+        }
         if (randomSN) {
             uint64_t draw = 0;
             if (!drawIndex(singlePath, draw)) {
@@ -360,14 +439,19 @@ int main(int argc, char ** argv) {
         cfg.slhaPath = singlePath;
         const natlha::Result r = natlha::evaluate(cfg);
         printReport(r, cfg, digits, randomSN, snSeed);
+        if (!finishOutput(output, outputPath)) return 1;
         return r.ok ? 0 : 2;
     }
 
-    printHeader(
-        cfg, randomSN, snSeed, qSusyAudit, batchOptions.backendAudit);
     std::cerr << std::setprecision(17)
               << "# q_susy_max_dlogq " << cfg.qSusyMaxDeltaLogQ << "\n";
     if (batchOptions.backend == natlha::Backend::Cpu) {
+        CoutRedirect output(outputPath);
+        if (!output.good()) {
+            std::cerr << "error: cannot open output file: " << outputPath << "\n";
+            return 1;
+        }
+        printHeader(cfg, randomSN, snSeed, qSusyAudit, false);
         long done = 0;
         long failed = 0;
         for (const std::string& line : batchEntries) {
@@ -398,11 +482,12 @@ int main(int argc, char ** argv) {
             }
         }
         std::cerr << "# points " << done << ", failed " << failed << "\n";
+        if (!finishOutput(output, outputPath)) return 1;
         return failed ? 2 : 0;
     }
 
     std::vector<natlha::Config> pointConfigs(batchEntries.size(), cfg);
-    std::vector<natlha::Result> pointResults(batchEntries.size());
+    std::vector<natlha::BatchRowResult> pointResults(batchEntries.size());
     std::vector<natlha::PointExecutionDiagnostic> pointDiagnostics(batchEntries.size());
     std::vector<std::size_t> evaluatedIndices;
     std::vector<natlha::Config> evaluatedConfigs;
@@ -432,8 +517,8 @@ int main(int argc, char ** argv) {
         }
     }
 
-    const natlha::BatchRun batch =
-        natlha::evaluateBatch(evaluatedConfigs, batchOptions);
+    const natlha::BatchRowRun batch =
+        natlha::evaluateBatchRows(evaluatedConfigs, batchOptions);
     if (batch.results.size() != evaluatedIndices.size()
             || batch.diagnostics.size() != evaluatedIndices.size()) {
         std::cerr << "error: batch backend returned misaligned result arrays\n";
@@ -445,10 +530,24 @@ int main(int argc, char ** argv) {
         pointDiagnostics[point] = batch.diagnostics[evaluated];
     }
 
+    if (!writeBackendProvenance(
+            backendProvenancePath, batchEntries, pointDiagnostics)) {
+        std::cerr << "error: cannot write backend provenance file: "
+                  << backendProvenancePath << "\n";
+        return 1;
+    }
+
+    CoutRedirect output(outputPath);
+    if (!output.good()) {
+        std::cerr << "error: cannot open output file: " << outputPath << "\n";
+        return 1;
+    }
+    printHeader(
+        cfg, randomSN, snSeed, qSusyAudit, batchOptions.backendAudit);
     long failed = 0;
     for (std::size_t point = 0; point < batchEntries.size(); ++point) {
         const std::string& line = batchEntries[point];
-        const natlha::Result& result = pointResults[point];
+        const natlha::BatchRowResult& result = pointResults[point];
         printRow(
             line, result, pointConfigs[point], digits, randomSN, qSusyAudit,
             &pointDiagnostics[point], batchOptions.backendAudit);
@@ -488,5 +587,6 @@ int main(int argc, char ** argv) {
     printCudaProfile("rge", batch.summary.rgeProfile);
     printCudaProfile("q_susy", batch.summary.qSusyProfile);
     std::cerr << "# points " << batchEntries.size() << ", failed " << failed << "\n";
+    if (!finishOutput(output, outputPath)) return 1;
     return failed ? 2 : 0;
 }

@@ -86,12 +86,24 @@ Backend behavior is explicit:
   execution-tier and adjudication columns, and replaces a mismatching result
   with the CPU result. It is a validation mode, not a performance mode.
 
+For production runs that need execution provenance without comparing every row
+to CPU, add `--backend-provenance-out provenance.tsv`. This batch-only option
+requires the CUDA or auto backend and writes one ordered sidecar row per input:
+whether the backend executed, the selected backend, candidate and final tiers,
+the numeric adjudication-reason bitset, whether CPU/MPFR adjudicated the row,
+and the SLHA path. It does not enable `--backend-audit` and does not change the
+primary result schema. Treat the result table and its provenance sidecar as one
+logical artifact; callers are responsible for atomic promotion of the pair.
+
 CUDA candidates near a numerical or branch boundary are retried with device
-double-double arithmetic. Tier disagreement is adjudicated by CPU/MPFR. Because
-exact Delta_BG contribution order is part of the CPU semantic contract, the
-generic boundary detector also escalates adjacent contributions whose
-magnitudes are close enough to reorder. This preserves label semantics but can
-remove the speed benefit for affected rows in any model.
+double-double arithmetic. The full `evaluateBatch` API CPU-adjudicates tier
+disagreement and treats exact Delta_BG contribution order as part of its
+scientific result contract. The tabular CLI uses the narrower
+`evaluateBatchRows` contract: it may retain an independently agreeing
+double-double result when ambiguity is confined to lower-ranked Delta_BG
+contributions that the row does not emit. Every emitted field, the signed
+Delta_BG headline label and ordinal, and the exact-tie ordinal set must still
+agree; any other boundary or disagreement is CPU-adjudicated.
 
 ---
 

@@ -2,6 +2,7 @@
 #define NATLHA_CUDA_BACKEND_HPP
 
 #include <cstddef>
+#include <string>
 #include <vector>
 
 #include "MSSM_RGE_solver_with_stopfinder.hpp"
@@ -32,6 +33,11 @@ enum class CudaQSusyStatus : int {
     ResidualFailure = 9,
     NonUniqueRoot = 10,
     NonFiniteBoundary = 11
+};
+
+enum class CudaResultContract {
+    Full,
+    BatchRow
 };
 
 constexpr AdjudicationReasons cudaQSusyAdjudicationReasons(
@@ -77,6 +83,14 @@ inline void recordCudaPointEscape(
         diagnostic.executed = false;
     }
 }
+
+/// Structured host-side CUDA acceptance diagnostics. These are exposed from the detail
+/// namespace so contract tests execute the same predicates used by production adjudication.
+AdjudicationReasons cudaBranchBoundaryReasons(const Result& candidate);
+std::string cudaResultMismatch(const Result& candidate, const Result& reference);
+std::string cudaBatchRowMismatch(const Result& candidate, const Result& reference);
+bool cudaBatchRowAcceptsBranchReasons(AdjudicationReasons reasons);
+bool cudaBatchRowAcceptsRelaxedDiagnosticReasons(AdjudicationReasons reasons);
 
 struct CudaOdeBatch {
     /// Point-major 44-component input states.
@@ -179,7 +193,8 @@ std::vector<CudaQSusyHelperResult> evaluateCudaQSusyHelpers(
 BatchRun evaluateCudaBatch(
     const std::vector<Config>& configs,
     const BatchOptions& options,
-    const CudaDeviceInfo& device);
+    const CudaDeviceInfo& device,
+    CudaResultContract contract);
 
 }  // namespace natlha::detail
 
